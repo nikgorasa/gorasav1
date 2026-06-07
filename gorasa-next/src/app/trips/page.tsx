@@ -6,9 +6,10 @@ import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import BoardingPassModal from "@/components/BoardingPassModal";
 import InvoiceModal from "@/components/InvoiceModal";
+import WhatsAppModal from "@/components/WhatsAppModal";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "motion/react";
-import { Plane, Package, CreditCard, MapPin, Calendar, Users, FileText, X, Ticket, Receipt } from "lucide-react";
+import { Plane, Package, CreditCard, MapPin, Calendar, Users, FileText, X, Ticket, Receipt, MessageSquare } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -34,6 +35,7 @@ export default function TripsPage() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [boardingPassBooking, setBoardingPassBooking] = useState<Booking | null>(null);
   const [invoiceBooking, setInvoiceBooking] = useState<Booking | null>(null);
+  const [whatsappBooking, setWhatsappBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -230,6 +232,16 @@ export default function TripsPage() {
                             <Receipt size={14} />
                             Invoice
                           </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setWhatsappBooking(booking);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 cursor-pointer"
+                          >
+                            <MessageSquare size={14} />
+                            WhatsApp
+                          </button>
                         </div>
                       </motion.div>
                     );
@@ -341,6 +353,16 @@ export default function TripsPage() {
           booking={invoiceBooking}
           userName={user.name}
           userEmail={user.email}
+        />
+      )}
+
+      {/* WhatsApp Modal */}
+      {whatsappBooking && user && (
+        <WhatsAppModal
+          isOpen={!!whatsappBooking}
+          onClose={() => setWhatsappBooking(null)}
+          booking={whatsappBooking}
+          userName={user.name}
         />
       )}
 
