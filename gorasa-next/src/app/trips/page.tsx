@@ -1,16 +1,68 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "motion/react";
-import { Plane, Package, CreditCard, MapPin } from "lucide-react";
+import { Plane, Package, CreditCard, MapPin, Calendar, Users, FileText, X } from "lucide-react";
+
+interface Booking {
+  id: string;
+  type: string;
+  itemName: string;
+  providerOrAirline?: string;
+  price: number;
+  originalPrice?: number;
+  discountApplied: number;
+  status: string;
+  pnr?: string;
+  seatOrRoom?: string;
+  paxCount: number;
+  travelDates?: string;
+  bookedAt: string;
+}
 
 export default function TripsPage() {
   const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setLoading(true);
+      fetch("/api/bookings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setBookings(data);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [user]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "CONFIRMED": return "bg-green-100 text-green-700";
+      case "CANCELLED": return "bg-red-100 text-red-700";
+      case "PENDING": return "bg-yellow-100 text-yellow-700";
+      default: return "bg-slate-100 text-slate-700";
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "FLIGHT": return Plane;
+      case "HOTEL": return MapPin;
+      case "PACKAGE": return Package;
+      default: return CreditCard;
+    }
+  };
 
   return (
     <>
@@ -24,13 +76,31 @@ export default function TripsPage() {
             animate={{ opacity: 1, y: 0 }}
           >
             <h1 className="text-3xl font-serif font-bold text-slate-900 mb-2">
-              My Trips
+              Reservation Desk
             </h1>
             <p className="text-slate-500 mb-8">
               {user ? `Welcome back, ${user.name}` : "Sign in to view your bookings"}
             </p>
 
-            {user ? (
+            {!user ? (
+              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+                <Plane size={48} className="mx-auto text-slate-300 mb-4" />
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Sign in to view trips</h2>
+                <p className="text-slate-500 mb-6">
+                  Access your bookings, boarding passes, and travel documents.
+                </p>
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="px-6 py-2.5 bg-brand-saffron text-white rounded-xl font-semibold text-sm hover:bg-brand-burnt transition-colors cursor-pointer"
+                >
+                  Sign In
+                </button>
+              </div>
+            ) : loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-saffron" />
+              </div>
+            ) : bookings.length === 0 ? (
               <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
                 <Package size={48} className="mx-auto text-slate-300 mb-4" />
                 <h2 className="text-xl font-bold text-slate-900 mb-2">No trips yet</h2>
@@ -53,23 +123,175 @@ export default function TripsPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-                <Plane size={48} className="mx-auto text-slate-300 mb-4" />
-                <h2 className="text-xl font-bold text-slate-900 mb-2">Sign in to view trips</h2>
-                <p className="text-slate-500 mb-6">
-                  Access your bookings, boarding passes, and travel documents.
-                </p>
-                <button
-                  onClick={() => setShowLogin(true)}
-                  className="px-6 py-2.5 bg-brand-saffron text-white rounded-xl font-semibold text-sm hover:bg-brand-burnt transition-colors cursor-pointer"
-                >
-                  Sign In
-                </button>
+              <div className="space-y-4">
+                {/* User Stats */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider">Loyalty Tier</p>
+                      <p className="text-lg font-bold text-slate-900">{user.loyaltyTier}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider">Points</p>
+                      <p className="text-lg font-bold text-slate-900">{user.loyaltyPoints?.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider">Wallet</p>
+                      <p className="text-lg font-bold text-slate-900">₹{user.walletBalance?.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider">Total Bookings</p>
+                      <p className="text-lg font-bold text-slate-900">{bookings.length}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bookings List */}
+                <div className="space-y-3">
+                  {bookings.map((booking) => {
+                    const TypeIcon = getTypeIcon(booking.type);
+                    return (
+                      <motion.div
+                        key={booking.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => setSelectedBooking(booking)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
+                              <TypeIcon size={24} className="text-brand-saffron" />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-slate-900">{booking.itemName}</h3>
+                              {booking.providerOrAirline && (
+                                <p className="text-sm text-slate-500">{booking.providerOrAirline}</p>
+                              )}
+                              <div className="flex items-center gap-3 mt-2">
+                                {booking.pnr && (
+                                  <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded">
+                                    PNR: {booking.pnr}
+                                  </span>
+                                )}
+                                {booking.travelDates && (
+                                  <span className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Calendar size={12} />
+                                    {booking.travelDates}
+                                  </span>
+                                )}
+                                <span className="text-xs text-slate-500 flex items-center gap-1">
+                                  <Users size={12} />
+                                  {booking.paxCount} pax
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${getStatusColor(booking.status)}`}>
+                              {booking.status}
+                            </span>
+                            <p className="text-xl font-bold text-slate-900 mt-2">
+                              ₹{booking.price?.toLocaleString()}
+                            </p>
+                            {booking.originalPrice && booking.originalPrice > booking.price && (
+                              <p className="text-xs text-slate-400 line-through">
+                                ₹{booking.originalPrice.toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </motion.div>
         </div>
       </main>
+
+      {/* Booking Detail Modal */}
+      {selectedBooking && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedBooking(null)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden p-8"
+          >
+            <button
+              onClick={() => setSelectedBooking(null)}
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-orange-50 flex items-center justify-center">
+                {React.createElement(getTypeIcon(selectedBooking.type), { size: 32, className: "text-brand-saffron" })}
+              </div>
+              <h2 className="text-2xl font-serif font-bold text-slate-900">{selectedBooking.itemName}</h2>
+              {selectedBooking.providerOrAirline && (
+                <p className="text-slate-500">{selectedBooking.providerOrAirline}</p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Status</p>
+                  <span className={`text-sm font-bold px-3 py-1 rounded-full ${getStatusColor(selectedBooking.status)}`}>
+                    {selectedBooking.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">PNR</p>
+                  <p className="font-mono font-bold text-slate-900">{selectedBooking.pnr || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Travel Dates</p>
+                  <p className="font-medium text-slate-900">{selectedBooking.travelDates || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Passengers</p>
+                  <p className="font-medium text-slate-900">{selectedBooking.paxCount}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Seat/Room</p>
+                  <p className="font-medium text-slate-900">{selectedBooking.seatOrRoom || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Booked On</p>
+                  <p className="font-medium text-slate-900">
+                    {new Date(selectedBooking.bookedAt).toLocaleDateString("en-IN")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    {selectedBooking.originalPrice && selectedBooking.originalPrice > selectedBooking.price && (
+                      <p className="text-sm text-slate-400 line-through">
+                        ₹{selectedBooking.originalPrice.toLocaleString()}
+                      </p>
+                    )}
+                    <p className="text-3xl font-black font-mono text-slate-900">
+                      ₹{selectedBooking.price?.toLocaleString()}
+                    </p>
+                  </div>
+                  {selectedBooking.status === "CONFIRMED" && (
+                    <button className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 transition-colors cursor-pointer">
+                      Request Cancellation
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       <Footer />
     </>
