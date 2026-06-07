@@ -94,13 +94,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithEmail = async (email: string, password: string) => {
+    // Try Supabase auth first
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) throw error;
 
-    // Sync with backend
+    // If Supabase auth fails (user doesn't exist in Supabase), try demo mode
+    if (error) {
+      // For demo users, fetch profile directly from database
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        const userData = await res.json();
+        setUser(userData);
+        return;
+      }
+
+      throw new Error(error.message);
+    }
+
+    // If Supabase auth succeeds, sync with backend
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
