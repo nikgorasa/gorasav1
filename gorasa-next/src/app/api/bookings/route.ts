@@ -1,7 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -24,9 +29,11 @@ async function getUser() {
 
   if (!user) return null;
 
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email! },
-  });
+  const { data: dbUser } = await supabaseAdmin
+    .from("User")
+    .select("*")
+    .eq("email", user.email!)
+    .single();
 
   return dbUser;
 }
@@ -38,15 +45,19 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const bookings = await prisma.booking.findMany({
-      where: { userId: user.id },
-      include: {
-        payment: true,
-        invoice: true,
-        cancellation: true,
-      },
-      orderBy: { bookedAt: "desc" },
-    });
+    const { data: bookings, error } = await supabaseAdmin
+      .from("Booking")
+      .select("*, payment:Payment(*), invoice:Invoice(*), cancellation:CancellationRequest(*)")
+      .eq("userId", user.id)
+      .order("bookedAt", { ascending: false });
+
+    if (error) {
+      console.error("Bookings error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch bookings" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(bookings);
   } catch (error) {
@@ -75,8 +86,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const booking = await prisma.booking.create({
-      data: {
+    const bookingId = crypto.randomUUID();
+    const pnrCode = pnr || `GR${Date.now().toString(36).toUpperCase()}`;
+
+    const { data: booking, error } = await supabaseAdmin
+      .from("Booking")
+      .insert({
+        id: bookingId,
         userId: user.id,
         type,
         itemName,
@@ -85,24 +101,30 @@ export async function POST(request: Request) {
         originalPrice: originalPrice ? Number(originalPrice) : null,
         discountApplied: discountApplied ? Number(discountApplied) : 0,
         couponCodeUsed,
-        pnr: pnr || `GR${Date.now().toString(36).toUpperCase()}`,
+        pnr: pnrCode,
         seatOrRoom,
         paxCount: paxCount || 1,
         travelDates,
-        payment: paymentMethod
-          ? {
-              create: {
-                amount: Number(price),
-                method: paymentMethod,
-                status: "PENDING",
-              },
-            }
-          : undefined,
-      },
-      include: {
-        payment: true,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Booking create error:", error);
+      return NextResponse.json(
+        { error: "Failed to create booking" },
+        { status: 500 }
+      );
+    }
+
+    if (paymentMethod) {
+      await supabaseAdmin.from("Payment").insert({
+        bookingId: booking.id,
+        amount: Number(price),
+        method: paymentMethod,
+        status: "PENDING",
+      });
+    }
 
     return NextResponse.json(booking, { status: 201 });
   } catch (error) {

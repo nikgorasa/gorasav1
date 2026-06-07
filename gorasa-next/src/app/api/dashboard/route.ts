@@ -1,35 +1,42 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  db: { schema: "public" },
+});
 
 export async function GET() {
   try {
-    const [totalUsers, activePackages, totalLeads, totalBookings, pendingLeads, revenueData, roleDistribution] =
+    const [usersResult, packagesResult, leadsResult, bookingsResult, revenueResult, rolesResult] =
       await Promise.all([
-        prisma.user.count(),
-        prisma.package.count({ where: { isActive: true } }),
-        prisma.lead.count(),
-        prisma.booking.count(),
-        prisma.lead.count({ where: { stage: "NEW" } }),
-        prisma.booking.aggregate({
-          _sum: { price: true },
-          where: { status: { not: "CANCELLED" } },
-        }),
-        prisma.user.groupBy({
-          by: ["role"],
-          _count: true,
-        }),
+        supabase.from("User").select("*", { count: "exact", head: true }),
+        supabase.from("Package").select("*", { count: "exact", head: true }).eq("isActive", true),
+        supabase.from("Lead").select("*", { count: "exact", head: true }),
+        supabase.from("Booking").select("*", { count: "exact", head: true }),
+        supabase.from("Booking").select("price").neq("status", "CANCELLED"),
+        supabase.from("User").select("role"),
       ]);
 
+    const totalRevenue = revenueResult.data?.reduce((sum, b) => sum + (b.price || 0), 0) || 0;
+
+    const roleDistribution = rolesResult.data?.reduce((acc, u) => {
+      acc[u.role] = (acc[u.role] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
     return NextResponse.json({
-      totalUsers,
-      activePackages,
-      totalLeads,
-      totalBookings,
-      pendingLeads,
-      totalRevenue: revenueData._sum.price || 0,
-      roleDistribution: roleDistribution.map((r) => ({
-        role: r.role,
-        count: r._count,
+      totalUsers: usersResult.count || 0,
+      activePackages: packagesResult.count || 0,
+      totalLeads: leadsResult.count || 0,
+      totalBookings: bookingsResult.count || 0,
+      pendingLeads: 0,
+      totalRevenue,
+      roleDistribution: Object.entries(roleDistribution || {}).map(([role, count]) => ({
+        role,
+        count,
       })),
     });
   } catch (error) {

@@ -1,7 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function GET() {
   try {
@@ -29,14 +34,17 @@ export async function GET() {
     }
 
     // Find or create user in database
-    let dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-    });
+    const { data: existingUser } = await supabaseAdmin
+      .from("User")
+      .select("*")
+      .eq("email", user.email!)
+      .single();
 
-    if (!dbUser) {
-      // Auto-create user from Supabase auth
-      dbUser = await prisma.user.create({
-        data: {
+    if (!existingUser) {
+      // Create new user
+      const { data: newUser, error: createError } = await supabaseAdmin
+        .from("User")
+        .insert({
           supabaseId: user.id,
           email: user.email!,
           name:
@@ -46,27 +54,30 @@ export async function GET() {
             "User",
           avatar: user.user_metadata?.avatar_url,
           role: "CUSTOMER",
-        },
-      });
-    } else if (!dbUser.supabaseId) {
-      // Link Supabase ID if not set
-      dbUser = await prisma.user.update({
-        where: { id: dbUser.id },
-        data: { supabaseId: user.id },
-      });
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("User create error:", createError);
+        return NextResponse.json(
+          { error: "Failed to create user" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(newUser);
     }
 
-    return NextResponse.json({
-      id: dbUser.id,
-      email: dbUser.email,
-      name: dbUser.name,
-      role: dbUser.role,
-      avatar: dbUser.avatar,
-      companyId: dbUser.companyId,
-      walletBalance: dbUser.walletBalance,
-      loyaltyPoints: dbUser.loyaltyPoints,
-      loyaltyTier: dbUser.loyaltyTier,
-    });
+    // Update supabaseId if not set
+    if (!existingUser.supabaseId) {
+      await supabaseAdmin
+        .from("User")
+        .update({ supabaseId: user.id })
+        .eq("id", existingUser.id);
+    }
+
+    return NextResponse.json(existingUser);
   } catch (error) {
     console.error("Auth/me error:", error);
     return NextResponse.json(

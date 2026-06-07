@@ -1,12 +1,28 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  db: { schema: "public" },
+});
 
 export async function GET() {
   try {
-    const packages = await prisma.package.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const { data: packages, error } = await supabase
+      .from("Package")
+      .select("*")
+      .eq("isActive", true)
+      .order("createdAt", { ascending: false });
+
+    if (error) {
+      console.error("Packages error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch packages" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(packages);
   } catch (error) {
@@ -30,8 +46,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const pkg = await prisma.package.create({
-      data: {
+    const { data: pkg, error } = await supabase
+      .from("Package")
+      .insert({
         title,
         duration,
         price: Number(price),
@@ -45,8 +62,17 @@ export async function POST(request: Request) {
         importantNotes: importantNotes || "{}",
         images: images || "[]",
         status: status || "DRAFT",
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Package create error:", error);
+      return NextResponse.json(
+        { error: "Failed to create package" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(pkg, { status: 201 });
   } catch (error) {
