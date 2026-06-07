@@ -13,6 +13,10 @@ export default defineConfig({
         },
       },
     },
+    build: {
+      outDir: path.resolve(__dirname, '../../dist'),
+      emptyOutDir: true,
+    },
     plugins: [react()],
     resolve: {
       alias: {
