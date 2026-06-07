@@ -101,6 +101,12 @@ export async function getMyBookings() {
   }>>('/api/bookings/my');
 }
 
+export async function cancelBooking(id: string) {
+  return apiFetch<{ message: string }>(`/api/bookings/${id}/cancel`, {
+    method: 'PATCH',
+  });
+}
+
 export async function getDashboardStats() {
   return apiFetch<{
     totalUsers: number;

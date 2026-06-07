@@ -28,7 +28,7 @@ import { searchPremiumHotels, searchOyoHotels } from './services/hotelService';
 import { searchGlobalPartnersHotels, searchGlobalPackages } from './services/globalService';
 import { getFromCache, saveToCache } from './services/cacheService';
 import { verifyLatestVendorRate, RateVerificationResult } from './services/vendorService';
-import { login as apiLogin, getMe, getPackages, logout as apiLogout } from './services/apiClient';
+import { login as apiLogin, getMe, getPackages, getMyBookings, cancelBooking as apiCancelBooking, logout as apiLogout } from './services/apiClient';
 import { 
   Briefcase, 
   TrendingUp, 
@@ -247,6 +247,47 @@ const App: React.FC = () => {
       console.error('Failed to fetch packages from backend:', err);
     });
   }, []);
+
+  // Fetch bookings from backend when user logs in
+  useEffect(() => {
+    if (!user) {
+      setBookings([]);
+      return;
+    }
+    getMyBookings().then((data) => {
+      const mapped: Booking[] = data.map((b) => ({
+        id: b.id,
+        type: b.type.toLowerCase() === 'flight' ? 'flight' : b.type.toLowerCase() === 'hotel' ? 'hotel' : 'package',
+        itemName: b.itemName,
+        providerOrAirline: b.providerOrAirline || 'GoRASA',
+        price: b.price,
+        originalPrice: b.originalPrice || b.price,
+        discountApplied: b.discountApplied,
+        couponCodeUsed: b.couponCodeUsed || undefined,
+        bookedDate: b.bookedAt,
+        travelDates: b.travelDates ? (() => {
+          try {
+            const d = JSON.parse(b.travelDates);
+            if (d.from && d.to) {
+              const from = new Date(d.from).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              const to = new Date(d.to).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              return `${from} - ${to}`;
+            }
+            return b.travelDates;
+          } catch {
+            return b.travelDates;
+          }
+        })() : 'TBD',
+        status: (b.status.charAt(0).toUpperCase() + b.status.slice(1).toLowerCase()) as 'Confirmed' | 'Cancelled' | 'Refunded',
+        pnr: b.pnr || 'GR' + b.id.slice(0, 6).toUpperCase(),
+        seatOrRoom: b.seatOrRoom || undefined,
+        paxCount: b.paxCount,
+      }));
+      setBookings(mapped);
+    }).catch((err) => {
+      console.error('Failed to fetch bookings from backend:', err);
+    });
+  }, [user]);
 
   const handleInterestedClick = (price: number, title: string, provider: string) => {
     setInterestedItem({ price, title, provider });
@@ -558,16 +599,21 @@ const App: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleCancelBooking = (bookingId: string) => {
-    setBookings(prev => prev.map(b => {
-      if (b.id === bookingId) {
-        if (user && user.role !== 'user') {
-          setUser(u => u ? { ...u, walletBalance: u.walletBalance + b.price } : null);
+  const handleCancelBooking = async (bookingId: string) => {
+    try {
+      await apiCancelBooking(bookingId);
+      setBookings(prev => prev.map(b => {
+        if (b.id === bookingId) {
+          if (user && user.role !== 'user') {
+            setUser(u => u ? { ...u, walletBalance: u.walletBalance + b.price } : null);
+          }
+          return { ...b, status: 'Cancelled' as const };
         }
-        return { ...b, status: 'Cancelled' as const };
-      }
-      return b;
-    }));
+        return b;
+      }));
+    } catch (err: any) {
+      alert(err.message || 'Failed to cancel booking');
+    }
   };
 
   const handleHotelSearch = async (params: SearchParams, forceLive = false) => {
