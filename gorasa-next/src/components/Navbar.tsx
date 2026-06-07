@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
+import GoRasaLogo from "./GoRasaLogo";
 import {
   Compass,
   Ticket,
@@ -47,15 +48,7 @@ export default function Navbar({
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-brand-saffron to-brand-burnt rounded-lg flex items-center justify-center">
-              <span className="text-white font-display font-bold text-sm">G</span>
-            </div>
-            <span className="font-display font-bold text-xl text-slate-900">
-              Go<span className="text-brand-saffron">RASA</span>
-            </span>
-            <span className="text-[10px] font-bold text-slate-400 border border-slate-200 hover:border-orange-200 uppercase tracking-widest pl-2 ml-1 border-l">
-              Travel Tech
-            </span>
+            <GoRasaLogo className="h-9 w-auto hover:opacity-90 transition-opacity" />
           </Link>
 
           {/* Desktop Nav */}
