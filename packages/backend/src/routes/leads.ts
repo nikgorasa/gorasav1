@@ -43,20 +43,20 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 })
 
 router.patch('/:id', authenticate, authorize('SALES', 'ADMIN', 'SUPER_ADMIN'), async (req: Request, res: Response): Promise<void> => {
-  const { status, assignedTo, priceEstimated, notes } = req.body
+  const { stage, assignedTo, notes } = req.body
   const lead = await prisma.lead.update({
     where: { id: req.params.id as string },
-    data: { status, assignedTo, priceEstimated, notes },
+    data: { stage, assignedTo, notes },
   })
   res.json(lead)
 })
 
 router.get('/stats/summary', authenticate, authorize('SALES', 'ADMIN', 'SUPER_ADMIN'), async (_req: Request, res: Response): Promise<void> => {
-  const [total, byStatus] = await Promise.all([
+  const [total, byStage] = await Promise.all([
     prisma.lead.count(),
-    prisma.lead.groupBy({ by: ['status'], _count: true }),
+    prisma.lead.groupBy({ by: ['stage'], _count: true }),
   ])
-  res.json({ total, byStatus })
+  res.json({ total, byStage })
 })
 
 export default router

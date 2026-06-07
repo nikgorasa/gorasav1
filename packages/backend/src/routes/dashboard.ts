@@ -14,7 +14,7 @@ router.get('/stats', authenticate, authorize('ADMIN', 'SUPER_ADMIN', 'SALES'), a
   ])
 
   const totalRevenue = bookings.reduce<number>((sum, b) => sum + b.price, 0)
-  const pendingLeads = await prisma.lead.count({ where: { status: 'INQUIRED' } })
+  const pendingLeads = await prisma.lead.count({ where: { stage: 'NEW' } })
   const roleDistribution = await prisma.user.groupBy({ by: ['role'], _count: true })
 
   res.json({
