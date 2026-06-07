@@ -7,14 +7,15 @@ import bookingRoutes from './routes/bookings.js'
 import dashboardRoutes from './routes/dashboard.js'
 
 const app = express()
-const PORT = process.env.PORT || 3001
 
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://gorasav1.netlify.app',
-  ],
+    'http://localhost:5173',
+    'https://gorasav1.vercel.app',
+    'https://gorasav1-nikjp2021.vercel.app',
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+  ].filter(Boolean),
   credentials: true,
 }))
 app.use(express.json({ limit: '10mb' }))
@@ -29,8 +30,11 @@ app.use('/api/packages', packageRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 
-app.listen(PORT, () => {
-  console.log(`GoRASA API running on http://localhost:${PORT}`)
-})
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3001
+  app.listen(PORT, () => {
+    console.log(`GoRASA API running on http://localhost:${PORT}`)
+  })
+}
 
 export default app
