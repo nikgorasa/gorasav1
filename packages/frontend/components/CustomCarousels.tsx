@@ -26,9 +26,10 @@ import {
 
 interface CustomCarouselsProps {
   onBookPackage: (price: number, title: string, provider: string) => void;
+  backendPackages?: TravelPackage[];
 }
 
-const CustomCarousels: React.FC<CustomCarouselsProps> = ({ onBookPackage }) => {
+const CustomCarousels: React.FC<CustomCarouselsProps> = ({ onBookPackage, backendPackages = [] }) => {
   // Setup individual refs for each carousel to support precise horizontal scrolling controls
   const topDealsRef = useRef<HTMLDivElement>(null);
   const weekendDealsRef = useRef<HTMLDivElement>(null);
@@ -36,6 +37,7 @@ const CustomCarousels: React.FC<CustomCarouselsProps> = ({ onBookPackage }) => {
   const allInclusiveRef = useRef<HTMLDivElement>(null);
   const beachRef = useRef<HTMLDivElement>(null);
   const gorasaSelectRef = useRef<HTMLDivElement>(null);
+  const backendRef = useRef<HTMLDivElement>(null);
 
   const scroll = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
     if (ref.current) {
@@ -231,6 +233,17 @@ const CustomCarousels: React.FC<CustomCarouselsProps> = ({ onBookPackage }) => {
 
   return (
     <div className="space-y-16 py-12">
+      {/* Backend Packages (from database) */}
+      {backendPackages.length > 0 && renderCarouselSection(
+        'Live from Database',
+        'Packages loaded from the GoRASA backend API — real data, live prices.',
+        <Sparkles className="w-3.5 h-3.5 text-violet-600" />,
+        backendPackages,
+        backendRef,
+        'bg-violet-50 text-violet-600 border border-violet-100',
+        'Live Data'
+      )}
+
       {/* 1. Top Deals */}
       {renderCarouselSection(
         'Top Holiday Deals',

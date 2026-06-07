@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, 
@@ -28,6 +28,7 @@ import { searchPremiumHotels, searchOyoHotels } from './services/hotelService';
 import { searchGlobalPartnersHotels, searchGlobalPackages } from './services/globalService';
 import { getFromCache, saveToCache } from './services/cacheService';
 import { verifyLatestVendorRate, RateVerificationResult } from './services/vendorService';
+import { login as apiLogin, getMe, getPackages, logout as apiLogout } from './services/apiClient';
 import { 
   Briefcase, 
   TrendingUp, 
@@ -88,6 +89,7 @@ const App: React.FC = () => {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [packages, setPackages] = useState<TravelPackage[]>([]);
+  const [backendPackages, setBackendPackages] = useState<TravelPackage[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchType, setSearchType] = useState<'hotels' | 'flights' | 'packages'>('packages');
   
@@ -205,6 +207,46 @@ const App: React.FC = () => {
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [nameError, setNameError] = useState('');
+
+  // Restore session from JWT token on page load
+  useEffect(() => {
+    const token = localStorage.getItem('gorasa_token');
+    if (token) {
+      getMe().then((u) => {
+        setUser({
+          name: u.name,
+          email: u.email,
+          role: u.role === 'CORPORATE_USER' ? 'corporate' : u.role === 'SALES' || u.role === 'ADMIN' || u.role === 'SUPER_ADMIN' ? 'agent' : 'user',
+          companyName: u.companyName,
+          loyaltyPoints: u.loyaltyPoints,
+          loyaltyTier: u.loyaltyTier as 'Silver' | 'Gold' | 'Platinum',
+          walletBalance: u.walletBalance,
+        });
+      }).catch(() => {
+        apiLogout();
+      });
+    }
+  }, []);
+
+  // Fetch packages from backend on mount
+  useEffect(() => {
+    getPackages().then((pkgs) => {
+      const mapped: TravelPackage[] = pkgs.map((p) => ({
+        id: p.id,
+        title: p.title,
+        duration: p.duration,
+        price: p.price,
+        originalPrice: p.originalPrice || undefined,
+        rating: p.rating,
+        provider: p.provider,
+        inclusions: JSON.parse(p.inclusions || '[]'),
+        imageUrl: JSON.parse(p.images || '[]')[0] || '',
+      }));
+      setBackendPackages(mapped);
+    }).catch((err) => {
+      console.error('Failed to fetch packages from backend:', err);
+    });
+  }, []);
 
   const handleInterestedClick = (price: number, title: string, provider: string) => {
     setInterestedItem({ price, title, provider });
@@ -333,18 +375,29 @@ const App: React.FC = () => {
     infants: 0
   });
 
-  const handleLogin = (name: string, email: string, role?: 'user' | 'corporate' | 'agent', companyName?: string) => {
-    const finalRole = role || 'user';
-    setUser({
-      name,
-      email,
-      role: finalRole,
-      companyName,
-      loyaltyPoints: finalRole === 'user' ? 850 : finalRole === 'corporate' ? 3400 : 5600,
-      loyaltyTier: finalRole === 'user' ? 'Silver' : finalRole === 'corporate' ? 'Gold' : 'Platinum',
-      walletBalance: finalRole === 'user' ? 0 : 150000
-    });
-    setShowLogin(false);
+  const handleLogin = async (name: string, email: string, role?: 'user' | 'corporate' | 'agent', companyName?: string) => {
+    const roleMap: Record<string, string> = {
+      user: 'CUSTOMER',
+      corporate: 'CORPORATE_USER',
+      agent: 'SALES',
+    };
+    const backendRole = roleMap[role || 'user'] || 'CUSTOMER';
+
+    try {
+      const data = await apiLogin(email, backendRole);
+      setUser({
+        name: data.user.name,
+        email: data.user.email,
+        role: role || 'user',
+        companyName: data.user.companyName || companyName,
+        loyaltyPoints: data.user.loyaltyPoints,
+        loyaltyTier: data.user.loyaltyTier as 'Silver' | 'Gold' | 'Platinum',
+        walletBalance: data.user.walletBalance,
+      });
+      setShowLogin(false);
+    } catch (err: any) {
+      alert(err.message || 'Login failed. Check your email.');
+    }
   };
 
   // Trigger secure payment overlay desk
@@ -753,6 +806,7 @@ const App: React.FC = () => {
         user={user} 
         onLoginClick={() => setShowLogin(true)} 
         onLogout={() => {
+          apiLogout();
           setUser(null);
           setCurrentTab('home');
         }}
@@ -867,7 +921,8 @@ const App: React.FC = () => {
 
             <motion.section variants={itemVariants} className="max-w-7xl mx-auto px-4 pb-24">
               <CustomCarousels 
-                onBookPackage={(price, title, provider) => handleInterestedClick(price, title, provider)} 
+                onBookPackage={(price, title, provider) => handleInterestedClick(price, title, provider)}
+                backendPackages={backendPackages}
               />
             </motion.section>
           </motion.div>
