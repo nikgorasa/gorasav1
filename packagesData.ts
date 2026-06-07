@@ -1,0 +1,289 @@
+import { TravelPackage } from './types';
+
+// 1. Top Deals
+export const TOP_DEALS: TravelPackage[] = [
+  {
+    id: 'td_1',
+    title: 'Taj Exotica Resort & Spa Goa',
+    duration: '3 Nights / 4 Days',
+    price: 45500,
+    originalPrice: 55000,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Direct',
+    inclusions: ['Luxury Villa Stay', 'Airport Transfers', 'Complimentary Buffet Breakfast', 'Goan Spice Tour Guide']
+  },
+  {
+    id: 'td_2',
+    title: 'Wildflower Hall, Shimla in the Himalayas',
+    duration: '4 Nights / 5 Days',
+    price: 62000,
+    originalPrice: 75000,
+    rating: 4.8,
+    imageUrl: 'https://images.unsplash.com/photo-1549417229-aa67d3263c09?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Direct',
+    inclusions: ['Mountain View Room', 'Heated Indoor Pool Access', 'Gourmet High Tea', 'Guided Forest Sanctuary Walk']
+  },
+  {
+    id: 'td_3',
+    title: 'The Leela Palace Udaipur Lake Retreat',
+    duration: '3 Nights / 4 Days',
+    price: 68000,
+    originalPrice: 82000,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1590053132182-6f56a2cad33b?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Grand Palace View Lake Cabin', 'Royal Welcome Ceremony', 'Private Lake Pichola Boat Cruise', 'Signature Massage Session']
+  },
+  {
+    id: 'td_4',
+    title: 'Evolve Back Kabini Jungle & Wildlife Lodge',
+    duration: '3 Nights / 4 Days',
+    price: 54000,
+    originalPrice: 64000,
+    rating: 4.7,
+    imageUrl: 'https://images.unsplash.com/photo-1546961329-78bef0414d7c?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Direct',
+    inclusions: ['Jacuzzi Hut Stay', 'Morning & Evening Boat Safaris', 'Naturalist Guided Flora Exploration', 'Premium All Meals Plan']
+  }
+];
+
+// 2. Weekend Deals
+export const WEEKEND_DEALS: TravelPackage[] = [
+  {
+    id: 'wd_1',
+    title: 'Alila Diwa South Goa Wellness Escape',
+    duration: '2 Nights / 3 Days',
+    price: 24500,
+    originalPrice: 32000,
+    rating: 4.7,
+    imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Direct',
+    inclusions: ['Terrace Room Sanctuary', 'Yoga & Meditation Circle', 'Infinity Edge Pool Access', 'Artisanal Spirits Tasting']
+  },
+  {
+    id: 'wd_2',
+    title: 'The Machan Treehouse Lonavala',
+    duration: '2 Nights / 3 Days',
+    price: 18900,
+    originalPrice: 24000,
+    rating: 4.6,
+    imageUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Canopy Treehouse Cabin', 'Forest Trekking Guide', 'Organic Farm-to-Table Breakfast', 'Evening Bonfire']
+  },
+  {
+    id: 'wd_3',
+    title: 'Amanbagh Palace Heritage Wellness Retreat',
+    duration: '2 Nights / 3 Days',
+    price: 48000,
+    originalPrice: 60500,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Select',
+    inclusions: ['Haveli Suite Stay', 'Organic Garden Tour', 'Private Ayurvedic Cleansing Session', 'Ancient Fort Sunset Picnic']
+  },
+  {
+    id: 'wd_4',
+    title: 'Svatma Thanjavur Heritage & Art Stay',
+    duration: '2 Nights / 3 Days',
+    price: 21200,
+    originalPrice: 28000,
+    rating: 4.8,
+    imageUrl: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Heritage Deluxe Room', 'Carnatic Music Recital', 'Traditional Bronze Casting Demo', 'Organic Tamil Feast']
+  }
+];
+
+// 3. International Packages
+export const INTERNATIONAL_PACKAGES: TravelPackage[] = [
+  {
+    id: 'ip_1',
+    title: 'Dubai Luxury Skyline & Desert Safari',
+    duration: '4 Nights / 5 Days',
+    price: 95000,
+    originalPrice: 120000,
+    rating: 4.8,
+    imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['5-Star Sheikh Zayed Rd Hotel', 'Burj Khalifa Sky Deck Tickets', 'Premium 4x4 Desert Safari & Dinner', 'Private VIP Airport Pickups']
+  },
+  {
+    id: 'ip_2',
+    title: 'Maldives Private Water Villa Escape',
+    duration: '5 Nights / 6 Days',
+    price: 185000,
+    originalPrice: 240000,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Soneva Jani Luxury Overwater Slide Villa', 'Speedboat Airport Transfers', 'All-Day Wine & Dine Access', 'Coral Reef Guided Snorkeling']
+  },
+  {
+    id: 'ip_3',
+    title: 'Switzerland Alpine Wonders Scenic Tour',
+    duration: '6 Nights / 7 Days',
+    price: 145000,
+    originalPrice: 190000,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1502784444187-359ac186c5bb?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Elite Chalet Stays in Zermatt & Interlaken', 'Swiss Travel Pass Premier Index', 'Mount Titlis Cable Car Climb', 'Private Lake Lucerne Gondola']
+  },
+  {
+    id: 'ip_4',
+    title: 'Singapore Marina Bay Sands & Sentosa Jet',
+    duration: '4 Nights / 5 Days',
+    price: 74500,
+    originalPrice: 95000,
+    rating: 4.7,
+    imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Direct',
+    inclusions: ['MBS Observation Deck Access', 'Universal Studios VIP Access passes', 'Night Safari Expeditions', 'Premium Private City Transfers']
+  }
+];
+
+// 4. All Inclusive deals
+export const ALL_INCLUSIVE_DEALS: TravelPackage[] = [
+  {
+    id: 'ai_1',
+    title: 'Kandima Maldives Playful All-Inclusive',
+    duration: '4 Nights / 5 Days',
+    price: 110000,
+    originalPrice: 140000,
+    rating: 4.8,
+    imageUrl: 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Sky Studio Beach Room', 'All Meals and Premium Spirits Pack', 'Water Sports Equipment Rental', 'Dynamic Beach Club Entry']
+  },
+  {
+    id: 'ai_2',
+    title: 'The Khyber Himalayan Resort Gulmarg Ski Tour',
+    duration: '4 Nights / 5 Days',
+    price: 58000,
+    originalPrice: 72000,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1482862549707-f63cb32c5fd9?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Direct',
+    inclusions: ['Premier Luxury Pine Room', 'Gondola Cable Car Passes (Phase 1 & 2)', 'Full Ski Set & Professional Guide', 'Unlimited Gourmet Dining']
+  },
+  {
+    id: 'ai_3',
+    title: 'The Tamara Coorg Coffee Estate Oasis',
+    duration: '3 Nights / 4 Days',
+    price: 38000,
+    originalPrice: 48000,
+    rating: 4.7,
+    imageUrl: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Luxury Elevated Cottage Stay', 'Private Plantation Coffee Brewing Class', 'All Gourmet Farmhouse Meals', 'Spa Couples Treatment Session']
+  },
+  {
+    id: 'ai_4',
+    title: 'Ananda in the Himalayas Yoga & Cleanse Spa',
+    duration: '5 Nights / 6 Days',
+    price: 115000,
+    originalPrice: 145000,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Select',
+    inclusions: ['Palace View Deluxe Garden Suite', 'Daily Personalized Ayurvedic Meals', 'Individualized Wellness Consultations', 'Ganges Evening Aarti Tour']
+  }
+];
+
+// 5. Beach vacations
+export const BEACH_VACATIONS: TravelPackage[] = [
+  {
+    id: 'bv_1',
+    title: 'Taj Fisherman\'s Cove Beach Front Villa Kovalam',
+    duration: '3 Nights / 4 Days',
+    price: 34900,
+    originalPrice: 44000,
+    rating: 4.8,
+    imageUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Direct',
+    inclusions: ['Beachfront Luxury Cottage Stay', 'Private Seafood Shore Deck Dinner', 'Complimentary Surfing Basics Lessons', 'Premium Ayurveda Body Spa']
+  },
+  {
+    id: 'bv_2',
+    title: 'The Oberoi Beach Resort Luxury Mauritius',
+    duration: '5 Nights / 6 Days',
+    price: 152000,
+    originalPrice: 195000,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Independent Luxury Ocean Pavilion', 'Private Catamaran Sunset Cruise', 'Complimentary Glass Bottom Boat Safaris', 'World-Class All-Day Dining']
+  },
+  {
+    id: 'bv_3',
+    title: 'W Goa Festive Cliffside Beach Villa',
+    duration: '3 Nights / 4 Days',
+    price: 49000,
+    originalPrice: 62000,
+    rating: 4.8,
+    imageUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Select',
+    inclusions: ['Vibrant Private Pool Villa Stay', 'VIP Rockpool Deck Club Passes', 'Detox Yoga Session with Master Trainer', 'Premium Private Airport luxury car transfer']
+  },
+  {
+    id: 'bv_4',
+    title: 'Havelock Island Beach Resort Magic (Andamans)',
+    duration: '4 Nights / 5 Days',
+    price: 32500,
+    originalPrice: 41000,
+    rating: 4.7,
+    imageUrl: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Partners',
+    inclusions: ['Private Beachfront Hut Block', 'Radhanagar Beach Sunset Tour', 'Elite Private Scuba Diving Session with photos', 'Ferry Speedboat Transfers']
+  }
+];
+
+// 7. GoRASA select
+export const GORASA_SELECT: TravelPackage[] = [
+  {
+    id: 'gs_1',
+    title: 'Umaid Bhawan Palace Jodhpur Royal Maharajah Life',
+    duration: '3 Nights / 4 Days',
+    price: 125000,
+    originalPrice: 165500,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Select',
+    inclusions: ['Historical Royal Suite Residency', 'Vintage Luxury Car Tour of Blue City', 'Palace Museum Exclusive Tour with Curator', 'Magnificent Royal Ballroom Ceremonial Feast']
+  },
+  {
+    id: 'gs_2',
+    title: 'The Oberoi Amarvilas Agra Taj Mahal View Stay',
+    duration: '2 Nights / 3 Days',
+    price: 72000,
+    originalPrice: 90000,
+    rating: 4.9,
+    imageUrl: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Select',
+    inclusions: ['Premier Balcony View Suite (Taj Mahal View)', 'Dedicated Private Butler Service 24/7', 'VIP Entry Tickets & Private Expert Archaeologist Tour', 'Romantic Balcony Dinner Candlelit']
+  },
+  {
+    id: 'gs_3',
+    title: 'Soneva Fushi Islands Luxury Eco Maldives Retreat',
+    duration: '5 Nights / 6 Days',
+    price: 220000,
+    originalPrice: 285000,
+    rating: 5.0,
+    imageUrl: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Select',
+    inclusions: ['Overwater Crusoe Beach Reserve Villa', 'Eco-Luxury Culinary Island Tour with Michelin Chef', 'Stargazing at Astronomical Observatory Lounge', 'Seaplane Private Luxury Lounge Transfers Included']
+  },
+  {
+    id: 'gs_4',
+    title: 'Postcard Dewki, Sikkim Eco Sanctuary Stay',
+    duration: '4 Nights / 5 Days',
+    price: 51000,
+    originalPrice: 64000,
+    rating: 4.8,
+    imageUrl: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=800&q=80',
+    provider: 'GoRASA Select',
+    inclusions: ['Forest Canopy Deluxe Pavilion', 'Local Sikkim Organic Cuisine Plan', 'Glacial Lake Tsomgo Expeditions Guard', 'Private Monastery Morning Monks Chant']
+  }
+];

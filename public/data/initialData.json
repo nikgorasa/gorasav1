@@ -1,0 +1,87 @@
+{
+  "bookings": [
+    {
+      "id": "b_prev_1",
+      "type": "flight",
+      "itemName": "Indigo 6E-204 Flight BOM to DEL",
+      "providerOrAirline": "Indigo",
+      "price": 5400,
+      "originalPrice": 5400,
+      "discountApplied": 0,
+      "bookedDate": "2026-05-18T10:00:00.000Z",
+      "travelDates": "May 30, 2026",
+      "status": "Confirmed",
+      "pnr": "6EGR7Y",
+      "seatOrRoom": "14B (Standard Economy)",
+      "paxCount": 1
+    },
+    {
+      "id": "b_prev_2",
+      "type": "hotel",
+      "itemName": "The Amaya Luxury Resort Goa",
+      "providerOrAirline": "OYO Premium Partners",
+      "price": 14200,
+      "originalPrice": 15200,
+      "discountApplied": 1000,
+      "couponCodeUsed": "RASA1000",
+      "bookedDate": "2026-05-20T14:30:00.000Z",
+      "travelDates": "Jun 12 - Jun 15, 2026",
+      "status": "Confirmed",
+      "pnr": "TBGR4X",
+      "seatOrRoom": "Cottage Hill View 104",
+      "paxCount": 2
+    }
+  ],
+  "promoCodes": [
+    {
+      "code": "GORASA500",
+      "discountValue": 500,
+      "type": "flat",
+      "description": "Flat ₹500 off on first platform booking",
+      "minBookingValue": 1500,
+      "active": true
+    },
+    {
+      "code": "RASA1000",
+      "discountValue": 1000,
+      "type": "flat",
+      "description": "Corporate Sponsor Flat ₹1,000 off",
+      "minBookingValue": 4000,
+      "active": true
+    },
+    {
+      "code": "FESTIVE10",
+      "discountValue": 10,
+      "type": "percentage",
+      "description": "10% off on premium global resorts (Max ₹2,500)",
+      "minBookingValue": 3000,
+      "active": true
+    }
+  ],
+  "inquiries": [
+    {
+      "id": "inq_1",
+      "destination": "Goa Luxury Wellness Retreat",
+      "travelerName": "Vikram Birla",
+      "travelerEmail": "vikram@birla.com",
+      "numberOfDays": 5,
+      "inclusionsSelected": ["Hotel", "Flight", "Transfers"],
+      "specificDemands": "Needs a private yacht bookings on evening of day 3.",
+      "submittedAt": "2026-05-24T12:00:00.000Z",
+      "status": "Inquired",
+      "priceEstimated": 48500
+    },
+    {
+      "id": "inq_2",
+      "destination": "Andaman Beach Hopper Escape",
+      "travelerName": "Meera Sen",
+      "travelerEmail": "meera@gmail.com",
+      "numberOfDays": 6,
+      "inclusionsSelected": ["Hotel", "Transfers"],
+      "specificDemands": "High floor ocean view cottage block requested.",
+      "submittedAt": "2026-05-23T15:30:00.000Z",
+      "status": "Contacted",
+      "priceEstimated": 34500
+    }
+  ]
+}

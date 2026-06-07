@@ -1,0 +1,149 @@
+{
+  "indigo": [
+    {
+      "id": "6E-204",
+      "airline": "Indigo",
+      "flightNumber": "6E-204",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "06:30",
+      "arrivalTime": "08:45",
+      "duration": "2h 15m",
+      "stops": 0,
+      "price": 4800,
+      "tier": "Lite"
+    },
+    {
+      "id": "6E-308",
+      "airline": "Indigo",
+      "flightNumber": "6E-308",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "09:15",
+      "arrivalTime": "11:30",
+      "duration": "2h 15m",
+      "stops": 0,
+      "price": 5200,
+      "tier": "Standard"
+    },
+    {
+      "id": "6E-412",
+      "airline": "Indigo",
+      "flightNumber": "6E-412",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "13:45",
+      "arrivalTime": "16:00",
+      "duration": "2h 15m",
+      "stops": 0,
+      "price": 6100,
+      "tier": "Flexi Plus"
+    },
+    {
+      "id": "6E-528",
+      "airline": "Indigo",
+      "flightNumber": "6E-528",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "18:20",
+      "arrivalTime": "20:35",
+      "duration": "2h 15m",
+      "stops": 0,
+      "price": 5500,
+      "tier": "Standard"
+    },
+    {
+      "id": "6E-642",
+      "airline": "Indigo",
+      "flightNumber": "6E-642",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "21:30",
+      "arrivalTime": "23:45",
+      "duration": "2h 15m",
+      "stops": 0,
+      "price": 4500,
+      "tier": "Lite"
+    },
+    {
+      "id": "6E-180",
+      "airline": "Indigo",
+      "flightNumber": "6E-180",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "07:00",
+      "arrivalTime": "09:20",
+      "duration": "2h 20m",
+      "stops": 1,
+      "price": 4200,
+      "tier": "Lite"
+    }
+  ],
+  "airIndia": [
+    {
+      "id": "AI-101",
+      "airline": "Air India",
+      "flightNumber": "AI-101",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "06:00",
+      "arrivalTime": "08:20",
+      "duration": "2h 20m",
+      "stops": 0,
+      "price": 7200,
+      "tier": "Economy"
+    },
+    {
+      "id": "AI-203",
+      "airline": "Air India",
+      "flightNumber": "AI-203",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "10:30",
+      "arrivalTime": "12:50",
+      "duration": "2h 20m",
+      "stops": 0,
+      "price": 8500,
+      "tier": "Economy"
+    },
+    {
+      "id": "AI-315",
+      "airline": "Air India",
+      "flightNumber": "AI-315",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "14:15",
+      "arrivalTime": "16:35",
+      "duration": "2h 20m",
+      "stops": 0,
+      "price": 12500,
+      "tier": "Business"
+    },
+    {
+      "id": "AI-427",
+      "airline": "Air India",
+      "flightNumber": "AI-427",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "19:45",
+      "arrivalTime": "22:05",
+      "duration": "2h 20m",
+      "stops": 0,
+      "price": 9800,
+      "tier": "Economy"
+    },
+    {
+      "id": "AI-550",
+      "airline": "Air India",
+      "flightNumber": "AI-550",
+      "origin": "Mumbai",
+      "destination": "Delhi",
+      "departureTime": "08:30",
+      "arrivalTime": "11:00",
+      "duration": "2h 30m",
+      "stops": 1,
+      "price": 6800,
+      "tier": "Economy"
+    }
+  ]
+}

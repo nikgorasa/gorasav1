@@ -1,0 +1,11 @@
+{
+  "name": "GoRASA",
+  "description": "GoRASA Travel Platform - A premium Indian and global travel reservation desk featuring live flights, hotel bookings, holiday packages, corporate B2B corporate portal, and a loyalty points club.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

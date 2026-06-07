@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-07T00:00:00.000Z",
+  "title": "Design System: GoRASA",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Burnt Saffron",
+        "canonical": "oklch(45% 0.16 40)",
+        "tonalRamp": ["oklch(18% 0.08 40)", "oklch(27% 0.12 40)", "oklch(36% 0.15 40)", "oklch(45% 0.16 40)", "oklch(55% 0.16 40)", "oklch(68% 0.13 40)", "oklch(82% 0.08 40)", "oklch(95% 0.02 40)"]
+      },
+      "primary-light": {
+        "role": "primary",
+        "displayName": "Ember Orange",
+        "canonical": "oklch(64% 0.19 45)",
+        "tonalRamp": ["oklch(28% 0.10 45)", "oklch(38% 0.14 45)", "oklch(50% 0.17 45)", "oklch(64% 0.19 45)", "oklch(76% 0.15 45)", "oklch(86% 0.09 45)", "oklch(94% 0.04 45)", "oklch(98% 0.01 45)"]
+      },
+      "primary-wash": {
+        "role": "neutral",
+        "displayName": "Saffron Wash",
+        "canonical": "oklch(98% 0.005 60)"
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Cloud Slate",
+        "canonical": "oklch(97% 0.002 250)"
+      },
+      "neutral-text-primary": {
+        "role": "neutral",
+        "displayName": "Ink Primary",
+        "canonical": "oklch(15% 0.01 250)"
+      },
+      "neutral-text-secondary": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "canonical": "oklch(55% 0.01 250)"
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Verified Green",
+        "canonical": "oklch(55% 0.18 150)"
+      },
+      "error": {
+        "role": "semantic",
+        "displayName": "Error Red",
+        "canonical": "oklch(50% 0.22 30)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headlines only. Not reusable for section titles."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headers, modal titles, card naming."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card subtitles, feature titles, emphasis within body."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraphs, descriptions, label bodies. Max 75ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, pill tags, form labels, metadata."
+      }
+    },
+    "shadows": [
+      { "name": "card-hover", "value": "0 4px 12px rgba(0,0,0,0.06)", "purpose": "Primary interaction shadow. Cards lift 2px on hover." },
+      { "name": "modal", "value": "0 20px 60px rgba(0,0,0,0.12)", "purpose": "Deepest shadow. Modals and checkout overlays." },
+      { "name": "button-drop", "value": "0 4px 6px rgba(0,0,0,0.05)", "purpose": "Subtle shadow under primary buttons." }
+    ],
+    "motion": [
+      { "name": "ease-enter", "value": "cubic-bezier(0.25, 0.1, 0, 1)", "purpose": "Default entrance easing for UI transitions." },
+      { "name": "ease-exit", "value": "ease-in", "purpose": "Exit easing for dismissals. Faster than enter." },
+      { "name": "duration-micro", "value": "150ms", "purpose": "Hover states, press feedback." },
+      { "name": "duration-standard", "value": "250ms", "purpose": "UI transitions, modal entrances." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The primary call-to-action. Slate-900 fill, white text, 12px corner radius.",
+      "html": "<button class=\"ds-btn-primary\">Book Now</button>",
+      "css": ".ds-btn-primary { background: #0F172A; color: #fff; padding: 12px 20px; border-radius: 12px; border: none; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; } .ds-btn-primary:hover { background: #1E293B; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); } .ds-btn-primary:focus-visible { outline: 2px solid #F97316; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action. Transparent bg, slate text. Turns orange on hover.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: #64748B; padding: 12px 20px; border-radius: 12px; border: none; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: color 0.15s ease, transform 0.15s ease; } .ds-btn-ghost:hover { color: #EA580C; transform: scale(1.03); } .ds-btn-ghost:focus-visible { outline: 2px solid #F97316; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Standard text input. Slate-50 bg, slate-200 border, orange focus ring.",
+      "html": "<div style=\"display:flex;flex-direction:column;gap:6px\"><label class=\"ds-input-label\">Full Name</label><input class=\"ds-input-text\" placeholder=\"Alex Nomad\" type=\"text\" /></div>",
+      "css": ".ds-input-label { font-family: Outfit, system-ui, sans-serif; font-size: 0.625rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #94A3B8; } .ds-input-text { background: #F8FAFC; color: #0F172A; padding: 10px 16px; border-radius: 12px; border: 1px solid #E2E8F0; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease; } .ds-input-text::placeholder { color: #94A3B8; } .ds-input-text:focus { border-color: transparent; box-shadow: 0 0 0 2px #F97316; } .ds-input-text:focus-visible { outline: none; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Default content card. White bg, generous curve, no shadow at rest.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Amalfi Coast</h3><p class=\"ds-card-body\">Breathtaking cliffs and turquoise waters of the Mediterranean.</p></div>",
+      "css": ".ds-card { background: #FFFFFF; border-radius: 24px; padding: 32px; border: 1px solid #E2E8F0; font-family: Inter, system-ui, sans-serif; transition: transform 0.2s cubic-bezier(0.25,0.1,0,1), box-shadow 0.2s cubic-bezier(0.25,0.1,0,1); } .ds-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); } .ds-card-title { font-family: Playfair Display, Georgia, serif; font-size: 1.25rem; font-weight: 700; color: #0F172A; margin: 0 0 8px 0; } .ds-card-body { font-size: 0.875rem; color: #64748B; line-height: 1.5; margin: 0; }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Top navigation item. Inactive = slate-600, active = orange-600.",
+      "html": "<nav style=\"display:flex;gap:24px;align-items:center\"><a class=\"ds-nav-link ds-nav-link--active\" href=\"#\">Explore</a><a class=\"ds-nav-link\" href=\"#\">Reservations</a><a class=\"ds-nav-link\" href=\"#\">Support</a></nav>",
+      "css": ".ds-nav-link { font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: #475569; text-decoration: none; padding: 8px 4px; transition: color 0.15s ease; cursor: pointer; } .ds-nav-link:hover { color: #EA580C; } .ds-nav-link--active { color: #EA580C; font-weight: 700; } .ds-nav-link:focus-visible { outline: 2px solid #F97316; outline-offset: 4px; border-radius: 4px; }"
+    },
+    {
+      "name": "Badge / Pill",
+      "kind": "chip",
+      "refersTo": "badge-pill",
+      "description": "Section and category label. Saffron wash bg, burnt saffron text.",
+      "html": "<span class=\"ds-badge\">GoRASA Premium Portal</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; background: #FFF7ED; color: #C2410C; padding: 4px 12px; border-radius: 9999px; font-family: Outfit, system-ui, sans-serif; font-size: 0.625rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; white-space: nowrap; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Saffron Compass",
+    "overview": "Warm Indian hospitality meets precise travel technology. The Saffron Compass points toward trusted journeys: every rate is verified, every booking has a PNR trail, and a human concierge is one tap away. The interface feels like a well-appointed travel desk — confident but not cold, luxurious but not fussy. This system explicitly rejects the dense coupon-cluttered OTA aesthetic. No blinking discount badges, no \"hurry only 2 left\" panic, no closeout-sale visual noise.",
+    "keyCharacteristics": [
+      "Warm neutrals with a single burnt saffron accent",
+      "Serif headings for editorial luxury, sans body for readability",
+      "Flat surfaces that lift on interaction, never decorative shadows",
+      "Generous whitespace that signals premium without emptiness",
+      "Motion that explains transitions, never decorates"
+    ],
+    "rules": [
+      {
+        "name": "The Saffron Rarity Rule",
+        "body": "Burnt saffron appears on no more than 15% of any screen. Its scarcity is what gives it weight.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif-Only-For-Heading Rule",
+        "body": "Playfair Display is reserved for hero copy and section headers. Never use it for body text, captions, buttons, or form labels.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces at rest have no shadow. Elevation is a response, not a permanent property.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do let whitespace carry the luxury signal. If a section feels cramped, double the padding before adding anything.",
+      "Do use burnt saffron sparingly — one badge per section, one active nav item, one primary accent per view.",
+      "Do show system state clearly: verified rate locks, PNR numbers, processing status text.",
+      "Do keep card content inside the border-radius. No overflow-hidden surprises.",
+      "Do use the WhatsApp concierge as a release valve. Every complex workflow offers a 'talk to a human' escape."
+    ],
+    "donts": [
+      "Don't use gradient text (background-clip: text).",
+      "Don't use side-stripe borders (border-left greater than 1px as an accent).",
+      "Don't build hero sections with the big-number-small-label SaaS template.",
+      "Don't show identical card grids (same-sized cards with icon + heading + text, repeated endlessly).",
+      "Don't default to modals. Exhaust inline panels, progressive disclosure, and expandable sections first.",
+      "Don't use emoji as structural icons. Every system icon must be an SVG from a consistent family.",
+      "Don't use glassmorphism decoratively.",
+      "Don't animate layout properties (width, height, top, left). Animate only transform and opacity."
+    ]
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "premium": [
+    {
+      "id": "premium-1",
+      "name": "The Amaya Luxury Resort Goa",
+      "location": "Goa",
+      "price": 15200,
+      "rating": 4.8,
+      "imageUrl": "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800",
+      "description": "Oceanfront luxury resort with private beach access, infinity pool, and world-class spa. Perfect for romantic getaways and wellness retreats.",
+      "brand": "Premium",
+      "category": "Luxury Resort"
+    },
+    {
+      "id": "premium-2",
+      "name": "Taj Exotica Maldives",
+      "location": "Maldives",
+      "price": 45000,
+      "rating": 4.9,
+      "imageUrl": "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=800",
+      "description": "Overwater villas with glass floors, private butler service, and marine life viewing. Ultimate luxury in the Indian Ocean.",
+      "brand": "Premium",
+      "category": "Overwater Villa"
+    },
+    {
+      "id": "premium-3",
+      "name": "The Leela Palace Udaipur",
+      "location": "Udaipur",
+      "price": 28500,
+      "rating": 4.8,
+      "imageUrl": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800",
+      "description": "Palace hotel on Lake Pichola with royal suites, traditional Rajasthani architecture, and award-winning dining.",
+      "brand": "Premium",
+      "category": "Palace Hotel"
+    },
+    {
+      "id": "premium-4",
+      "name": "Six Senses Fort Barwara",
+      "location": "Rajasthan",
+      "price": 32000,
+      "rating": 4.7,
+      "imageUrl": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+      "description": "14th-century fort converted to luxury wellness resort. Ancient walls meet modern spa therapies.",
+      "brand": "Premium",
+      "category": "Heritage Wellness"
+    },
+    {
+      "id": "premium-5",
+      "name": "Aman-i-Khas Ranthambore",
+      "location": "Ranthambore",
+      "price": 38000,
+      "rating": 4.9,
+      "imageUrl": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800",
+      "description": "Luxury tented camp on the edge of Ranthambore National Park. Tiger safaris and Mughal-inspired tents.",
+      "brand": "Premium",
+      "category": "Luxury Camp"
+    }
+  ],
+  "oyo": [
+    {
+      "id": "oyo-1",
+      "name": "OYO Townhouse 145 Goa Calangute",
+      "location": "Goa",
+      "price": 2800,
+      "rating": 4.2,
+      "imageUrl": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+      "description": "Modern rooms with free Wi-Fi, AC, clean linen, and complimentary breakfast. Walking distance to Calangute Beach.",
+      "brand": "Oyo",
+      "category": "OYO Townhouse"
+    },
+    {
+      "id": "oyo-2",
+      "name": "OYO Flagship 289 Mumbai Andheri",
+      "location": "Mumbai",
+      "price": 3500,
+      "rating": 4.3,
+      "imageUrl": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800",
+      "description": "Business-friendly hotel near metro station. Free high-speed Wi-Fi, work desk, 24-hour front desk.",
+      "brand": "Oyo",
+      "category": "OYO Flagship"
+    },
+    {
+      "id": "oyo-3",
+      "name": "Capital O 1234 Delhi Connaught Place",
+      "location": "Delhi",
+      "price": 2200,
+      "rating": 4.1,
+      "imageUrl": "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800",
+      "description": "Central location near Rajiv Chowk. Clean rooms, AC, free Wi-Fi, and attached bathroom with hot water.",
+      "brand": "Oyo",
+      "category": "Capital O"
+    },
+    {
+      "id": "oyo-4",
+      "name": "Spot On 5678 Bangalore Koramangala",
+      "location": "Bangalore",
+      "price": 1800,
+      "rating": 4.0,
+      "imageUrl": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+      "description": "Budget stay in tech hub. Free Wi-Fi, AC, power backup, and close to restaurants and pubs.",
+      "brand": "Oyo",
+      "category": "Spot On"
+    },
+    {
+      "id": "oyo-5",
+      "name": "SilverKey 9012 Jaipur City Center",
+      "location": "Jaipur",
+      "price": 4200,
+      "rating": 4.4,
+      "imageUrl": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800",
+      "description": "Premium OYO category with enhanced amenities. Rooftop restaurant, heritage decor, free breakfast.",
+      "brand": "Oyo",
+      "category": "SilverKey"
+    },
+    {
+      "id": "oyo-6",
+      "name": "OYO Townhouse 334 Kochi Marine Drive",
+      "location": "Kochi",
+      "price": 2500,
+      "rating": 4.2,
+      "imageUrl": "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=800",
+      "description": "Sea-facing rooms with Marine Drive views. Free Wi-Fi, AC, and easy access to Fort Kochi.",
+      "brand": "Oyo",
+      "category": "OYO Townhouse"
+    },
+    {
+      "id": "oyo-7",
+      "name": "Capital O 7788 Hyderabad Hitech City",
+      "location": "Hyderabad",
+      "price": 2100,
+      "rating": 4.1,
+      "imageUrl": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800",
+      "description": "Near IT corridor. Clean rooms, free Wi-Fi, AC, and 24-hour check-in for late flights.",
+      "brand": "Oyo",
+      "category": "Capital O"
+    },
+    {
+      "id": "oyo-8",
+      "name": "OYO Flagship 4455 Chennai Marina Beach",
+      "location": "Chennai",
+      "price": 3200,
+      "rating": 4.3,
+      "imageUrl": "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800",
+      "description": "Beachside location with Marina views. Free breakfast, Wi-Fi, AC, and travel desk.",
+      "brand": "Oyo",
+      "category": "OYO Flagship"
+    }
+  ],
+  "global": [
+    {
+      "id": "global-1",
+      "name": "Marriott Resort Goa",
+      "location": "Goa",
+      "price": 12500,
+      "rating": 4.6,
+      "imageUrl": "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800",
+      "description": "5-star resort with multiple pools, kids club, golf course, and 6 dining options. Family-friendly luxury.",
+      "brand": "Global",
+      "category": "Deluxe Room"
+    },
+    {
+      "id": "global-2",
+      "name": "Hilton Shillim Estate",
+      "location": "Maharashtra",
+      "price": 14800,
+      "rating": 4.7,
+      "imageUrl": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800",
+      "description": "Wellness retreat in Sahyadri mountains. Spa, yoga, organic farm, and conservation programs.",
+      "brand": "Global",
+      "category": "Executive Suite"
+    },
+    {
+      "id": "global-3",
+      "name": "Hyatt Regency Delhi",
+      "location": "Delhi",
+      "price": 11200,
+      "rating": 4.5,
+      "imageUrl": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+      "description": "Luxury hotel near diplomatic enclave. Club lounge, multiple restaurants, and extensive meeting facilities.",
+      "brand": "Global",
+      "category": "Regency Club"
+    },
+    {
+      "id": "global-4",
+      "name": "InterContinental Maldives",
+      "location": "Maldives",
+      "price": 35000,
+      "rating": 4.8,
+      "imageUrl": "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=800",
+      "description": "Lagoon-facing overwater villas. Marine biologist, kids club, and 6 restaurants including underwater dining.",
+      "brand": "Global",
+      "category": "Overwater Villa"
+    },
+    {
+      "id": "global-5",
+      "name": "ITC Grand Chola Chennai",
+      "location": "Chennai",
+      "price": 9800,
+      "rating": 4.6,
+      "imageUrl": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800",
+      "description": "Luxury hotel with Chola dynasty architecture. Award-winning restaurants, spa, and vast convention center.",
+      "brand": "Global",
+      "category": "Executive Club"
+    },
+    {
+      "id": "global-6",
+      "name": "JW Marriott Mumbai Sahar",
+      "location": "Mumbai",
+      "price": 13500,
+      "rating": 4.5,
+      "imageUrl": "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800",
+      "description": "Airport-adjacent luxury with rooftop pool, 5 restaurants, and quick terminal access. Ideal for transit.",
+      "brand": "Global",
+      "category": "Deluxe Room"
+    }
+  ]
+}

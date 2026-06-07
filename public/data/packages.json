@@ -1,0 +1,92 @@
+{
+  "packages": [
+    {
+      "id": "pkg-1",
+      "title": "Goa Luxury Wellness Retreat",
+      "duration": "4 Nights / 5 Days",
+      "price": 48500,
+      "originalPrice": 55000,
+      "inclusions": ["Luxury Oceanfront Suite", "Daily Gourmet Breakfast", "Airport Transfers", "Spa Sessions (3)", "Sunset Yacht Cruise", "Guided Heritage Walk"],
+      "imageUrl": "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800",
+      "provider": "GoRASA Partners",
+      "rating": 4.9
+    },
+    {
+      "id": "pkg-2",
+      "title": "Andaman Beach Hopper Escape",
+      "duration": "5 Nights / 6 Days",
+      "price": 34500,
+      "originalPrice": 39000,
+      "inclusions": ["Beachfront Cottage", "Daily Breakfast & Dinner", "Inter-Island Transfers", "Scuba Diving Session", "Radhanagar Beach Visit", "Cellular Jail Light Show"],
+      "imageUrl": "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=800",
+      "provider": "GoRASA Partners",
+      "rating": 4.8
+    },
+    {
+      "id": "pkg-3",
+      "title": "Rajasthan Royal Heritage Circuit",
+      "duration": "6 Nights / 7 Days",
+      "price": 52000,
+      "originalPrice": 60000,
+      "inclusions": ["Palace Hotels (Udaipur, Jodhpur, Jaipur)", "Daily Breakfast", "Private AC Vehicle", "Guided Fort Tours", "Camel Safari", "Cultural Evening"],
+      "imageUrl": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800",
+      "provider": "GoRASA Partners",
+      "rating": 4.7
+    },
+    {
+      "id": "pkg-4",
+      "title": "Kerala Backwaters & Hills",
+      "duration": "5 Nights / 6 Days",
+      "price": 28500,
+      "originalPrice": 33000,
+      "inclusions": ["Houseboat Stay (1 Night)", "Munnar Tea Estate Resort", "Daily Breakfast", "Transfers", "Spice Plantation Tour", "Kathakali Show"],
+      "imageUrl": "https://images.unsplash.com/photo-1602216056091-624f535947f4?w=800",
+      "provider": "GoRASA Partners",
+      "rating": 4.6
+    },
+    {
+      "id": "pkg-5",
+      "title": "Maldives Overwater Paradise",
+      "duration": "4 Nights / 5 Days",
+      "price": 85000,
+      "originalPrice": 95000,
+      "inclusions": ["Overwater Villa", "All Meals", "Seaplane Transfers", "Snorkeling Gear", "Dolphin Cruise", "Spa Credit"],
+      "imageUrl": "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=800",
+      "provider": "GoRASA Partners",
+      "rating": 4.9
+    },
+    {
+      "id": "pkg-6",
+      "title": "Himalayan Wellness Retreat Rishikesh",
+      "duration": "3 Nights / 4 Days",
+      "price": 18500,
+      "originalPrice": 22000,
+      "inclusions": ["Ganges View Cottage", "Daily Yoga & Meditation", "Sattvic Meals", "River Rafting", "Temple Visit", "Ayurveda Consultation"],
+      "imageUrl": "https://images.unsplash.com/photo-1506905925346-21b24d855719?w=800",
+      "provider": "GoRASA Partners",
+      "rating": 4.5
+    },
+    {
+      "id": "pkg-7",
+      "title": "Ladakh Adventure Expedition",
+      "duration": "6 Nights / 7 Days",
+      "price": 42000,
+      "originalPrice": 48000,
+      "inclusions": ["Premium Camps/Resorts", "All Meals", "Private SUV", "Pangong Lake", "Nubra Valley", "Monastery Visits", "Inner Line Permits"],
+      "imageUrl": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800",
+      "provider": "GoRASA Partners",
+      "rating": 4.8
+    },
+    {
+      "id": "pkg-8",
+      "title": "Coorg Coffee Plantation Stay",
+      "duration": "3 Nights / 4 Days",
+      "price": 22000,
+      "originalPrice": 25000,
+      "inclusions": ["Plantation Bungalow", "All Meals", "Coffee Estate Tour", "Waterfall Trek", "Bird Watching", "Bonfire Evening"],
+      "imageUrl": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800",
+      "provider": "GoRASA Partners",
+      "rating": 4.4
+    }
+  ]
+}

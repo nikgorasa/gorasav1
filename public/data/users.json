@@ -1,0 +1,40 @@
+{
+  "demoUsers": [
+    {
+      "name": "Vikram Birla",
+      "email": "vikram@corporate.com",
+      "role": "corporate",
+      "companyName": "Birla & Sons Corp",
+      "loyaltyPoints": 3400,
+      "loyaltyTier": "Gold",
+      "walletBalance": 150000
+    },
+    {
+      "name": "Nisha Mehta",
+      "email": "nisha@agents.com",
+      "role": "agent",
+      "companyName": "Mehta Global Tours",
+      "loyaltyPoints": 5600,
+      "loyaltyTier": "Platinum",
+      "walletBalance": 150000
+    },
+    {
+      "name": "Rasa Admin",
+      "email": "rasatravelindia@gmail.com",
+      "role": "agent",
+      "companyName": "Control Tower Headquarters",
+      "loyaltyPoints": 10000,
+      "loyaltyTier": "Platinum",
+      "walletBalance": 500000
+    },
+    {
+      "name": "Alex Nomad",
+      "email": "alex@gorasa.com",
+      "role": "user",
+      "companyName": "",
+      "loyaltyPoints": 850,
+      "loyaltyTier": "Silver",
+      "walletBalance": 0
+    }
+  ]
+}
