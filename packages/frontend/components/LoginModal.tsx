@@ -2,27 +2,72 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Icons } from '../constants';
+import { login, register } from '../services/apiClient';
 
 interface LoginModalProps {
   onClose: () => void;
-  onLogin: (name: string, email: string, role: 'user' | 'corporate' | 'agent', companyName?: string) => void;
+  onLogin: (user: { name: string; email: string; role: string; companyId?: string; walletBalance: number; loyaltyPoints: number; loyaltyTier: string }) => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'user' | 'corporate' | 'agent'>('user');
-  const [companyName, setCompanyName] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && name) {
-      onLogin(
-        name,
-        email,
-        role,
-        (role === 'corporate' || role === 'agent') ? (companyName || (role === 'corporate' ? 'Rasa Corp Client' : 'GoRASA Travels Ltd')) : undefined
-      );
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isRegistering) {
+        await register(email, password, name);
+        setError('Registration successful! Please check your email to verify your account.');
+        setLoading(false);
+        return;
+      }
+
+      const data = await login(email, password);
+      onLogin({
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role,
+        companyId: data.user.companyId,
+        walletBalance: data.user.walletBalance,
+        loyaltyPoints: data.user.loyaltyPoints,
+        loyaltyTier: data.user.loyaltyTier,
+      });
+      onClose();
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (demoEmail: string, demoName: string) => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const data = await login(demoEmail, 'demo123');
+      onLogin({
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role,
+        companyId: data.user.companyId,
+        walletBalance: data.user.walletBalance,
+        loyaltyPoints: data.user.loyaltyPoints,
+        loyaltyTier: data.user.loyaltyTier,
+      });
+      onClose();
+    } catch (err: any) {
+      setError(err.message || 'Demo login failed. Please use email/password.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,42 +98,36 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
           <span className="text-orange-500 font-bold uppercase tracking-widest text-[10px] bg-orange-50 px-3 py-1 rounded-full">
             GoRASA Gateway
           </span>
-          <h2 className="text-3xl font-serif font-bold text-slate-900 mt-3 mb-2">Create Your Passport</h2>
-          <p className="text-slate-500 text-sm">Sign in to unlock live pricing, corporate wallets, and 2.5x premium loyalty multipliers.</p>
+          <h2 className="text-3xl font-serif font-bold text-slate-900 mt-3 mb-2">
+            {isRegistering ? 'Create Account' : 'Welcome Back'}
+          </h2>
+          <p className="text-slate-500 text-sm">
+            {isRegistering
+              ? 'Create your GoRASA account to start exploring luxury travel.'
+              : 'Sign in to unlock live pricing, corporate wallets, and 2.5x premium loyalty multipliers.'}
+          </p>
         </div>
 
-        {/* Role Segmented Filter */}
-        <div className="bg-slate-50 p-1.5 rounded-2xl border border-slate-100 flex space-x-1 mb-6">
-          {(['user', 'corporate', 'agent'] as const).map((r) => (
-            <motion.button
-              key={r}
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setRole(r)}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
-                role === r
-                  ? 'bg-orange-500 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-orange-500'
-              }`}
-            >
-              {r === 'user' ? 'Traveler' : r === 'corporate' ? 'Corporate' : 'B2B Agent'}
-            </motion.button>
-          ))}
-        </div>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Full Name</label>
-            <input 
-              type="text" 
-              required
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm font-medium"
-              placeholder="Alex Nomad"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+          {isRegistering && (
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Full Name</label>
+              <input 
+                type="text" 
+                required
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm font-medium"
+                placeholder="Alex Nomad"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          )}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Email Address</label>
             <input 
@@ -100,42 +139,49 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-
-          {(role === 'corporate' || role === 'agent') && (
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                {role === 'corporate' ? 'Corporation Name' : 'Agency / Agency Name'}
-              </label>
-              <input 
-                type="text" 
-                required
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm font-medium"
-                placeholder={role === 'corporate' ? 'Infosys Corporate Desk' : 'Rasa India Travels Agent'}
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Password</label>
+            <input 
+              type="password" 
+              required
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all text-sm font-medium"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
           <motion.button
             type="submit"
+            disabled={loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-xl shadow-slate-100 text-sm mt-2 cursor-pointer"
+            className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-xl shadow-slate-100 text-sm mt-2 cursor-pointer disabled:opacity-50"
           >
-            Access GoRASA Portal
+            {loading ? 'Loading...' : isRegistering ? 'Create Account' : 'Sign In'}
           </motion.button>
         </form>
 
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
+            className="text-sm text-orange-600 hover:text-orange-700 font-medium cursor-pointer"
+          >
+            {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Register"}
+          </button>
+        </div>
+
         <div className="mt-6 pt-6 border-t border-slate-50 flex flex-col items-center">
-          <p className="text-xs text-slate-400 mb-3">Instant mock authentication via GoRASA ID</p>
+          <p className="text-xs text-slate-400 mb-3">Quick demo access</p>
           <div className="grid grid-cols-3 gap-2 w-full">
             <motion.button
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => { setName('Neha Gupta'); setEmail('neha@corp.in'); setRole('corporate'); setCompanyName('TechCorp India Pvt Ltd'); }}
-              className="py-2 border border-slate-200 hover:border-orange-200 hover:bg-orange-50/20 rounded-xl text-[10px] font-bold text-slate-600 transition-colors text-center leading-tight cursor-pointer"
+              onClick={() => handleDemoLogin('neha@corp.in', 'Neha Gupta')}
+              disabled={loading}
+              className="py-2 border border-slate-200 hover:border-orange-200 hover:bg-orange-50/20 rounded-xl text-[10px] font-bold text-slate-600 transition-colors text-center leading-tight cursor-pointer disabled:opacity-50"
             >
               Corp Demo
             </motion.button>
@@ -143,8 +189,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => { setName('Rahul Verma'); setEmail('sales@gorasa.in'); setRole('agent'); setCompanyName('GoRASA Sales'); }}
-              className="py-2 border border-slate-200 hover:border-orange-200 hover:bg-orange-50/20 rounded-xl text-[10px] font-bold text-slate-600 transition-colors text-center leading-tight cursor-pointer"
+              onClick={() => handleDemoLogin('sales@gorasa.in', 'Rahul Verma')}
+              disabled={loading}
+              className="py-2 border border-slate-200 hover:border-orange-200 hover:bg-orange-50/20 rounded-xl text-[10px] font-bold text-slate-600 transition-colors text-center leading-tight cursor-pointer disabled:opacity-50"
             >
               Agent Demo
             </motion.button>
@@ -152,8 +199,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => { setName('Harsh Mittal'); setEmail('hmittal@gorasa.in'); setRole('agent'); setCompanyName('GoRASA Admin'); }}
-              className="py-2 border border-orange-200 bg-orange-500/5 text-orange-600 hover:bg-orange-500/10 rounded-xl text-[10px] font-bold transition-colors text-center leading-tight cursor-pointer"
+              onClick={() => handleDemoLogin('hmittal@gorasa.in', 'Harsh Mittal')}
+              disabled={loading}
+              className="py-2 border border-orange-200 bg-orange-500/5 text-orange-600 hover:bg-orange-500/10 rounded-xl text-[10px] font-bold transition-colors text-center leading-tight cursor-pointer disabled:opacity-50"
             >
               Admin Demo
             </motion.button>
@@ -165,4 +213,3 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
 };
 
 export default LoginModal;
-

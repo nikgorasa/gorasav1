@@ -6,12 +6,35 @@ async function main() {
   console.log('🌱 Seeding GoRASA database...')
 
   await prisma.cancellationRequest.deleteMany()
-  await prisma.corporateAccount.deleteMany()
-  await prisma.pricingOverride.deleteMany()
+  await prisma.invoice.deleteMany()
+  await prisma.payment.deleteMany()
+  await prisma.activity.deleteMany()
   await prisma.booking.deleteMany()
   await prisma.lead.deleteMany()
   await prisma.package.deleteMany()
+  await prisma.pricingRule.deleteMany()
   await prisma.user.deleteMany()
+  await prisma.company.deleteMany()
+
+  const companies = await Promise.all([
+    prisma.company.create({
+      data: {
+        name: 'TechCorp India Pvt Ltd',
+        domain: 'techcorp.in',
+        walletBalance: 500000,
+        discountRate: 10,
+      },
+    }),
+    prisma.company.create({
+      data: {
+        name: 'Pinnacle Ventures Ltd',
+        domain: 'pinnacle.in',
+        walletBalance: 300000,
+        discountRate: 8,
+      },
+    }),
+  ])
+  console.log(`  ✓ ${companies.length} companies created`)
 
   const users = await Promise.all([
     prisma.user.create({
@@ -52,7 +75,7 @@ async function main() {
         email: 'neha@corp.in',
         name: 'Neha Gupta',
         role: 'CORPORATE_USER',
-        companyName: 'TechCorp India Pvt Ltd',
+        companyId: companies[0].id,
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=neha',
         walletBalance: 150000,
         loyaltyPoints: 3500,
@@ -83,28 +106,8 @@ async function main() {
     }),
   ])
 
-  const [harsh, priya, rahul, neha, amit, priyaS] = users
+  const [harsh, admin, rahul, neha, amit, priyaS] = users
   console.log(`  ✓ ${users.length} users created`)
-
-  await Promise.all([
-    prisma.corporateAccount.create({
-      data: {
-        companyName: 'TechCorp India Pvt Ltd',
-        contactEmail: 'travel@techcorp.in',
-        walletBalance: 500000,
-        discountRate: 10,
-      },
-    }),
-    prisma.corporateAccount.create({
-      data: {
-        companyName: 'Pinnacle Ventures Ltd',
-        contactEmail: 'bookings@pinnacle.in',
-        walletBalance: 300000,
-        discountRate: 8,
-      },
-    }),
-  ])
-  console.log('  ✓ 2 corporate accounts created')
 
   const packagesData = [
     {
@@ -234,6 +237,7 @@ async function main() {
       prisma.package.create({
         data: {
           ...p,
+          status: 'PUBLISHED',
           overview: JSON.stringify({
             type: 'doc',
             content: [
@@ -274,7 +278,7 @@ async function main() {
         inclusions: JSON.stringify(['Hotel', 'Flights', 'Transfers', 'Sightseeing']),
         specificDemands: 'Beachfront villa with private pool, vegetarian meal options',
         notes: 'Traveling with family of 4 (2 adults, 2 kids)',
-        status: 'INQUIRED',
+        stage: 'NEW',
         assignedTo: rahul.id,
       },
     }),
@@ -286,7 +290,7 @@ async function main() {
         numberOfDays: 7,
         inclusions: JSON.stringify(['Houseboat', 'Ayurveda', 'Hotel']),
         specificDemands: 'Premium Ayurveda wellness package, houseboat for 2 nights',
-        status: 'CONTACTED',
+        stage: 'QUALIFIED',
         assignedTo: rahul.id,
       },
     }),
@@ -300,7 +304,7 @@ async function main() {
         inclusions: JSON.stringify(['Hotel', 'Flights', 'Activities']),
         specificDemands: 'Honeymoon package with candlelight dinner',
         notes: 'Honeymoon trip, looking for romantic experiences',
-        status: 'NEGOTIATION',
+        stage: 'NEGOTIATION',
         assignedTo: rahul.id,
       },
     }),
@@ -311,7 +315,7 @@ async function main() {
         travelerEmail: 'sneha@example.com',
         numberOfDays: 4,
         inclusions: JSON.stringify(['Hotel', 'Transfers', 'Sightseeing', 'Meals']),
-        status: 'INQUIRED',
+        stage: 'NEW',
       },
     }),
     prisma.lead.create({
@@ -323,12 +327,25 @@ async function main() {
         inclusions: JSON.stringify(['Hotel', 'Flights', 'Visa', 'Desert Safari']),
         specificDemands: 'Business class flights, 5-star hotel near business district',
         notes: 'Corporate incentive trip for 10 employees',
-        status: 'INQUIRED',
+        stage: 'MEETING',
         assignedTo: rahul.id,
       },
     }),
   ])
   console.log(`  ✓ ${leads.length} leads created`)
+
+  await Promise.all([
+    prisma.activity.create({
+      data: { leadId: leads[0].id, type: 'NOTE', description: 'Initial inquiry received via WhatsApp', createdBy: rahul.id },
+    }),
+    prisma.activity.create({
+      data: { leadId: leads[1].id, type: 'CALL', description: 'Called to discuss Kerala package options', createdBy: rahul.id },
+    }),
+    prisma.activity.create({
+      data: { leadId: leads[2].id, type: 'EMAIL', description: 'Sent honeymoon package proposal', createdBy: rahul.id },
+    }),
+  ])
+  console.log('  ✓ 3 activities created')
 
   const bookings = await Promise.all([
     prisma.booking.create({
@@ -409,28 +426,28 @@ async function main() {
   console.log(`  ✓ ${bookings.length} bookings created`)
 
   await Promise.all([
-    prisma.pricingOverride.create({
+    prisma.pricingRule.create({
       data: { type: 'HOTEL_MARKUP', destination: 'Goa', markupPercent: 22 },
     }),
-    prisma.pricingOverride.create({
+    prisma.pricingRule.create({
       data: { type: 'HOTEL_MARKUP', destination: 'Kerala', markupPercent: 20 },
     }),
-    prisma.pricingOverride.create({
+    prisma.pricingRule.create({
       data: { type: 'HOTEL_MARKUP', destination: 'Rajasthan', markupPercent: 25 },
     }),
-    prisma.pricingOverride.create({
+    prisma.pricingRule.create({
       data: { type: 'HOTEL_MARKUP', destination: 'Maldives', markupPercent: 18 },
     }),
-    prisma.pricingOverride.create({
+    prisma.pricingRule.create({
       data: { type: 'FLIGHT_TDS', markupPercent: 2 },
     }),
   ])
-  console.log('  ✓ 5 pricing overrides created')
+  console.log('  ✓ 5 pricing rules created')
 
   console.log('')
   console.log('✅ GoRASA database seeded successfully!')
   console.log('')
-  console.log('📋 Login credentials (dev login):')
+  console.log('📋 Login credentials:')
   console.log('   SUPER_ADMIN: hmittal@gorasa.in')
   console.log('   ADMIN:       admin@gorasa.in')
   console.log('   SALES:       sales@gorasa.in')

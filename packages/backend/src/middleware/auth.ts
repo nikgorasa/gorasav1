@@ -1,26 +1,54 @@
 import { Request, Response, NextFunction } from 'express'
-import { verifyToken, JwtPayload } from '../lib/jwt.js'
+import { supabase } from '../lib/supabase.js'
+import prisma from '../lib/prisma.js'
 
 declare global {
   namespace Express {
     interface Request {
-      user?: JwtPayload
+      user?: {
+        userId: string
+        email: string
+        role: string
+      }
     }
   }
 }
 
-export function authenticate(req: Request, res: Response, next: NextFunction): void {
+export async function authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization
   if (!header?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Missing authorization token' })
     return
   }
 
+  const token = header.slice(7)
+
   try {
-    req.user = verifyToken(header.slice(7))
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+
+    if (error || !user) {
+      res.status(401).json({ error: 'Invalid or expired token' })
+      return
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email! },
+    })
+
+    if (!dbUser) {
+      res.status(401).json({ error: 'User not found in database' })
+      return
+    }
+
+    req.user = {
+      userId: dbUser.id,
+      email: dbUser.email,
+      role: dbUser.role,
+    }
+
     next()
-  } catch {
-    res.status(401).json({ error: 'Invalid or expired token' })
+  } catch (err) {
+    res.status(401).json({ error: 'Authentication failed' })
   }
 }
 
