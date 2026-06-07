@@ -5,7 +5,7 @@ import { signToken } from '../lib/jwt.js'
 const router = Router()
 
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
-  const { email } = req.body
+  const { email, role } = req.body
 
   if (!email) {
     res.status(400).json({ error: 'email is required' })
@@ -24,7 +24,10 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
-  const token = signToken({ userId: user.id, email: user.email, role: user.role })
+  const validRoles = ['CUSTOMER', 'CORPORATE_USER', 'SALES', 'ADMIN', 'SUPER_ADMIN']
+  const tokenRole = role && validRoles.includes(role) ? role : user.role
+
+  const token = signToken({ userId: user.id, email: user.email, role: tokenRole })
 
   res.json({
     token,
@@ -32,7 +35,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
+      role: tokenRole,
       avatar: user.avatar,
       companyName: user.companyName,
       walletBalance: user.walletBalance,
