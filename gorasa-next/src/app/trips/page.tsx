@@ -32,9 +32,9 @@ export default function TripsPage() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
-    if (user) {
+    if (user?.email) {
       setLoading(true);
-      fetch("/api/bookings")
+      fetch(`/api/bookings?email=${encodeURIComponent(user.email)}`)
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
