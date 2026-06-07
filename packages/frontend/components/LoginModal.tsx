@@ -134,7 +134,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => { setName('Vikram Birla'); setEmail('vikram@corporate.com'); setRole('corporate'); setCompanyName('Birla & Sons Corp'); }}
+              onClick={() => { setName('Neha Gupta'); setEmail('neha@corp.in'); setRole('corporate'); setCompanyName('TechCorp India Pvt Ltd'); }}
               className="py-2 border border-slate-200 hover:border-orange-200 hover:bg-orange-50/20 rounded-xl text-[10px] font-bold text-slate-600 transition-colors text-center leading-tight cursor-pointer"
             >
               Corp Demo
@@ -143,7 +143,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => { setName('Nisha Mehta'); setEmail('nisha@agents.com'); setRole('agent'); setCompanyName('Mehta Global Tours'); }}
+              onClick={() => { setName('Rahul Verma'); setEmail('sales@gorasa.in'); setRole('agent'); setCompanyName('GoRASA Sales'); }}
               className="py-2 border border-slate-200 hover:border-orange-200 hover:bg-orange-50/20 rounded-xl text-[10px] font-bold text-slate-600 transition-colors text-center leading-tight cursor-pointer"
             >
               Agent Demo
@@ -152,7 +152,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => { setName('Rasa Admin'); setEmail('rasatravelindia@gmail.com'); setRole('agent'); setCompanyName('Control Tower Headquarters'); }}
+              onClick={() => { setName('Harsh Mittal'); setEmail('hmittal@gorasa.in'); setRole('agent'); setCompanyName('GoRASA Admin'); }}
               className="py-2 border border-orange-200 bg-orange-500/5 text-orange-600 hover:bg-orange-500/10 rounded-xl text-[10px] font-bold transition-colors text-center leading-tight cursor-pointer"
             >
               Admin Demo

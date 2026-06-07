@@ -376,19 +376,15 @@ const App: React.FC = () => {
   });
 
   const handleLogin = async (name: string, email: string, role?: 'user' | 'corporate' | 'agent', companyName?: string) => {
-    const roleMap: Record<string, string> = {
-      user: 'CUSTOMER',
-      corporate: 'CORPORATE_USER',
-      agent: 'SALES',
-    };
-    const backendRole = roleMap[role || 'user'] || 'CUSTOMER';
-
     try {
-      const data = await apiLogin(email, backendRole);
+      const data = await apiLogin(email);
+      const backendRole = data.user.role;
+      const frontendRole = backendRole === 'CORPORATE_USER' ? 'corporate' : 
+                           backendRole === 'SALES' || backendRole === 'ADMIN' || backendRole === 'SUPER_ADMIN' ? 'agent' : 'user';
       setUser({
         name: data.user.name,
         email: data.user.email,
-        role: role || 'user',
+        role: frontendRole,
         companyName: data.user.companyName || companyName,
         loyaltyPoints: data.user.loyaltyPoints,
         loyaltyTier: data.user.loyaltyTier as 'Silver' | 'Gold' | 'Platinum',

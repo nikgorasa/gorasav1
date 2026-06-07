@@ -5,16 +5,10 @@ import { signToken } from '../lib/jwt.js'
 const router = Router()
 
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
-  const { email, role } = req.body
+  const { email } = req.body
 
-  if (!email || !role) {
-    res.status(400).json({ error: 'email and role are required' })
-    return
-  }
-
-  const validRoles = ['CUSTOMER', 'CORPORATE_USER', 'SALES', 'ADMIN', 'SUPER_ADMIN']
-  if (!validRoles.includes(role)) {
-    res.status(400).json({ error: `Invalid role. Must be one of: ${validRoles.join(', ')}` })
+  if (!email) {
+    res.status(400).json({ error: 'email is required' })
     return
   }
 
@@ -30,7 +24,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
-  const token = signToken({ userId: user.id, email: user.email, role })
+  const token = signToken({ userId: user.id, email: user.email, role: user.role })
 
   res.json({
     token,

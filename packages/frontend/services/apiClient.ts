@@ -26,7 +26,7 @@ export async function apiFetch<T>(
   return res.json();
 }
 
-export async function login(email: string, role: string) {
+export async function login(email: string) {
   const data = await apiFetch<{
     token: string;
     user: {
@@ -42,7 +42,7 @@ export async function login(email: string, role: string) {
     };
   }>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, role }),
+    body: JSON.stringify({ email }),
   });
 
   localStorage.setItem('gorasa_token', data.token);
