@@ -19,9 +19,12 @@ interface Lead {
 
 const STAGES = [
   { id: "NEW", label: "New", color: "bg-blue-100 text-blue-700 border-blue-200" },
+  { id: "QUALIFIED", label: "Qualified", color: "bg-cyan-100 text-cyan-700 border-cyan-200" },
   { id: "CONTACTED", label: "Contacted", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
+  { id: "MEETING", label: "Meeting", color: "bg-orange-100 text-orange-700 border-orange-200" },
   { id: "QUOTED", label: "Quoted", color: "bg-purple-100 text-purple-700 border-purple-200" },
-  { id: "SUCCESS", label: "Success", color: "bg-green-100 text-green-700 border-green-200" },
+  { id: "NEGOTIATION", label: "Negotiation", color: "bg-pink-100 text-pink-700 border-pink-200" },
+  { id: "SUCCESS", label: "Won", color: "bg-green-100 text-green-700 border-green-200" },
 ];
 
 export default function LeadsPage() {
