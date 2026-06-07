@@ -4,3 +4,4 @@ dist
 .vite
 .vscode
 .mcp.json
+.vercel

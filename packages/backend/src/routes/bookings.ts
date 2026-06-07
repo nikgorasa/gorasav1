@@ -37,8 +37,8 @@ router.patch('/:id/cancel', authenticate, async (req: Request, res: Response): P
 
 router.get('/stats/revenue', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), async (_req: Request, res: Response): Promise<void> => {
   const bookings = await prisma.booking.findMany({ where: { status: { not: 'CANCELLED' } } })
-  const totalRevenue = bookings.reduce<number>((sum, b) => sum + b.price, 0)
-  const totalDiscount = bookings.reduce<number>((sum, b) => sum + b.discountApplied, 0)
+  const totalRevenue = bookings.reduce((sum: number, b: { price: number }) => sum + b.price, 0)
+  const totalDiscount = bookings.reduce((sum: number, b: { discountApplied: number }) => sum + b.discountApplied, 0)
   const activeBookings = await prisma.booking.count({ where: { status: 'CONFIRMED' } })
   res.json({ totalRevenue, totalDiscount, activeBookings, totalBookings: bookings.length })
 })
