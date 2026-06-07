@@ -4,11 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "npx prisma generate && tsc",
     "start": "npx prisma generate && npx prisma db push && npx tsx prisma/seed.ts && npx tsx src/index.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "prisma generate && tsx prisma/seed.ts"
+    "db:seed": "npx prisma generate && npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.6.0",
