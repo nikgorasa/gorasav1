@@ -14,7 +14,7 @@ router.get('/', authenticate, authorize('SALES', 'ADMIN', 'SUPER_ADMIN'), async 
 
 router.get('/:id', authenticate, authorize('SALES', 'ADMIN', 'SUPER_ADMIN'), async (req: Request, res: Response): Promise<void> => {
   const lead = await prisma.lead.findUnique({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     include: { assignedUser: { select: { id: true, name: true, email: true } } },
   })
   if (!lead) { res.status(404).json({ error: 'Lead not found' }); return }
@@ -45,7 +45,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 router.patch('/:id', authenticate, authorize('SALES', 'ADMIN', 'SUPER_ADMIN'), async (req: Request, res: Response): Promise<void> => {
   const { status, assignedTo, priceEstimated, notes } = req.body
   const lead = await prisma.lead.update({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     data: { status, assignedTo, priceEstimated, notes },
   })
   res.json(lead)

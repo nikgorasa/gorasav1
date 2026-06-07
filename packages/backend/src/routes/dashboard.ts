@@ -13,7 +13,7 @@ router.get('/stats', authenticate, authorize('ADMIN', 'SUPER_ADMIN', 'SALES'), a
     prisma.booking.findMany({ where: { status: { not: 'CANCELLED' } } }),
   ])
 
-  const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0)
+  const totalRevenue = bookings.reduce<number>((sum, b) => sum + b.price, 0)
   const pendingLeads = await prisma.lead.count({ where: { status: 'INQUIRED' } })
   const roleDistribution = await prisma.user.groupBy({ by: ['role'], _count: true })
 

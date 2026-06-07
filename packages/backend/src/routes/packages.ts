@@ -18,7 +18,7 @@ router.get('/all', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), async (_req:
 })
 
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
-  const pkg = await prisma.package.findUnique({ where: { id: req.params.id } })
+  const pkg = await prisma.package.findUnique({ where: { id: req.params.id as string } })
   if (!pkg) { res.status(404).json({ error: 'Package not found' }); return }
   res.json(pkg)
 })
@@ -49,14 +49,14 @@ router.post('/', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), async (req: Re
 router.put('/:id', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), async (req: Request, res: Response): Promise<void> => {
   const { title, duration, price, originalPrice, rating, provider, overview, itinerary, inclusions, exclusions, importantNotes, images, isActive } = req.body
   const pkg = await prisma.package.update({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     data: { title, duration, price, originalPrice, rating, provider, overview, itinerary, inclusions, exclusions, importantNotes, images, isActive },
   })
   res.json(pkg)
 })
 
 router.delete('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response): Promise<void> => {
-  await prisma.package.update({ where: { id: req.params.id }, data: { isActive: false } })
+  await prisma.package.update({ where: { id: req.params.id as string }, data: { isActive: false } })
   res.json({ message: 'Package deactivated' })
 })
 
