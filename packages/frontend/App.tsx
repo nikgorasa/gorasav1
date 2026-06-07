@@ -21,6 +21,7 @@ import WhatsAppChannel from './components/WhatsAppChannel';
 import PremiumDashboard from './components/PremiumDashboard';
 import UserProfile from './components/UserProfile';
 import CustomCarousels from './components/CustomCarousels';
+import Footer from './components/Footer';
 import { getTravelSuggestions, parseFlightQuery } from './services/geminiService';
 import { searchIndigoFlights, searchAirIndiaFlights } from './services/flightService';
 import { searchPremiumHotels, searchOyoHotels } from './services/hotelService';
@@ -1572,6 +1573,8 @@ const App: React.FC = () => {
       </AnimatePresence>
 
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={handleLogin} />}
+
+      <Footer />
 
       {/* Floating WhatsApp Assist Widget */}
       <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end">

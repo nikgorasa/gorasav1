@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  role          String   @default("CUSTOMER")
+  avatar        String?
+  companyName   String?
+  walletBalance Float    @default(0)
+  loyaltyPoints Int      @default(0)
+  loyaltyTier   String   @default("Silver")
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  leads         Lead[]
+  bookings      Booking[]
+  cancellations CancellationRequest[]
+}
+
+model Lead {
+  id              String   @id @default(cuid())
+  destination     String
+  travelerName    String
+  travelerEmail   String
+  travelerPhone   String?
+  numberOfDays    Int      @default(5)
+  inclusions      String   @default("[]")
+  specificDemands String?
+  notes           String?
+  status          String   @default("INQUIRED")
+  priceEstimated  Float?
+  assignedTo      String?
+  assignedUser    User?    @relation(fields: [assignedTo], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Package {
+  id          String   @id @default(cuid())
+  title       String
+  duration    String
+  price       Float
+  originalPrice Float?
+  rating      Float    @default(4.5)
+  provider    String   @default("GoRASA Direct")
+  overview    String   @default("{}")
+  itinerary   String   @default("{}")
+  inclusions  String   @default("[]")
+  exclusions  String   @default("[]")
+  importantNotes String @default("{}")
+  images      String   @default("[]")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Booking {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  type            String
+  itemName        String
+  providerOrAirline String?
+  price           Float
+  originalPrice   Float?
+  discountApplied Float    @default(0)
+  couponCodeUsed  String?
+  status          String   @default("CONFIRMED")
+  pnr             String?
+  seatOrRoom      String?
+  paxCount        Int      @default(1)
+  travelDates     String?
+  bookedAt        DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PricingOverride {
+  id            String   @id @default(cuid())
+  type          String
+  destination   String?
+  hotelName     String?
+  markupPercent Float
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CorporateAccount {
+  id            String   @id @default(cuid())
+  companyName   String   @unique
+  contactEmail  String
+  walletBalance Float    @default(0)
+  discountRate  Float    @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CancellationRequest {
+  id          String   @id @default(cuid())
+  bookingId   String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  reason      String
+  status      String   @default("PENDING")
+  processedBy String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
