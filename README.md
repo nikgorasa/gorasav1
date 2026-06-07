@@ -190,7 +190,7 @@ The website goes live at a `*.netlify.app` URL.
 | **Region** | Singapore |
 | **Branch** | `main` |
 | **Runtime** | `Node` |
-| **Build Command** | _(leave empty — Render runs npm install automatically)_ |
+| **Build Command** | `npm install` |
 | **Start Command** | `npm run start -w packages/backend` |
 | **Plan** | **Free** |
 

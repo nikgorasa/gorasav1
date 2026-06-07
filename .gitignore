@@ -3,3 +3,4 @@ dist
 *.db
 .vite
 .vscode
+.mcp.json
