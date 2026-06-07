@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
+import InquiryModal from "@/components/InquiryModal";
 import PackageCarousel from "@/components/PackageCarousel";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "motion/react";
@@ -57,6 +58,7 @@ export default function HomePage() {
   const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [backendPackages, setBackendPackages] = useState<TravelPackage[]>([]);
+  const [inquiryPackage, setInquiryPackage] = useState<TravelPackage | null>(null);
 
   useEffect(() => {
     fetch("/api/packages")
@@ -85,6 +87,13 @@ export default function HomePage() {
     <>
       <Navbar onLoginClick={() => setShowLogin(true)} />
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
+      <InquiryModal
+        isOpen={!!inquiryPackage}
+        onClose={() => setInquiryPackage(null)}
+        pkg={inquiryPackage}
+        userName={user?.name}
+        userEmail={user?.email}
+      />
 
       <main className="min-h-screen pt-16">
         {/* Hero Section */}
@@ -179,6 +188,7 @@ export default function HomePage() {
                 items={backendPackages}
                 badgeColor="bg-violet-50 text-violet-600 border border-violet-100"
                 badgeText="Live Data"
+                onInterested={setInquiryPackage}
               />
             )}
 
@@ -190,6 +200,7 @@ export default function HomePage() {
               items={TOP_DEALS}
               badgeColor="bg-orange-50 text-orange-600 border border-orange-100"
               badgeText="Top Deals"
+              onInterested={setInquiryPackage}
             />
 
             {/* Weekend Deals */}
@@ -200,6 +211,7 @@ export default function HomePage() {
               items={WEEKEND_DEALS}
               badgeColor="bg-emerald-50 text-emerald-600 border border-emerald-100"
               badgeText="Weekend Deals"
+              onInterested={setInquiryPackage}
             />
 
             {/* International */}
@@ -210,6 +222,7 @@ export default function HomePage() {
               items={INTERNATIONAL_PACKAGES}
               badgeColor="bg-blue-50 text-blue-600 border border-blue-100"
               badgeText="International"
+              onInterested={setInquiryPackage}
             />
 
             {/* All Inclusive */}
@@ -220,6 +233,7 @@ export default function HomePage() {
               items={ALL_INCLUSIVE_DEALS}
               badgeColor="bg-purple-50 text-purple-600 border border-purple-100"
               badgeText="All Inclusive"
+              onInterested={setInquiryPackage}
             />
 
             {/* Beach */}
@@ -230,6 +244,7 @@ export default function HomePage() {
               items={BEACH_VACATIONS}
               badgeColor="bg-amber-50 text-amber-600 border border-amber-100"
               badgeText="Beach"
+              onInterested={setInquiryPackage}
             />
 
             {/* GoRASA Select */}
@@ -240,6 +255,7 @@ export default function HomePage() {
               items={GORASA_SELECT}
               badgeColor="bg-rose-50 text-rose-600 border border-rose-100"
               badgeText="GoRASA Select"
+              onInterested={setInquiryPackage}
             />
           </div>
         </section>
