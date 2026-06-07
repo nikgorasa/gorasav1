@@ -23,6 +23,8 @@ import {
   Sparkles,
   Sun,
   Award,
+  User,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -299,51 +301,107 @@ export default function HomePage() {
         </section>
 
         {/* Corporate Travel */}
-        <section className="py-16 bg-gradient-to-r from-slate-900 to-slate-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <section className="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-brand-saffron rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500 rounded-full blur-3xl" />
+          </div>
+
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              {/* Left Content */}
               <div>
-                <span className="text-brand-saffron font-bold uppercase tracking-widest text-xs">
+                <span className="inline-block text-brand-saffron font-bold uppercase tracking-widest text-[10px] bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-full mb-4">
                   Corporate Travel
                 </span>
-                <h2 className="text-3xl font-serif font-bold text-white mt-2 mb-4">
-                  Business Travel, Elevated
+                <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-5 leading-tight">
+                  Business Travel,<br />
+                  <span className="text-brand-saffron italic">Elevated</span>
                 </h2>
-                <p className="text-slate-400 mb-6">
+                <p className="text-slate-400 text-lg mb-8 leading-relaxed max-w-lg">
                   Streamline your corporate travel with dedicated account management, negotiated rates, and 24/7 concierge support.
                 </p>
-                <ul className="space-y-3 mb-8">
-                  {["Dedicated account manager", "Negotiated corporate rates", "Expense management dashboard", "24/7 priority support"].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-slate-300 text-sm">
-                      <Shield size={16} className="text-brand-saffron" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-brand-saffron text-white rounded-xl font-bold hover:bg-brand-burnt transition-colors"
-                >
-                  Get Started
-                  <ArrowRight size={18} />
-                </Link>
-              </div>
-              <div className="relative">
-                <div className="aspect-square rounded-3xl overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80"
-                    alt="Corporate Travel"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl p-4 shadow-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <Shield size={20} className="text-green-600" />
+
+                {/* Features Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                  {[
+                    { icon: User, label: "Dedicated account manager" },
+                    { icon: TrendingUp, label: "Negotiated corporate rates" },
+                    { icon: CreditCard, label: "Expense management dashboard" },
+                    { icon: Headphones, label: "24/7 priority support" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                      <div className="w-8 h-8 rounded-lg bg-brand-saffron/20 flex items-center justify-center shrink-0">
+                        <item.icon size={16} className="text-brand-saffron" />
+                      </div>
+                      <span className="text-slate-300 text-sm font-medium">{item.label}</span>
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-900 text-sm">Trusted by 500+</p>
-                      <p className="text-slate-500 text-xs">Corporate partners</p>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-saffron text-white rounded-xl font-bold hover:bg-brand-burnt transition-colors shadow-lg shadow-orange-500/20"
+                  >
+                    Get Started
+                    <ArrowRight size={18} />
+                  </Link>
+                  <Link
+                    href="/holidays"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors border border-white/10"
+                  >
+                    Learn More
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Image + Stats */}
+              <div className="relative">
+                <div className="rounded-3xl overflow-hidden shadow-2xl">
+                  <img
+                    src="https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&w=800&q=80"
+                    alt="Corporate Travel - Modern office building"
+                    className="w-full h-[400px] object-cover"
+                  />
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent rounded-3xl" />
+                </div>
+
+                {/* Stats Cards */}
+                <div className="absolute -bottom-6 left-6 right-6 flex gap-3">
+                  <div className="flex-1 bg-white rounded-2xl p-4 shadow-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <Shield size={20} className="text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-lg">500+</p>
+                        <p className="text-slate-500 text-xs">Corporate Partners</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 bg-white rounded-2xl p-4 shadow-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Building2 size={20} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-lg">50K+</p>
+                        <p className="text-slate-500 text-xs">Bookings Made</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 bg-white rounded-2xl p-4 shadow-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                        <Star size={20} className="text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-lg">4.9</p>
+                        <p className="text-slate-500 text-xs">Client Rating</p>
+                      </div>
                     </div>
                   </div>
                 </div>
