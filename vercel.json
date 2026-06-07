@@ -1,8 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd packages/backend && npx prisma generate && cd ../.. && npm run build -w packages/frontend",
-  "outputDirectory": "packages/frontend/dist",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
-  ]
+  "rootDirectory": "gorasa-next",
+  "buildCommand": "npx prisma generate && next build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install"
 }

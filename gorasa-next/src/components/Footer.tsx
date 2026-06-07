@@ -1,0 +1,110 @@
+"use client";
+
+import React from "react";
+import Link from "next/link";
+import { Mail, Phone, MapPin } from "lucide-react";
+
+export default function Footer() {
+  return (
+    <footer className="bg-brand-cream border-t border-orange-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+          {/* Brand */}
+          <div className="md:col-span-1">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-brand-saffron to-brand-burnt rounded-lg flex items-center justify-center">
+                <span className="text-white font-display font-bold text-sm">G</span>
+              </div>
+              <span className="font-display font-bold text-xl text-slate-900">
+                Go<span className="text-brand-saffron">RASA</span>
+              </span>
+            </div>
+            <p className="text-slate-600 text-sm leading-relaxed mb-4">
+              Premium travel experiences crafted for the discerning traveler.
+              Flights, hotels, and curated holiday packages.
+            </p>
+            <p className="text-brand-saffron font-serif italic text-sm">
+              &ldquo;Experience The Finest&rdquo;
+            </p>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="font-display font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">
+              Explore
+            </h4>
+            <ul className="space-y-2.5">
+              {[
+                { href: "/flights", label: "Flights" },
+                { href: "/hotels", label: "Hotels" },
+                { href: "/holidays", label: "Holiday Packages" },
+                { href: "/trips", label: "My Trips" },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-slate-600 hover:text-brand-saffron text-sm transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h4 className="font-display font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">
+              Company
+            </h4>
+            <ul className="space-y-2.5">
+              {["About Us", "Privacy Policy", "Terms of Service", "Cancellation Policy"].map(
+                (label) => (
+                  <li key={label}>
+                    <span className="text-slate-600 hover:text-brand-saffron text-sm transition-colors cursor-pointer">
+                      {label}
+                    </span>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="font-display font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">
+              Contact
+            </h4>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2">
+                <Phone size={16} className="text-brand-saffron mt-0.5 shrink-0" />
+                <span className="text-slate-600 text-sm">+91 95285 00383</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Mail size={16} className="text-brand-saffron mt-0.5 shrink-0" />
+                <span className="text-slate-600 text-sm">rasatravelindia@gmail.com</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <MapPin size={16} className="text-brand-saffron mt-0.5 shrink-0" />
+                <span className="text-slate-600 text-sm">
+                  RASA Travel Services India Pvt Ltd
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="mt-12 pt-6 border-t border-orange-200/50 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-slate-500 text-xs">
+            &copy; {new Date().getFullYear()} RASA Travel Services India Private Limited. All
+            rights reserved.
+          </p>
+          <p className="text-slate-400 text-xs font-serif italic">
+            Crafted with care for travelers who demand the finest
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
