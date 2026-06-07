@@ -6,12 +6,15 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
 import Link from "next/link";
-import { LayoutDashboard, Users, Package, BarChart3, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Package, BarChart3, Settings, Tag, Star, Building2 } from "lucide-react";
 
 const ADMIN_NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/leads", label: "Leads", icon: BarChart3 },
   { href: "/admin/packages", label: "Packages", icon: Package },
+  { href: "/admin/promos", label: "Promo Desk", icon: Tag },
+  { href: "/admin/loyalty", label: "Loyalty Club", icon: Star },
+  { href: "/admin/b2b", label: "B2B Registry", icon: Building2 },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 
