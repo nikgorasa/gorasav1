@@ -1,13 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "npm run build -w packages/frontend",
+  "buildCommand": "cd packages/backend && npx prisma generate && cd ../.. && npm run build -w packages/frontend",
   "outputDirectory": "packages/frontend/dist",
   "rewrites": [
-    { "source": "/api/auth/:path*", "destination": "/api/auth/:path*" },
-    { "source": "/api/packages/:path*", "destination": "/api/packages/:path*" },
-    { "source": "/api/bookings/:path*", "destination": "/api/bookings/:path*" },
-    { "source": "/api/leads/:path*", "destination": "/api/leads/:path*" },
-    { "source": "/api/dashboard/:path*", "destination": "/api/dashboard/:path*" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
