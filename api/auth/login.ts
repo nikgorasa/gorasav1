@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient()
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -27,36 +25,28 @@ export default async function handler(req: any, res: any) {
     return res.status(401).json({ error: error.message })
   }
 
-  let user = await prisma.user.findUnique({ where: { email } })
+  const { data: dbUser, error: dbError } = await supabase
+    .from('User')
+    .select('*')
+    .eq('email', email)
+    .single()
 
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        email,
-        name: data.user.user_metadata?.name || email.split('@')[0],
-        role: 'CUSTOMER',
-        supabaseId: data.user.id,
-      },
-    })
-  } else if (!user.supabaseId) {
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { supabaseId: data.user.id },
-    })
+  if (dbError || !dbUser) {
+    return res.status(404).json({ error: 'User not found in database' })
   }
 
   return res.json({
     token: data.session.access_token,
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      avatar: user.avatar,
-      companyId: user.companyId,
-      walletBalance: user.walletBalance,
-      loyaltyPoints: user.loyaltyPoints,
-      loyaltyTier: user.loyaltyTier,
+      id: dbUser.id,
+      email: dbUser.email,
+      name: dbUser.name,
+      role: dbUser.role,
+      avatar: dbUser.avatar,
+      companyId: dbUser.companyId,
+      walletBalance: dbUser.walletBalance,
+      loyaltyPoints: dbUser.loyaltyPoints,
+      loyaltyTier: dbUser.loyaltyTier,
     },
   })
 }
