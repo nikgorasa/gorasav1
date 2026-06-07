@@ -66,8 +66,14 @@ export default function Navbar({
                 href={item.href}
                 className="flex items-center space-x-1.3 py-2 text-sm font-medium text-slate-600 hover:text-orange-600 transition-colors"
               >
-                <item.icon className="w-4 h-4 mr-0.5" />
-                <span>{item.label}</span>
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-1"
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </motion.span>
               </Link>
             ))}
             {user && (
@@ -75,8 +81,14 @@ export default function Navbar({
                 href="/profile"
                 className="flex items-center space-x-1.3 py-2 text-sm font-medium text-slate-600 hover:text-orange-600 transition-colors"
               >
-                <UserCheck className="w-4 h-4 mr-0.5" />
-                <span>Profile & Loyalty</span>
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-1"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>Profile & Loyalty</span>
+                </motion.span>
               </Link>
             )}
             {isAdmin && (
@@ -84,8 +96,14 @@ export default function Navbar({
                 href="/admin"
                 className="flex items-center space-x-1.3 py-2 text-sm font-medium text-slate-600 hover:text-orange-600 transition-colors"
               >
-                <TrendingUp className="w-4 h-4 mr-0.5" />
-                <span>Control Tower</span>
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-1"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  <span>Control Tower</span>
+                </motion.span>
               </Link>
             )}
           </div>
@@ -93,11 +111,18 @@ export default function Navbar({
           {/* Auth / User Menu */}
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-3">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center space-x-3"
+              >
                 <div className="flex flex-col items-end">
-                  <span className="text-xs font-semibold text-slate-800 cursor-pointer hover:text-orange-600">
+                  <motion.span
+                    whileHover={{ color: "#ea580c" }}
+                    className="text-xs font-semibold text-slate-800 cursor-pointer"
+                  >
                     {user.name}
-                  </span>
+                  </motion.span>
                   <button
                     onClick={signOut}
                     className="text-[10px] text-slate-400 underline uppercase tracking-widest flex items-center cursor-pointer hover:text-red-500"
@@ -106,17 +131,23 @@ export default function Navbar({
                     Logout
                   </button>
                 </div>
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white text-sm font-bold shadow-sm cursor-pointer">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white text-sm font-bold shadow-sm cursor-pointer"
+                >
                   {user.name?.charAt(0)?.toUpperCase()}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             ) : (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={onLoginClick}
                 className="bg-slate-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200 cursor-pointer"
               >
                 Sign In
-              </button>
+              </motion.button>
             )}
 
             {/* Mobile menu button */}
