@@ -3,17 +3,19 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id            String   @id @default(cuid())
+  supabaseId    String?  @unique
   email         String   @unique
   name          String
   role          String   @default("CUSTOMER")
   avatar        String?
-  companyName   String?
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id])
   walletBalance Float    @default(0)
   loyaltyPoints Int      @default(0)
   loyaltyTier   String   @default("Silver")
@@ -24,6 +26,20 @@ model User {
   leads         Lead[]
   bookings      Booking[]
   cancellations CancellationRequest[]
+  activities    Activity[]
+}
+
+model Company {
+  id            String   @id @default(cuid())
+  name          String
+  domain        String?
+  walletBalance Float    @default(0)
+  discountRate  Float    @default(0)
+  isActive      Boolean  @default(true)
+  approvedBy    String?
+  employees     User[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Lead {
@@ -36,31 +52,55 @@ model Lead {
   inclusions      String   @default("[]")
   specificDemands String?
   notes           String?
-  status          String   @default("INQUIRED")
-  priceEstimated  Float?
+  stage           String   @default("NEW")
   assignedTo      String?
   assignedUser    User?    @relation(fields: [assignedTo], references: [id])
+  activities      Activity[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
-model Package {
+model Activity {
   id          String   @id @default(cuid())
-  title       String
-  duration    String
-  price       Float
-  originalPrice Float?
-  rating      Float    @default(4.5)
-  provider    String   @default("GoRASA Direct")
-  overview    String   @default("{}")
-  itinerary   String   @default("{}")
-  inclusions  String   @default("[]")
-  exclusions  String   @default("[]")
-  importantNotes String @default("{}")
-  images      String   @default("[]")
-  isActive    Boolean  @default(true)
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id])
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  type        String
+  description String
+  createdBy   String
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+}
+
+model Package {
+  id             String   @id @default(cuid())
+  title          String
+  duration       String
+  price          Float
+  originalPrice  Float?
+  rating         Float    @default(4.5)
+  provider       String   @default("GoRASA Direct")
+  overview       String   @default("{}")
+  itinerary      String   @default("{}")
+  inclusions     String   @default("[]")
+  exclusions     String   @default("[]")
+  importantNotes String   @default("{}")
+  images         String   @default("[]")
+  status         String   @default("DRAFT")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model PricingRule {
+  id            String   @id @default(cuid())
+  type          String
+  destination   String?
+  hotelName     String?
+  markupPercent Float
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Booking {
@@ -79,35 +119,38 @@ model Booking {
   seatOrRoom      String?
   paxCount        Int      @default(1)
   travelDates     String?
+  payment         Payment?
+  invoice         Invoice?
+  cancellation    CancellationRequest?
   bookedAt        DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
-model PricingOverride {
+model Payment {
   id            String   @id @default(cuid())
-  type          String
-  destination   String?
-  hotelName     String?
-  markupPercent Float
-  isActive      Boolean  @default(true)
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+  amount        Float
+  method        String
+  status        String   @default("PENDING")
+  phonepeId     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
 
-model CorporateAccount {
-  id            String   @id @default(cuid())
-  companyName   String   @unique
-  contactEmail  String
-  walletBalance Float    @default(0)
-  discountRate  Float    @default(0)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model Invoice {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  number      String   @unique
+  url         String?
+  issuedAt    DateTime @default(now())
 }
 
 model CancellationRequest {
   id          String   @id @default(cuid())
-  bookingId   String
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id])
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   reason      String

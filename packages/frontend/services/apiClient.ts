@@ -1,52 +1,83 @@
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { supabase } from '../lib/supabase'
+
+const API_URL = import.meta.env.VITE_API_URL || ''
 
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = localStorage.getItem('gorasa_token');
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
-  };
+  }
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
-  });
+  })
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || `HTTP ${res.status}`);
+    const error = await res.json().catch(() => ({ error: 'Request failed' }))
+    throw new Error(error.error || `HTTP ${res.status}`)
   }
 
-  return res.json();
+  return res.json()
 }
 
-export async function login(email: string, role?: string) {
-  const data = await apiFetch<{
-    token: string;
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      role: string;
-      avatar?: string;
-      companyName?: string;
-      walletBalance: number;
-      loyaltyPoints: number;
-      loyaltyTier: string;
-    };
+export async function login(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  const userData = await apiFetch<{
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    avatar?: string;
+    companyId?: string;
+    walletBalance: number;
+    loyaltyPoints: number;
+    loyaltyTier: string;
   }>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, role }),
-  });
+    body: JSON.stringify({ email, password }),
+  })
 
-  localStorage.setItem('gorasa_token', data.token);
-  return data;
+  return {
+    token: data.session.access_token,
+    user: userData,
+  }
+}
+
+export async function register(email: string, password: string, name: string) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { name },
+    },
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return {
+    message: 'Registration successful. Please check your email to verify your account.',
+    token: data.session?.access_token,
+  }
 }
 
 export async function getMe() {
@@ -56,11 +87,11 @@ export async function getMe() {
     name: string;
     role: string;
     avatar?: string;
-    companyName?: string;
+    companyId?: string;
     walletBalance: number;
     loyaltyPoints: number;
     loyaltyTier: string;
-  }>('/api/auth/me');
+  }>('/api/auth/me')
 }
 
 export async function getPackages() {
@@ -78,6 +109,7 @@ export async function getPackages() {
     exclusions: string;
     importantNotes: string;
     images: string;
+    status: string;
     isActive: boolean;
   }>>('/api/packages');
 }
@@ -130,7 +162,7 @@ export async function getLeads() {
     inclusions: string;
     specificDemands?: string;
     notes?: string;
-    status: string;
+    stage: string;
     priceEstimated?: number;
     assignedTo?: string;
     createdAt: string;
@@ -153,6 +185,6 @@ export async function submitLead(data: {
   });
 }
 
-export function logout() {
-  localStorage.removeItem('gorasa_token');
+export async function logout() {
+  await supabase.auth.signOut()
 }
