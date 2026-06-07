@@ -4,9 +4,11 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
+import BoardingPassModal from "@/components/BoardingPassModal";
+import InvoiceModal from "@/components/InvoiceModal";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "motion/react";
-import { Plane, Package, CreditCard, MapPin, Calendar, Users, FileText, X } from "lucide-react";
+import { Plane, Package, CreditCard, MapPin, Calendar, Users, FileText, X, Ticket, Receipt } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -30,6 +32,8 @@ export default function TripsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [boardingPassBooking, setBoardingPassBooking] = useState<Booking | null>(null);
+  const [invoiceBooking, setInvoiceBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -203,6 +207,30 @@ export default function TripsPage() {
                             )}
                           </div>
                         </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBoardingPassBooking(booking);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 cursor-pointer"
+                          >
+                            <Ticket size={14} />
+                            {booking.type === "FLIGHT" ? "Boarding Pass" : "Voucher"}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInvoiceBooking(booking);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 cursor-pointer"
+                          >
+                            <Receipt size={14} />
+                            Invoice
+                          </button>
+                        </div>
                       </motion.div>
                     );
                   })}
@@ -293,6 +321,27 @@ export default function TripsPage() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Boarding Pass Modal */}
+      {boardingPassBooking && user && (
+        <BoardingPassModal
+          isOpen={!!boardingPassBooking}
+          onClose={() => setBoardingPassBooking(null)}
+          booking={boardingPassBooking}
+          userName={user.name}
+        />
+      )}
+
+      {/* Invoice Modal */}
+      {invoiceBooking && user && (
+        <InvoiceModal
+          isOpen={!!invoiceBooking}
+          onClose={() => setInvoiceBooking(null)}
+          booking={invoiceBooking}
+          userName={user.name}
+          userEmail={user.email}
+        />
       )}
 
       <Footer />
