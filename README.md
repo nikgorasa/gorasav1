@@ -174,17 +174,41 @@ packages/
 4. Set the following in Netlify settings:
    - **Build command:** `npm run build`
    - **Publish directory:** `dist/`
-5. Click "Deploy"
+5. Click **Deploy**
 
 The website goes live at a `*.netlify.app` URL.
 
-### Server (Backend) → Render or Railway (free tier)
+### Server (Backend) → Render (free)
 
-The backend needs a server that stays running 24/7. Options:
+1. Go to [dashboard.render.com](https://dashboard.render.com) → **New +** → **Web Service**
+2. Connect your GitHub repo (`nikjp2021/gorasa-app`)
+3. Fill in:
 
-- **Render** (free — sleeps after 15 min idle, wakes on first request)
-- **Railway** ($5 credit — no sleep)
-- **Fly.io** (free allowance — no sleep)
+| Field | Value |
+|---|---|
+| **Name** | `gorasa-backend` |
+| **Region** | Singapore |
+| **Branch** | `main` |
+| **Runtime** | `Node` |
+| **Build Command** | _(leave empty — Render runs npm install automatically)_ |
+| **Start Command** | `npm run start -w packages/backend` |
+| **Plan** | **Free** |
+
+4. **Advanced** → Add environment variable:
+   - `JWT_SECRET` = any random string (e.g. `gorasa-prod-secret-123`)
+
+5. Click **Create Web Service**
+
+The API goes live at `https://gorasa-backend.onrender.com`. The start command automatically creates database tables and fills sample data on every launch.
+
+### Connect frontend to backend
+
+In your Netlify dashboard:
+- Go to **Site settings** → **Environment variables**
+- Add `VITE_API_URL` = `https://gorasa-backend.onrender.com`
+- Rebuild the site
+
+Now the website knows where the API lives.
 
 ---
 
