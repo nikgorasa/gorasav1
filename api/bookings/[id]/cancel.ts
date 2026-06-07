@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient()
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -29,15 +27,23 @@ export default async function handler(req: any, res: any) {
       return res.status(401).json({ error: 'Invalid token' })
     }
 
-    const dbUser = await prisma.user.findUnique({ where: { email: user.email! } })
+    const { data: dbUser, error: dbError } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', user.email!)
+      .single()
 
-    if (!dbUser) {
+    if (dbError || !dbUser) {
       return res.status(404).json({ error: 'User not found' })
     }
 
-    const booking = await prisma.booking.findUnique({ where: { id } })
+    const { data: booking, error: bookingError } = await supabase
+      .from('Booking')
+      .select('*')
+      .eq('id', id)
+      .single()
 
-    if (!booking) {
+    if (bookingError || !booking) {
       return res.status(404).json({ error: 'Booking not found' })
     }
 
@@ -45,10 +51,14 @@ export default async function handler(req: any, res: any) {
       return res.status(403).json({ error: 'Not authorized' })
     }
 
-    await prisma.booking.update({
-      where: { id },
-      data: { status: 'CANCELLED' },
-    })
+    const { error: updateError } = await supabase
+      .from('Booking')
+      .update({ status: 'CANCELLED' })
+      .eq('id', id)
+
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message })
+    }
 
     return res.json({ message: 'Booking cancelled' })
   } catch {
