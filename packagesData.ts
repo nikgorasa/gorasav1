@@ -31,7 +31,7 @@ export const TOP_DEALS: TravelPackage[] = [
     price: 68000,
     originalPrice: 82000,
     rating: 4.9,
-    imageUrl: 'https://images.unsplash.com/photo-1590053132182-6f56a2cad33b?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80',
     provider: 'GoRASA Partners',
     inclusions: ['Grand Palace View Lake Cabin', 'Royal Welcome Ceremony', 'Private Lake Pichola Boat Cruise', 'Signature Massage Session']
   },
