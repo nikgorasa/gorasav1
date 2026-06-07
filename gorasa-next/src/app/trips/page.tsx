@@ -34,7 +34,9 @@ export default function TripsPage() {
   useEffect(() => {
     if (user) {
       setLoading(true);
-      fetch("/api/bookings")
+      fetch("/api/bookings", {
+        headers: { "x-user-email": user.email },
+      })
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {

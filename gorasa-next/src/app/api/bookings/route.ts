@@ -1,53 +1,35 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function getUser() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll() {},
-      },
-    }
-  );
+async function getUserFromRequest(request: Request) {
+  // Get user email from header (sent by frontend after login)
+  const userEmail = request.headers.get("x-user-email");
+  if (!userEmail) return null;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const { data: dbUser } = await supabaseAdmin
+  const { data: dbUser } = await supabase
     .from("User")
     .select("*")
-    .eq("email", user.email!)
+    .eq("email", userEmail)
     .single();
 
   return dbUser;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await getUser();
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: bookings, error } = await supabaseAdmin
+    const { data: bookings, error } = await supabase
       .from("Booking")
-      .select("*, payment:Payment(*), invoice:Invoice(*), cancellation:CancellationRequest(*)")
+      .select("*")
       .eq("userId", user.id)
       .order("bookedAt", { ascending: false });
 
@@ -71,7 +53,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const user = await getUser();
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -89,7 +71,7 @@ export async function POST(request: Request) {
     const bookingId = crypto.randomUUID();
     const pnrCode = pnr || `GR${Date.now().toString(36).toUpperCase()}`;
 
-    const { data: booking, error } = await supabaseAdmin
+    const { data: booking, error } = await supabase
       .from("Booking")
       .insert({
         id: bookingId,
@@ -118,7 +100,7 @@ export async function POST(request: Request) {
     }
 
     if (paymentMethod) {
-      await supabaseAdmin.from("Payment").insert({
+      await supabase.from("Payment").insert({
         bookingId: booking.id,
         amount: Number(price),
         method: paymentMethod,
