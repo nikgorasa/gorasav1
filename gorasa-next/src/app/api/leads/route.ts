@@ -1,20 +1,25 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function GET() {
   try {
-    const leads = await prisma.lead.findMany({
-      include: {
-        assignedUser: {
-          select: { id: true, name: true, email: true },
-        },
-        activities: {
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { data: leads, error } = await supabase
+      .from("Lead")
+      .select("*, assignedUser:User!assignedTo(id, name, email)")
+      .order("createdAt", { ascending: false });
+
+    if (error) {
+      console.error("Leads error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch leads" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(leads);
   } catch (error) {
@@ -38,8 +43,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const lead = await prisma.lead.create({
-      data: {
+    const { data: lead, error } = await supabase
+      .from("Lead")
+      .insert({
         destination,
         travelerName,
         travelerEmail,
@@ -49,8 +55,17 @@ export async function POST(request: Request) {
         specificDemands,
         notes,
         stage: "NEW",
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Lead create error:", error);
+      return NextResponse.json(
+        { error: "Failed to create lead" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {
