@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { PrismaClient } from '@prisma/client'
 
@@ -8,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   const header = req.headers.authorization
   if (!header?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing token' })
