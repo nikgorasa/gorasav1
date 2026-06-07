@@ -21,6 +21,7 @@ import {
 const NAV_ITEMS = [
   { href: "/", label: "Explore", icon: Compass },
   { href: "/trips", label: "Reservation Desk", icon: Ticket },
+  { href: "/support", label: "AI Support Desk", icon: MessageSquare },
   { href: "/flights", label: "Flights", icon: Plane },
   { href: "/hotels", label: "Hotels", icon: Building2 },
   { href: "/holidays", label: "Plan My Holiday", icon: Palmtree },
