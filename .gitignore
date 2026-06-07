@@ -5,3 +5,4 @@ dist
 .vscode
 .mcp.json
 .vercel
+.env*
