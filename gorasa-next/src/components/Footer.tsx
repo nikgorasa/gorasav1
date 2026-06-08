@@ -1,25 +1,29 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Mail, Phone, MapPin } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
-export default async function Footer() {
-  const [linksResult, configResult] = await Promise.all([
-    supabase
-      .from("FooterLink")
-      .select("*")
-      .eq("isactive", true)
-      .order("sortorder", { ascending: true }),
-    supabase.from("SiteConfig").select("key, value"),
-  ]);
+interface FooterLink {
+  id: string;
+  section: string;
+  label: string;
+  href: string | null;
+}
 
-  const footerLinks = linksResult.data || [];
-  const siteConfig: Record<string, string> = {};
-  (configResult.data || []).forEach(
-    (row: { key: string; value: string }) => {
-      siteConfig[row.key] = row.value;
-    },
-  );
+export default function Footer() {
+  const [footerLinks, setFooterLinks] = useState<FooterLink[]>([]);
+  const [siteConfig, setSiteConfig] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/footer-links").then((r) => r.json()).catch(() => []),
+      fetch("/api/site-config").then((r) => r.json()).catch(() => ({})),
+    ]).then(([links, config]) => {
+      if (Array.isArray(links)) setFooterLinks(links);
+      if (config && typeof config === "object" && !config.error) setSiteConfig(config);
+    }).catch(() => {});
+  }, []);
 
   return (
     <footer className="bg-brand-cream border-t border-orange-100">
