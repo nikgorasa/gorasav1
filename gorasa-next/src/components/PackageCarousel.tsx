@@ -57,7 +57,7 @@ export default function PackageCarousel({
     <div className="space-y-6 pt-12 first:pt-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 px-2">
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 1, x: 0 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.4 }}
@@ -107,7 +107,7 @@ export default function PackageCarousel({
             return (
               <motion.div
                 key={pkg.id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 1, y: 0 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: idx * 0.05 }}
