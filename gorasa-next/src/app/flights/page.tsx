@@ -1,13 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
-import { Plane, Search, Calendar, Users, ArrowRight, Star, Clock, Luggage, X } from "lucide-react";
-import { searchFlights, INDIAN_CITIES, type Flight, type FlightSearchParams } from "@/lib/travel-data";
+import { formatCurrency } from "@/lib";
+import { Plane, Search, Calendar, Users, ArrowRight, Star, Clock, Luggage, X, Loader2 } from "lucide-react";
+
+interface Flight {
+  id: string;
+  airline: string;
+  flightNumber: string;
+  origin: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  stops: number;
+  price: number;
+  tier: string;
+}
 
 export default function FlightsPage() {
   const { user } = useAuth();
@@ -19,21 +33,32 @@ export default function FlightsPage() {
   const [tripType, setTripType] = useState<"one-way" | "return">("one-way");
   const [results, setResults] = useState<Flight[]>([]);
   const [searched, setSearched] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+  const [cities, setCities] = useState<string[]>([]);
+  const [citiesLoading, setCitiesLoading] = useState(true);
 
-  const handleSearch = () => {
-    const params: FlightSearchParams = {
-      location: destination,
-      startDate: date,
-      endDate: "",
-      adults: parseInt(passengers),
-      children: 0,
-      origin,
-      tripType,
-    };
-    const flights = searchFlights(params);
-    setResults(flights);
-    setSearched(true);
+  useEffect(() => {
+    fetch("/api/cities?type=domestic")
+      .then((r) => r.json())
+      .then((data) => setCities(Array.isArray(data) ? data.map((c: { name: string }) => c.name) : []))
+      .catch(() => setCities(["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata"]))
+      .finally(() => setCitiesLoading(false));
+  }, []);
+
+  const handleSearch = async () => {
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/flights?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`);
+      const data = await res.json();
+      setResults(Array.isArray(data) ? data : []);
+      setSearched(true);
+    } catch {
+      setResults([]);
+      setSearched(true);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const getTierColor = (tier: string) => {
@@ -95,7 +120,7 @@ export default function FlightsPage() {
                     onChange={(e) => setOrigin(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    {INDIAN_CITIES.map((c) => (
+                    {citiesLoading ? <option>Loading...</option> : cities.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -107,7 +132,7 @@ export default function FlightsPage() {
                     onChange={(e) => setDestination(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    {INDIAN_CITIES.map((c) => (
+                    {citiesLoading ? <option>Loading...</option> : cities.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -148,12 +173,17 @@ export default function FlightsPage() {
         {/* Results */}
         <section className="py-8">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            {!searched ? (
+            {searching ? (
+              <div className="text-center py-16">
+                <Loader2 size={32} className="mx-auto animate-spin text-blue-600 mb-4" />
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Searching flights...</h2>
+                <p className="text-slate-500">Checking available routes between {origin} and {destination}.</p>
+              </div>
+            ) : !searched ? (
               <div className="text-center py-16">
                 <Plane size={48} className="mx-auto text-slate-300 mb-4" />
                 <h2 className="text-xl font-bold text-slate-900 mb-2">Search for flights</h2>
                 <p className="text-slate-500">Enter your travel details above to find the best flight deals.</p>
-                <p className="text-slate-400 text-sm mt-2">TBO integration coming soon — real-time flight search with Published Fare + 2% TDS pricing.</p>
               </div>
             ) : results.length === 0 ? (
               <div className="text-center py-16">
@@ -205,7 +235,7 @@ export default function FlightsPage() {
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getTierColor(flight.tier)}`}>
                             {flight.tier}
                           </span>
-                          <p className="text-2xl font-black text-slate-900 mt-1">₹{flight.price.toLocaleString()}</p>
+                          <p className="text-2xl font-black text-slate-900 mt-1">{formatCurrency(flight.price)}</p>
                           <p className="text-[10px] text-slate-400">per person</p>
                         </div>
                       </div>
@@ -274,7 +304,7 @@ export default function FlightsPage() {
                 <div className="pt-4 border-t border-slate-200">
                   <div className="flex justify-between items-center mb-4">
                     <div>
-                      <p className="text-3xl font-black font-mono text-slate-900">₹{selectedFlight.price.toLocaleString()}</p>
+                      <p className="text-3xl font-black font-mono text-slate-900">{formatCurrency(selectedFlight.price)}</p>
                       <p className="text-xs text-slate-400">per person • Published Fare + 2% TDS</p>
                     </div>
                   </div>

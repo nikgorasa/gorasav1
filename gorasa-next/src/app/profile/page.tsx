@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib";
 import { motion } from "motion/react";
 import {
   User, Mail, Shield, Star, CreditCard, Heart, Settings,
-  Plus, Trash2, Copy, Check, Gift, Plane, Building2, Palmtree
+  Plus, Trash2, Copy, Check, Gift, Plane, Building2, Palmtree, Loader2
 } from "lucide-react";
 
 const TABS = [
@@ -40,12 +41,14 @@ export default function ProfilePage() {
   const [showLogin, setShowLogin] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
 
   // Passengers state
-  const [passengers, setPassengers] = useState<Passenger[]>([
-    { id: "1", name: "Rajesh Sharma", relation: "Spouse", gender: "Male", passport: "J8294671" },
-    { id: "2", name: "Anita Sharma", relation: "Mother", gender: "Female", passport: "K1938472" },
-  ]);
+  const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [newPassenger, setNewPassenger] = useState({ name: "", relation: "", gender: "Male", passport: "" });
   const [showAddPassenger, setShowAddPassenger] = useState(false);
 
@@ -60,11 +63,67 @@ export default function ProfilePage() {
     sms: false,
   });
 
+  // Option lists state
+  const [mealOptions, setMealOptions] = useState<string[]>(["Vegetarian", "Non-Vegetarian", "Vegan", "Jain"]);
+  const [seatOptions, setSeatOptions] = useState<string[]>(["Window", "Aisle", "Middle"]);
+  const [hotelOptions, setHotelOptions] = useState<string[]>(["Deluxe Suite", "Presidential Suite", "Royal Suite", "Standard Room"]);
+  const [carrierOptions, setCarrierOptions] = useState<string[]>(["Indigo", "Air India", "SpiceJet", "Vistara"]);
+
   // Wishlist state
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([
-    { id: "1", name: "Maldives Water Villa", type: "International", price: 185000, imageUrl: "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400" },
-    { id: "2", name: "Swiss Alps Tour", type: "International", price: 145000, imageUrl: "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?w=400" },
-  ]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+
+  const saveProfile = async (data: Record<string, unknown>) => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-user-email": user?.email || "" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error("Save error:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.email) return;
+    setLoading(true);
+    fetch("/api/profile", { headers: { "x-user-email": user.email } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.passengers) setPassengers(data.passengers);
+        if (data.preferences) setPreferences(data.preferences);
+        if (data.wishlist) setWishlist(data.wishlist);
+        setEditName(data.name || "");
+        setEditEmail(data.email || "");
+      })
+      .catch((err) => console.error("Profile load error:", err))
+      .finally(() => setLoading(false));
+  }, [user?.email]);
+
+  useEffect(() => {
+    fetch("/api/preferences/options")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const byCategory: Record<string, string[]> = {};
+          data.forEach((opt: { category: string; value: string }) => {
+            if (!byCategory[opt.category]) byCategory[opt.category] = [];
+            byCategory[opt.category].push(opt.value);
+          });
+          if (byCategory.meal) setMealOptions(byCategory.meal);
+          if (byCategory.seat) setSeatOptions(byCategory.seat);
+          if (byCategory.hotel) setHotelOptions(byCategory.hotel);
+          if (byCategory.carrier) setCarrierOptions(byCategory.carrier);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const referralCode = user?.name ? `GORASA-${user.name.split(" ")[0].toUpperCase()}` : "GORASA-USER";
 
@@ -76,18 +135,24 @@ export default function ProfilePage() {
 
   const addPassenger = () => {
     if (newPassenger.name) {
-      setPassengers([...passengers, { ...newPassenger, id: Date.now().toString() }]);
+      const updated = [...passengers, { ...newPassenger, id: Date.now().toString() }];
+      setPassengers(updated);
+      saveProfile({ passengers: updated });
       setNewPassenger({ name: "", relation: "", gender: "Male", passport: "" });
       setShowAddPassenger(false);
     }
   };
 
   const removePassenger = (id: string) => {
-    setPassengers(passengers.filter((p) => p.id !== id));
+    const updated = passengers.filter((p) => p.id !== id);
+    setPassengers(updated);
+    saveProfile({ passengers: updated });
   };
 
   const removeWishlistItem = (id: string) => {
-    setWishlist(wishlist.filter((w) => w.id !== id));
+    const updated = wishlist.filter((w) => w.id !== id);
+    setWishlist(updated);
+    saveProfile({ wishlist: updated });
   };
 
   if (!user) {
@@ -106,6 +171,18 @@ export default function ProfilePage() {
               Sign In
             </button>
           </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Navbar onLoginClick={() => setShowLogin(true)} />
+        <main className="min-h-screen pt-16 bg-slate-50 flex items-center justify-center">
+          <Loader2 size={32} className="animate-spin text-brand-saffron" />
         </main>
         <Footer />
       </>
@@ -164,15 +241,28 @@ export default function ProfilePage() {
               {/* Details Tab */}
               {activeTab === "details" && (
                 <div className="space-y-6">
-                  <h2 className="text-lg font-bold text-slate-900">Personal Information</h2>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-slate-900">Personal Information</h2>
+                    {saved && <span className="text-xs text-green-600 font-medium">Saved!</span>}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Full Name</label>
-                      <p className="text-slate-900 font-medium mt-1">{user.name}</p>
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onBlur={() => editName !== user.name && saveProfile({ name: editName })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium mt-1"
+                      />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
-                      <p className="text-slate-900 font-medium mt-1">{user.email}</p>
+                      <input
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        onBlur={() => editEmail !== user.email && saveProfile({ email: editEmail })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium mt-1"
+                      />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Role</label>
@@ -184,11 +274,11 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Loyalty Points</label>
-                      <p className="text-slate-900 font-medium mt-1">{user.loyaltyPoints?.toLocaleString()}</p>
+                      <p className="text-slate-900 font-medium mt-1">{user.loyaltyPoints?.toLocaleString() ?? "0"}</p>
                     </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Wallet Balance</label>
-                      <p className="text-slate-900 font-medium mt-1">₹{user.walletBalance?.toLocaleString()}</p>
+                      <p className="text-slate-900 font-medium mt-1">{formatCurrency(user.walletBalance)}</p>
                     </div>
                   </div>
                   <div className="pt-4 border-t border-slate-200">
@@ -281,57 +371,65 @@ export default function ProfilePage() {
               {/* Preferences Tab */}
               {activeTab === "preferences" && (
                 <div className="space-y-6">
-                  <h2 className="text-lg font-bold text-slate-900">Travel Preferences</h2>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-slate-900">Travel Preferences</h2>
+                    {saved && <span className="text-xs text-green-600 font-medium">Saved!</span>}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Meal Preference</label>
                       <select
                         value={preferences.meal}
-                        onChange={(e) => setPreferences({ ...preferences, meal: e.target.value })}
+                        onChange={(e) => {
+                          const updated = { ...preferences, meal: e.target.value };
+                          setPreferences(updated);
+                          saveProfile({ preferences: updated });
+                        }}
                         className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                       >
-                        <option>Vegetarian</option>
-                        <option>Non-Vegetarian</option>
-                        <option>Vegan</option>
-                        <option>Jain</option>
+                        {mealOptions.map(o => <option key={o}>{o}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Seat Preference</label>
                       <select
                         value={preferences.seat}
-                        onChange={(e) => setPreferences({ ...preferences, seat: e.target.value })}
+                        onChange={(e) => {
+                          const updated = { ...preferences, seat: e.target.value };
+                          setPreferences(updated);
+                          saveProfile({ preferences: updated });
+                        }}
                         className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                       >
-                        <option>Window</option>
-                        <option>Aisle</option>
-                        <option>Middle</option>
+                        {seatOptions.map(o => <option key={o}>{o}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Hotel Suite Category</label>
                       <select
                         value={preferences.hotel}
-                        onChange={(e) => setPreferences({ ...preferences, hotel: e.target.value })}
+                        onChange={(e) => {
+                          const updated = { ...preferences, hotel: e.target.value };
+                          setPreferences(updated);
+                          saveProfile({ preferences: updated });
+                        }}
                         className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                       >
-                        <option>Deluxe Suite</option>
-                        <option>Presidential Suite</option>
-                        <option>Royal Suite</option>
-                        <option>Standard Room</option>
+                        {hotelOptions.map(o => <option key={o}>{o}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Preferred Carrier</label>
                       <select
                         value={preferences.carrier}
-                        onChange={(e) => setPreferences({ ...preferences, carrier: e.target.value })}
+                        onChange={(e) => {
+                          const updated = { ...preferences, carrier: e.target.value };
+                          setPreferences(updated);
+                          saveProfile({ preferences: updated });
+                        }}
                         className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                       >
-                        <option>Indigo</option>
-                        <option>Air India</option>
-                        <option>SpiceJet</option>
-                        <option>Vistara</option>
+                        {carrierOptions.map(o => <option key={o}>{o}</option>)}
                       </select>
                     </div>
                   </div>
@@ -348,7 +446,11 @@ export default function ProfilePage() {
                           <input
                             type="checkbox"
                             checked={preferences[n.key as keyof typeof preferences] as boolean}
-                            onChange={(e) => setPreferences({ ...preferences, [n.key]: e.target.checked })}
+                            onChange={(e) => {
+                              const updated = { ...preferences, [n.key]: e.target.checked };
+                              setPreferences(updated);
+                              saveProfile({ preferences: updated });
+                            }}
                             className="w-4 h-4 text-brand-saffron rounded"
                           />
                           <span className="text-sm text-slate-700">{n.label}</span>
@@ -375,7 +477,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="bg-green-600 rounded-2xl p-5 text-white">
                       <p className="text-xs opacity-80 uppercase tracking-wider">Wallet Balance</p>
-                      <p className="text-2xl font-bold mt-1">₹{user.walletBalance?.toLocaleString()}</p>
+                      <p className="text-2xl font-bold mt-1">{formatCurrency(user.walletBalance)}</p>
                     </div>
                   </div>
 
@@ -428,7 +530,7 @@ export default function ProfilePage() {
                           <div className="flex-1">
                             <p className="font-bold text-slate-900">{item.name}</p>
                             <p className="text-xs text-slate-500">{item.type}</p>
-                            <p className="text-sm font-bold text-brand-saffron mt-1">₹{item.price.toLocaleString()}</p>
+                            <p className="text-sm font-bold text-brand-saffron mt-1">{formatCurrency(item.price)}</p>
                           </div>
                           <button onClick={() => removeWishlistItem(item.id)} className="p-2 text-red-400 hover:text-red-600 cursor-pointer">
                             <Trash2 size={16} />

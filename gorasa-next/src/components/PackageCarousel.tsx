@@ -2,17 +2,30 @@
 
 import React, { useRef } from "react";
 import { motion } from "motion/react";
+import { formatCurrency } from "@/lib";
 import { ChevronLeft, ChevronRight, Check, Star, Tag } from "lucide-react";
-import type { TravelPackage } from "@/lib/packages-data";
+
+interface CarouselItem {
+  id: string;
+  title: string;
+  duration: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  imageUrl: string;
+  provider: string;
+  inclusions: string[];
+  category?: string;
+}
 
 interface PackageCarouselProps {
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-  items: TravelPackage[];
+  items: CarouselItem[];
   badgeColor: string;
   badgeText: string;
-  onInterested?: (pkg: TravelPackage) => void;
+  onInterested?: (pkg: CarouselItem) => void;
 }
 
 export default function PackageCarousel({
@@ -167,12 +180,12 @@ export default function PackageCarousel({
                     <div>
                       {pkg.originalPrice && (
                         <span className="text-xs text-slate-400 line-through block font-medium">
-                          ₹{pkg.originalPrice.toLocaleString()}
+                          {formatCurrency(pkg.originalPrice)}
                         </span>
                       )}
                       <div className="flex items-baseline">
                         <span className="text-2xl font-black font-mono text-slate-900">
-                          ₹{pkg.price.toLocaleString()}
+                          {formatCurrency(pkg.price)}
                         </span>
                         <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">
                           /Pax

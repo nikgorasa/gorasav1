@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
+import { formatCurrency } from "@/lib";
 import { Building2, Search, MapPin, X, Star, Wifi, Coffee, Car, Loader2, ChevronDown, ChevronUp, Bed, Users } from "lucide-react";
-import { INDIAN_CITIES } from "@/lib/travel-data";
 import type { TBODisplayHotel, TBODisplayRoom } from "@/lib/tbo-hotel-types";
 
 const STAR_LABELS: Record<string, string> = {
@@ -38,6 +38,16 @@ export default function HotelsPage() {
   const [selectedRoom, setSelectedRoom] = useState<TBODisplayRoom | null>(null);
   const [sessionId, setSessionId] = useState("");
   const [error, setError] = useState("");
+  const [cities, setCities] = useState<string[]>([]);
+  const [citiesLoading, setCitiesLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/cities")
+      .then((r) => r.json())
+      .then((data) => setCities(Array.isArray(data) ? data.map((c: { name: string }) => c.name) : []))
+      .catch(() => setCities(["Goa", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Maldives", "Dubai", "Singapore", "Bangkok", "Kuala Lumpur"]))
+      .finally(() => setCitiesLoading(false));
+  }, []);
 
   const handleSearch = async () => {
     if (!location) return;
@@ -156,7 +166,7 @@ export default function HotelsPage() {
                     onChange={(e) => setLocation(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                   >
-                    {INDIAN_CITIES.concat(["Maldives", "Dubai", "Singapore", "Bangkok", "Kuala Lumpur"]).map((c) => (
+                    {citiesLoading ? <option>Loading...</option> : cities.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -280,7 +290,7 @@ export default function HotelsPage() {
                         <p className="text-xs text-slate-400 mt-2 line-clamp-2">{hotel.description}</p>
                         <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
                           <div>
-                            <p className="text-xl font-black font-mono text-slate-900">₹{hotel.price.toLocaleString()}</p>
+                            <p className="text-xl font-black font-mono text-slate-900">{formatCurrency(hotel.price)}</p>
                             <p className="text-[10px] text-slate-400">per night</p>
                           </div>
                           <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 cursor-pointer">
@@ -391,8 +401,8 @@ export default function HotelsPage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-lg font-black font-mono text-slate-900">₹{room.totalFare.toLocaleString()}</p>
-                              <p className="text-[10px] text-slate-400">+ ₹{room.roomTax.toLocaleString()} tax</p>
+                              <p className="text-lg font-black font-mono text-slate-900">{formatCurrency(room.totalFare)}</p>
+                              <p className="text-[10px] text-slate-400">+ {formatCurrency(room.roomTax)} tax</p>
                             </div>
                           </div>
                         </div>
@@ -407,15 +417,15 @@ export default function HotelsPage() {
                     <div className="bg-emerald-50 rounded-xl p-4 mb-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm text-slate-600">Room Fare</span>
-                        <span className="font-mono font-bold">₹{selectedRoom.roomFare.toLocaleString()}</span>
+                        <span className="font-mono font-bold">{formatCurrency(selectedRoom.roomFare)}</span>
                       </div>
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm text-slate-600">Taxes & Fees</span>
-                        <span className="font-mono font-bold">₹{selectedRoom.roomTax.toLocaleString()}</span>
+                        <span className="font-mono font-bold">{formatCurrency(selectedRoom.roomTax)}</span>
                       </div>
                       <div className="flex justify-between items-center pt-2 border-t border-emerald-200">
                         <span className="font-bold text-slate-900">Total per night</span>
-                        <span className="font-mono font-black text-xl text-emerald-700">₹{selectedRoom.totalFare.toLocaleString()}</span>
+                        <span className="font-mono font-black text-xl text-emerald-700">{formatCurrency(selectedRoom.totalFare)}</span>
                       </div>
                     </div>
                     <button

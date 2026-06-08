@@ -11,18 +11,11 @@ interface LoginModalProps {
 }
 
 interface DemoUser {
+  id: string;
   email: string;
   name: string;
   role: string;
 }
-
-const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
-  SUPER_ADMIN: { label: "Super Admin", color: "bg-orange-500" },
-  ADMIN: { label: "Admin", color: "bg-blue-500" },
-  SALES: { label: "Sales", color: "bg-green-500" },
-  CORPORATE_USER: { label: "Corporate", color: "bg-purple-500" },
-  CUSTOMER: { label: "Customer", color: "bg-slate-500" },
-};
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
@@ -33,6 +26,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
+  const [roleConfig, setRoleConfig] = useState<Record<string, { label: string; color: string }>>({});
+
+  useEffect(() => {
+    fetch("/api/roles")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map: Record<string, { label: string; color: string }> = {};
+          data.forEach((r: { id: string; label: string; color: string }) => { map[r.id] = { label: r.label, color: r.color }; });
+          setRoleConfig(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -41,17 +48,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         .then((data) => {
           if (Array.isArray(data)) setDemoUsers(data);
         })
-        .catch(() => {
-          // Fallback to hardcoded if API fails
-          setDemoUsers([
-            { email: "hmittal@gorasa.in", name: "Harsh Mittal", role: "SUPER_ADMIN" },
-            { email: "admin@gorasa.in", name: "Priya Sharma", role: "ADMIN" },
-            { email: "sales@gorasa.in", name: "Rahul Verma", role: "SALES" },
-            { email: "neha@corp.in", name: "Neha Gupta", role: "CORPORATE_USER" },
-            { email: "amit@example.com", name: "Amit Patel", role: "CUSTOMER" },
-            { email: "priya@example.com", name: "Priya Singh", role: "CUSTOMER" },
-          ]);
-        });
+        .catch(() => setDemoUsers([
+          { id: "1", name: "Nikhil Gorasa", email: "nikhil@gorasa.com", role: "SUPER_ADMIN" },
+          { id: "2", name: "Priya Sharma", email: "priya@gorasa.com", role: "ADMIN" },
+          { id: "3", name: "Rahul Verma", email: "rahul@gorasa.com", role: "SALES" },
+          { id: "4", name: "Ananya Patel", email: "ananya@gorasa.com", role: "CORPORATE_USER" },
+          { id: "5", name: "Vikram Singh", email: "vikram@gorasa.com", role: "CUSTOMER" },
+          { id: "6", name: "Demo User", email: "demo@gorasa.com", role: "CUSTOMER" },
+        ]));
     }
   }, [isOpen]);
 
@@ -229,7 +233,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <p className="text-xs text-slate-400 mb-3 text-center font-medium">Quick demo access</p>
             <div className="grid grid-cols-3 gap-2">
               {demoUsers.map((demo) => {
-                const config = ROLE_CONFIG[demo.role] || ROLE_CONFIG.CUSTOMER;
+                const config = roleConfig[demo.role] || roleConfig.CUSTOMER;
                 return (
                   <button
                     key={demo.email}

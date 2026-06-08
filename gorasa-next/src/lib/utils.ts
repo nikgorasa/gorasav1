@@ -19,3 +19,16 @@ export function formatDate(date: string | Date): string {
     year: "numeric",
   }).format(new Date(date));
 }
+
+export function formatTravelDates(travelDates?: string): string {
+  if (!travelDates) return "N/A";
+  try {
+    const parsed = JSON.parse(travelDates);
+    if (parsed.from && parsed.to) {
+      return `${formatDate(parsed.from)} - ${formatDate(parsed.to)}`;
+    }
+    return travelDates;
+  } catch {
+    return travelDates;
+  }
+}

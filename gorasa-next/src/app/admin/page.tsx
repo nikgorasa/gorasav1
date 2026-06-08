@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { formatCurrency } from "@/lib";
 import { Users, Package, BarChart3, DollarSign, TrendingUp, Activity } from "lucide-react";
 
 interface DashboardStats {
@@ -42,7 +43,7 @@ export default function AdminDashboard() {
     { label: "Total Leads", value: stats?.totalLeads || 0, icon: BarChart3, color: "bg-purple-500" },
     { label: "Total Bookings", value: stats?.totalBookings || 0, icon: Activity, color: "bg-orange-500" },
     { label: "Pending Leads", value: stats?.pendingLeads || 0, icon: TrendingUp, color: "bg-yellow-500" },
-    { label: "Total Revenue", value: `₹${(stats?.totalRevenue || 0).toLocaleString()}`, icon: DollarSign, color: "bg-green-500" },
+    { label: "Total Revenue", value: formatCurrency(stats?.totalRevenue ?? 0), icon: DollarSign, color: "bg-green-500" },
   ];
 
   return (

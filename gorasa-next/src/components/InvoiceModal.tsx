@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { formatCurrency, formatDate, formatTravelDates } from "@/lib";
 import { X, Printer, Download } from "lucide-react";
 
 interface Booking {
@@ -74,11 +75,7 @@ export default function InvoiceModal({ isOpen, onClose, booking, userName, userE
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider">Invoice No</p>
                 <p className="font-mono font-bold text-slate-900">INV-{booking.pnr || "GR123456"}</p>
                 <p className="text-xs text-slate-500 mt-1">
-                  {new Date(booking.bookedAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {formatDate(booking.bookedAt)}
                 </p>
               </div>
             </div>
@@ -92,10 +89,10 @@ export default function InvoiceModal({ isOpen, onClose, booking, userName, userE
                     <p className="text-sm text-slate-500">{booking.providerOrAirline}</p>
                   )}
                   <p className="text-xs text-slate-400 mt-1">
-                    {booking.travelDates || "N/A"} • {booking.paxCount} Pax
+                    {formatTravelDates(booking.travelDates)} • {booking.paxCount} Pax
                   </p>
                 </div>
-                <p className="font-bold text-slate-900">₹{basePrice.toLocaleString()}</p>
+                <p className="font-bold text-slate-900">{formatCurrency(basePrice)}</p>
               </div>
             </div>
 
@@ -103,25 +100,25 @@ export default function InvoiceModal({ isOpen, onClose, booking, userName, userE
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">Base Price</span>
-                <span className="text-slate-900">₹{basePrice.toLocaleString()}</span>
+                <span className="text-slate-900">{formatCurrency(basePrice)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-green-600">Discount</span>
-                  <span className="text-green-600">-₹{discount.toLocaleString()}</span>
+                  <span className="text-green-600">-{formatCurrency(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">Subtotal</span>
-                <span className="text-slate-900">₹{subtotal.toLocaleString()}</span>
+                <span className="text-slate-900">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">GST (5%)</span>
-                <span className="text-slate-900">₹{gst.toLocaleString()}</span>
+                <span className="text-slate-900">{formatCurrency(gst)}</span>
               </div>
               <div className="border-t border-slate-200 pt-2 flex justify-between">
                 <span className="font-bold text-slate-900">Total</span>
-                <span className="font-bold text-xl text-slate-900">₹{total.toLocaleString()}</span>
+                <span className="font-bold text-xl text-slate-900">{formatCurrency(total)}</span>
               </div>
             </div>
 
