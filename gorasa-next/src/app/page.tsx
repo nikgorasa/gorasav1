@@ -105,9 +105,8 @@ export default async function HomePage() {
           .order("sortorder", { ascending: true }),
         supabase
           .from("User")
-          .select("company", { count: "exact", head: true })
-          .not("company", "is", null)
-          .neq("company", ""),
+          .select("companyId", { count: "exact", head: true })
+          .not("companyId", "is", null),
       ]);
 
     const carouselPackages = groupByCategory(packagesResult.data || []);
@@ -126,8 +125,8 @@ export default async function HomePage() {
     }));
 
     const uniqueCompanies = new Set(
-      (packagesResult.data || [])
-        .map((p: Record<string, unknown>) => p.provider as string)
+      (dashboardResult.data || [])
+        .map((u: Record<string, unknown>) => u.companyId as string)
         .filter(Boolean)
     );
     const stats = {
