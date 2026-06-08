@@ -81,11 +81,11 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/packages/carousel").then((r) => r.json()),
-      fetch("/api/testimonials").then((r) => r.json()),
+      fetch("/api/packages/carousel").then((r) => r.json()).catch((err) => { console.error("carousel fetch failed:", err); return { grouped: {} }; }),
+      fetch("/api/testimonials").then((r) => r.json()).catch((err) => { console.error("testimonials fetch failed:", err); return []; }),
       fetch("/api/dashboard").then((r) => r.json()).catch(() => ({})),
-      fetch("/api/categories").then((r) => r.json()).catch(() => ({})),
-      fetch("/api/value-propositions").then((r) => r.json()).catch(() => []) as Promise<{ icon: string; title: string; description: string }[]>,
+      fetch("/api/categories").then((r) => r.json()).catch((err) => { console.error("categories fetch failed:", err); return []; }),
+      fetch("/api/value-propositions").then((r) => r.json()).catch((err) => { console.error("value-propositions fetch failed:", err); return []; }),
     ])
       .then(([pkgData, testimonialData, dashboardData, categoriesData, valuePropsData]) => {
         if (pkgData.grouped) setCarouselPackages(pkgData.grouped);
@@ -104,7 +104,7 @@ export default function HomePage() {
         }
         if (Array.isArray(valuePropsData)) setValueProps(valuePropsData);
       })
-      .catch(() => {})
+      .catch((err) => { console.error("Promise.all failed:", err); })
       .finally(() => setLoading(false));
   }, []);
 
