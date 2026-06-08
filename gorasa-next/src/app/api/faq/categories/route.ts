@@ -6,9 +6,14 @@ export async function GET() {
     const { data, error } = await supabase
       .from("FaqCategory")
       .select("*")
-      .eq("isActive", true)
-      .order("sortOrder", { ascending: true });
+      .eq("isactive", true)
+      .order("sortorder", { ascending: true });
     if (error) return NextResponse.json({ error: "Failed" }, { status: 500 });
-    return NextResponse.json(data || []);
+    const mapped = (data || []).map((row: Record<string, unknown>) => ({
+      ...row,
+      isActive: row.isactive,
+      sortOrder: row.sortorder,
+    }));
+    return NextResponse.json(mapped);
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
 }
