@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
@@ -19,18 +19,15 @@ import {
   Palmtree,
 } from "lucide-react";
 
-const NAV_ITEMS = [
-  { href: "/", label: "Explore", icon: Compass },
-  { href: "/trips", label: "Reservation Desk", icon: Ticket },
-  { href: "/support", label: "AI Support Desk", icon: MessageSquare },
-  { href: "/flights", label: "Flights", icon: Plane },
-  { href: "/hotels", label: "Hotels", icon: Building2 },
-  { href: "/holidays", label: "Plan My Holiday", icon: Palmtree },
-];
-
-const ADMIN_ITEMS = [
-  { href: "/admin", label: "Control Tower", icon: TrendingUp },
-];
+const NAV_ICONS: Record<string, React.ReactNode> = {
+  Compass: <Compass size={18} />,
+  Ticket: <Ticket size={18} />,
+  MessageSquare: <MessageSquare size={18} />,
+  Plane: <Plane size={18} />,
+  Building2: <Building2 size={18} />,
+  Palmtree: <Palmtree size={18} />,
+  TrendingUp: <TrendingUp size={18} />,
+};
 
 export default function Navbar({
   onLoginClick,
@@ -39,6 +36,20 @@ export default function Navbar({
 }) {
   const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navItems, setNavItems] = useState<{ href: string; label: string; icon: string }[]>([]);
+  const [adminItems, setAdminItems] = useState<{ href: string; label: string; icon: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/navigation")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setNavItems(data.filter((i: { section: string }) => i.section === "main"));
+          setAdminItems(data.filter((i: { section: string }) => i.section === "admin"));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
@@ -53,7 +64,7 @@ export default function Navbar({
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-6">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -64,7 +75,7 @@ export default function Navbar({
                   whileTap={{ scale: 0.95 }}
                   className="flex items-center gap-1"
                 >
-                  <item.icon className="w-4 h-4" />
+                  {NAV_ICONS[item.icon] || item.icon}
                   <span>{item.label}</span>
                 </motion.span>
               </Link>
@@ -164,14 +175,14 @@ export default function Navbar({
             className="md:hidden bg-white border-b border-slate-200 overflow-hidden"
           >
             <div className="px-4 py-3 space-y-1">
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100"
                 >
-                  <item.icon size={18} />
+                  {NAV_ICONS[item.icon] || item.icon}
                   {item.label}
                 </Link>
               ))}
@@ -191,14 +202,14 @@ export default function Navbar({
                   <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     Admin
                   </p>
-                  {ADMIN_ITEMS.map((item) => (
+                  {adminItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100"
                     >
-                      <item.icon size={18} />
+                      {NAV_ICONS[item.icon] || item.icon}
                       {item.label}
                     </Link>
                   ))}

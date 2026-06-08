@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Tag, Plus, Trash2, ToggleLeft, ToggleRight, Gift, Star, Coffee, Plane } from "lucide-react";
+import { formatCurrency } from "@/lib";
 
 interface PromoCode {
   id: string;
@@ -11,18 +12,12 @@ interface PromoCode {
   type: "flat" | "percentage";
   description: string;
   minBookingValue: number;
-  active: boolean;
+  isActive: boolean;
 }
 
-const INITIAL_PROMOS: PromoCode[] = [
-  { id: "1", code: "GORASA10", discountValue: 10, type: "percentage", description: "10% off on all bookings", minBookingValue: 5000, active: true },
-  { id: "2", code: "FLAT500", discountValue: 500, type: "flat", description: "₹500 off on flights", minBookingValue: 3000, active: true },
-  { id: "3", code: "WELCOME200", discountValue: 200, type: "flat", description: "Welcome bonus for new users", minBookingValue: 0, active: false },
-  { id: "4", code: "HOLIDAY15", discountValue: 15, type: "percentage", description: "15% off on holiday packages", minBookingValue: 10000, active: true },
-];
-
 export default function PromoCMSPage() {
-  const [promos, setPromos] = useState<PromoCode[]>(INITIAL_PROMOS);
+  const [promos, setPromos] = useState<PromoCode[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [newPromo, setNewPromo] = useState({
     code: "",
@@ -32,28 +27,70 @@ export default function PromoCMSPage() {
     minBookingValue: 0,
   });
 
-  const togglePromo = (id: string) => {
-    setPromos(promos.map((p) => (p.id === id ? { ...p, active: !p.active } : p)));
-  };
-
-  const deletePromo = (id: string) => {
-    setPromos(promos.filter((p) => p.id !== id));
-  };
-
-  const createPromo = () => {
-    if (newPromo.code && newPromo.discountValue > 0) {
-      setPromos([
-        ...promos,
-        {
-          id: Date.now().toString(),
-          ...newPromo,
-          active: true,
-        },
-      ]);
-      setNewPromo({ code: "", discountValue: 0, type: "flat", description: "", minBookingValue: 0 });
-      setShowCreate(false);
+  const fetchPromos = async () => {
+    try {
+      const res = await fetch("/api/promos");
+      const data = await res.json();
+      setPromos(data || []);
+    } catch (err) {
+      console.error("Failed to fetch promos:", err);
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => { fetchPromos(); }, []);
+
+  const togglePromo = async (id: string) => {
+    const promo = promos.find((p) => p.id === id);
+    if (!promo) return;
+    try {
+      const res = await fetch(`/api/promos/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !promo.isActive }),
+      });
+      if (res.ok) fetchPromos();
+    } catch (err) {
+      console.error("Failed to toggle promo:", err);
+    }
+  };
+
+  const deletePromo = async (id: string) => {
+    try {
+      const res = await fetch(`/api/promos/${id}`, { method: "DELETE" });
+      if (res.ok) fetchPromos();
+    } catch (err) {
+      console.error("Failed to delete promo:", err);
+    }
+  };
+
+  const createPromo = async () => {
+    if (newPromo.code && newPromo.discountValue > 0) {
+      try {
+        const res = await fetch("/api/promos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newPromo),
+        });
+        if (res.ok) {
+          setNewPromo({ code: "", discountValue: 0, type: "flat", description: "", minBookingValue: 0 });
+          setShowCreate(false);
+          fetchPromos();
+        }
+      } catch (err) {
+        console.error("Failed to create promo:", err);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-saffron" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -68,7 +105,6 @@ export default function PromoCMSPage() {
         </button>
       </div>
 
-      {/* Create Form */}
       {showCreate && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -146,7 +182,6 @@ export default function PromoCMSPage() {
         </motion.div>
       )}
 
-      {/* Promo List */}
       <div className="space-y-3">
         {promos.map((promo, i) => (
           <motion.div
@@ -155,15 +190,15 @@ export default function PromoCMSPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
             className={`bg-white rounded-2xl p-5 border transition-all ${
-              promo.active ? "border-slate-200" : "border-slate-100 opacity-60"
+              promo.isActive ? "border-slate-200" : "border-slate-100 opacity-60"
             }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  promo.active ? "bg-green-50" : "bg-slate-100"
+                  promo.isActive ? "bg-green-50" : "bg-slate-100"
                 }`}>
-                  <Tag size={20} className={promo.active ? "text-green-600" : "text-slate-400"} />
+                  <Tag size={20} className={promo.isActive ? "text-green-600" : "text-slate-400"} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -176,7 +211,7 @@ export default function PromoCMSPage() {
                   </div>
                   <p className="text-sm text-slate-500">{promo.description}</p>
                   {promo.minBookingValue > 0 && (
-                    <p className="text-xs text-slate-400 mt-1">Min booking: ₹{promo.minBookingValue.toLocaleString()}</p>
+                    <p className="text-xs text-slate-400 mt-1">Min booking: {formatCurrency(promo.minBookingValue)}</p>
                   )}
                 </div>
               </div>
@@ -185,7 +220,7 @@ export default function PromoCMSPage() {
                   onClick={() => togglePromo(promo.id)}
                   className="cursor-pointer"
                 >
-                  {promo.active ? (
+                  {promo.isActive ? (
                     <ToggleRight size={32} className="text-green-500" />
                   ) : (
                     <ToggleLeft size={32} className="text-slate-300" />
@@ -203,18 +238,17 @@ export default function PromoCMSPage() {
         ))}
       </div>
 
-      {/* Stats */}
       <div className="mt-6 grid grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-4 border border-slate-200 text-center">
           <p className="text-2xl font-bold text-slate-900">{promos.length}</p>
           <p className="text-xs text-slate-500">Total Promos</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-200 text-center">
-          <p className="text-2xl font-bold text-green-600">{promos.filter((p) => p.active).length}</p>
+          <p className="text-2xl font-bold text-green-600">{promos.filter((p) => p.isActive).length}</p>
           <p className="text-xs text-slate-500">Active</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-200 text-center">
-          <p className="text-2xl font-bold text-slate-400">{promos.filter((p) => !p.active).length}</p>
+          <p className="text-2xl font-bold text-slate-400">{promos.filter((p) => !p.isActive).length}</p>
           <p className="text-xs text-slate-500">Inactive</p>
         </div>
       </div>

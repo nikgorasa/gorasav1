@@ -4,11 +4,52 @@ import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
+import { useAuth } from "@/hooks/useAuth";
 import { motion } from "motion/react";
-import { Palmtree, Send, MapPin, Calendar, Users, MessageSquare } from "lucide-react";
+import { Palmtree, Send, MapPin, Calendar, Users, MessageSquare, CheckCircle } from "lucide-react";
 
 export default function HolidaysPage() {
+  const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+  const [destination, setDestination] = useState("");
+  const [days, setDays] = useState("");
+  const [travelers, setTravelers] = useState("");
+  const [requests, setRequests] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!destination || !days || !travelers) {
+      setError("Please fill in destination, days, and travelers");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destination,
+          travelerName: user?.name || "Guest",
+          travelerEmail: user?.email || "guest@example.com",
+          travelerPhone: "",
+          numberOfDays: parseInt(days),
+          inclusions: JSON.stringify([]),
+          specificDemands: requests,
+          notes: `Plan My Holiday inquiry: ${destination}, ${days} days, ${travelers} travelers`,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to submit");
+      setSubmitted(true);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -40,49 +81,81 @@ export default function HolidaysPage() {
               transition={{ delay: 0.2 }}
               className="bg-white rounded-2xl p-6 shadow-xl"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="relative">
-                  <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Destination (e.g., Bali, Maldives, Goa)"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-saffron focus:border-transparent outline-none"
-                  />
+              {submitted ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-green-100 flex items-center justify-center">
+                    <CheckCircle size={32} className="text-green-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 mb-2">Inquiry Submitted!</h2>
+                  <p className="text-slate-500">
+                    Our travel experts will reach out within 24 hours with a personalized itinerary.
+                  </p>
                 </div>
-                <div className="relative">
-                  <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="number"
-                    placeholder="Number of days"
-                    min="1"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-saffron focus:border-transparent outline-none"
-                  />
-                </div>
-                <div className="relative">
-                  <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="number"
-                    placeholder="Number of travelers"
-                    min="1"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-saffron focus:border-transparent outline-none"
-                  />
-                </div>
-                <div className="relative">
-                  <MessageSquare size={16} className="absolute left-3 top-3 text-slate-400" />
-                  <textarea
-                    placeholder="Special requests or inclusions (e.g., honeymoon setup, adventure activities)"
-                    rows={1}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-saffron focus:border-transparent outline-none resize-none"
-                  />
-                </div>
-              </div>
-              <button className="w-full md:w-auto px-8 py-3 bg-brand-saffron text-white rounded-xl font-bold hover:bg-brand-burnt transition-colors flex items-center justify-center gap-2 cursor-pointer">
-                <Send size={18} />
-                Submit Inquiry
-              </button>
-              <p className="mt-3 text-xs text-slate-500">
-                * Pricing displayed as &ldquo;Starting From ₹XX,XXX* Per Person on Twin Sharing Basis&rdquo;
-              </p>
+              ) : (
+                <form onSubmit={handleSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="relative">
+                      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={destination}
+                        onChange={(e) => setDestination(e.target.value)}
+                        placeholder="Destination (e.g., Bali, Maldives, Goa)"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-saffron focus:border-transparent outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="relative">
+                      <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="number"
+                        value={days}
+                        onChange={(e) => setDays(e.target.value)}
+                        placeholder="Number of days"
+                        min="1"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-saffron focus:border-transparent outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="relative">
+                      <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="number"
+                        value={travelers}
+                        onChange={(e) => setTravelers(e.target.value)}
+                        placeholder="Number of travelers"
+                        min="1"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-saffron focus:border-transparent outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="relative">
+                      <MessageSquare size={16} className="absolute left-3 top-3 text-slate-400" />
+                      <textarea
+                        value={requests}
+                        onChange={(e) => setRequests(e.target.value)}
+                        placeholder="Special requests or inclusions (e.g., honeymoon setup, adventure activities)"
+                        rows={1}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-saffron focus:border-transparent outline-none resize-none"
+                      />
+                    </div>
+                  </div>
+                  {error && (
+                    <p className="text-red-500 text-sm mb-3">{error}</p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full md:w-auto px-8 py-3 bg-brand-saffron text-white rounded-xl font-bold hover:bg-brand-burnt transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <Send size={18} />
+                    {loading ? "Submitting..." : "Submit Inquiry"}
+                  </button>
+                  <p className="mt-3 text-xs text-slate-500">
+                    * Pricing displayed as &ldquo;Starting From ₹XX,XXX* Per Person on Twin Sharing Basis&rdquo;
+                  </p>
+                </form>
+              )}
             </motion.div>
           </div>
         </section>

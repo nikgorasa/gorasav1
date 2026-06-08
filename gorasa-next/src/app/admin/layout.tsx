@@ -6,17 +6,18 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
 import Link from "next/link";
-import { LayoutDashboard, Users, Package, BarChart3, Settings, Tag, Star, Building2 } from "lucide-react";
+import { LayoutDashboard, BarChart3, Package, Tag, Star, Building2, Users, Settings } from "lucide-react";
 
-const ADMIN_NAV = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/leads", label: "Leads", icon: BarChart3 },
-  { href: "/admin/packages", label: "Packages", icon: Package },
-  { href: "/admin/promos", label: "Promo Desk", icon: Tag },
-  { href: "/admin/loyalty", label: "Loyalty Club", icon: Star },
-  { href: "/admin/b2b", label: "B2B Registry", icon: Building2 },
-  { href: "/admin/users", label: "Users", icon: Users },
-];
+const ADMIN_ICONS: Record<string, React.ReactNode> = {
+  LayoutDashboard: <LayoutDashboard size={18} />,
+  BarChart3: <BarChart3 size={18} />,
+  Package: <Package size={18} />,
+  Tag: <Tag size={18} />,
+  Star: <Star size={18} />,
+  Building2: <Building2 size={18} />,
+  Users: <Users size={18} />,
+  Settings: <Settings size={18} />,
+};
 
 export default function AdminLayout({
   children,
@@ -26,6 +27,14 @@ export default function AdminLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
   const [showLogin, setShowLogin] = useState(false);
+  const [adminNav, setAdminNav] = useState<{ href: string; label: string; icon: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/navigation")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setAdminNav(data.filter((i: { section: string }) => i.section === "admin")); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -77,13 +86,13 @@ export default function AdminLayout({
                 <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Admin Panel
                 </p>
-                {ADMIN_NAV.map((item) => (
+                {adminNav.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                   >
-                    <item.icon size={18} />
+                    {ADMIN_ICONS[item.icon] || item.icon}
                     {item.label}
                   </Link>
                 ))}

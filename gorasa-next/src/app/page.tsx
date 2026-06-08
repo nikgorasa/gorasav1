@@ -25,64 +25,87 @@ import {
   Award,
   User,
   CreditCard,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  TOP_DEALS,
-  WEEKEND_DEALS,
-  INTERNATIONAL_PACKAGES,
-  ALL_INCLUSIVE_DEALS,
-  BEACH_VACATIONS,
-  GORASA_SELECT,
-  type TravelPackage,
-} from "@/lib/packages-data";
 
-const VALUE_PROPS = [
-  { icon: Shield, title: "Verified Rates", desc: "Best price guarantee on every booking" },
-  { icon: Clock, title: "24/7 Support", desc: "Concierge-led premium assistance" },
-  { icon: Star, title: "Loyalty Rewards", desc: "Earn points on every trip" },
-  { icon: Headphones, title: "WhatsApp Concierge", desc: "Instant support via WhatsApp" },
-];
+interface PackageItem {
+  id: string;
+  title: string;
+  duration: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  imageUrl: string;
+  provider: string;
+  inclusions: string[];
+}
 
+interface TestimonialItem {
+  id: string;
+  name: string;
+  role: string;
+  text: string;
+  rating: number;
+}
 const SEARCH_TABS = [
   { id: "flights", label: "Flights", icon: Plane, href: "/flights", color: "from-blue-500 to-blue-600" },
   { id: "hotels", label: "Hotels", icon: Building2, href: "/hotels", color: "from-emerald-500 to-emerald-600" },
   { id: "holidays", label: "Plan My Holiday", icon: Palmtree, href: "/holidays", color: "from-brand-saffron to-brand-burnt" },
 ];
 
-const TESTIMONIALS = [
-  { name: "Priya Sharma", role: "Frequent Traveler", text: "GoRASA made our Maldives trip absolutely magical. The attention to detail was incredible.", rating: 5 },
-  { name: "Rahul Mehta", role: "Corporate Client", text: "Best corporate travel management we've used. Seamless booking and premium support.", rating: 5 },
-  { name: "Anita Desai", role: "Honeymooner", text: "The Udaipur package exceeded all expectations. Every moment was perfectly curated.", rating: 5 },
-];
-
 export default function HomePage() {
   const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
-  const [backendPackages, setBackendPackages] = useState<TravelPackage[]>([]);
-  const [inquiryPackage, setInquiryPackage] = useState<TravelPackage | null>(null);
+  const [carouselPackages, setCarouselPackages] = useState<Record<string, PackageItem[]>>({});
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [inquiryPackage, setInquiryPackage] = useState<PackageItem | null>(null);
+  const [stats, setStats] = useState({ companies: "500+", bookings: "50K+", rating: "4.9" });
+  const [categories, setCategories] = useState<Record<string, { title: string; subtitle: string; icon: string; badgeColor: string; badgeText: string }>>({});
+  const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
+  const [valueProps, setValueProps] = useState<{ icon: string; title: string; description: string }[]>([]);
+
+  const ICON_MAP: Record<string, React.ReactNode> = {
+    Shield: <Shield className="w-6 h-6" />,
+    Clock: <Clock className="w-6 h-6" />,
+    Star: <Star className="w-6 h-6" />,
+    Headphones: <Headphones className="w-6 h-6" />,
+    TrendingUp: <TrendingUp className="w-3.5 h-3.5 text-orange-600" />,
+    Calendar: <Calendar className="w-3.5 h-3.5 text-emerald-600" />,
+    Compass: <Compass className="w-3.5 h-3.5 text-blue-600" />,
+    Sparkles: <Sparkles className="w-3.5 h-3.5 text-purple-600" />,
+    Sun: <Sun className="w-3.5 h-3.5 text-amber-600" />,
+    Award: <Award className="w-3.5 h-3.5 text-rose-600" />,
+  };
 
   useEffect(() => {
-    fetch("/api/packages")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setBackendPackages(
-            data.map((p: any) => ({
-              id: p.id,
-              title: p.title,
-              duration: p.duration,
-              price: p.price,
-              originalPrice: p.originalPrice,
-              rating: p.rating,
-              imageUrl: p.images ? JSON.parse(p.images)[0] : "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=800&q=80",
-              provider: p.provider,
-              inclusions: p.inclusions ? JSON.parse(p.inclusions) : [],
-            }))
-          );
+    Promise.all([
+      fetch("/api/packages/carousel").then((r) => r.json()),
+      fetch("/api/testimonials").then((r) => r.json()),
+      fetch("/api/dashboard").then((r) => r.json()).catch(() => ({})),
+      fetch("/api/categories").then((r) => r.json()).catch(() => ({})),
+      fetch("/api/value-propositions").then((r) => r.json()).catch(() => []) as Promise<{ icon: string; title: string; description: string }[]>,
+    ])
+      .then(([pkgData, testimonialData, dashboardData, categoriesData, valuePropsData]) => {
+        if (pkgData.grouped) setCarouselPackages(pkgData.grouped);
+        if (Array.isArray(testimonialData)) setTestimonials(testimonialData);
+        if (dashboardData.totalCompanies) setStats({ companies: `${dashboardData.totalCompanies}+`, bookings: `${dashboardData.totalBookings}+`, rating: "4.9" });
+
+        if (Array.isArray(categoriesData)) {
+          const catMap: Record<string, { title: string; subtitle: string; icon: string; badgeColor: string; badgeText: string }> = {};
+          const order: string[] = [];
+          categoriesData.forEach((cat: { id: string; title: string; subtitle: string; icon: string; badgeColor: string; badgeText: string; sortOrder: number }) => {
+            catMap[cat.id] = { title: cat.title, subtitle: cat.subtitle, icon: cat.icon, badgeColor: cat.badgeColor, badgeText: cat.badgeText };
+            order.push(cat.id);
+          });
+          setCategories(catMap);
+          setCategoryOrder(order);
         }
+        if (Array.isArray(valuePropsData)) setValueProps(valuePropsData);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -158,7 +181,7 @@ export default function HomePage() {
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {VALUE_PROPS.map((prop, i) => (
+              {valueProps.map((prop, i) => (
                 <motion.div
                   key={prop.title}
                   initial={{ opacity: 0, y: 20 }}
@@ -168,10 +191,10 @@ export default function HomePage() {
                   className="text-center p-4"
                 >
                   <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-orange-50 flex items-center justify-center">
-                    <prop.icon size={24} className="text-brand-saffron" />
+                    {ICON_MAP[prop.icon]}
                   </div>
                   <h3 className="font-bold text-slate-900 text-sm mb-1">{prop.title}</h3>
-                  <p className="text-slate-500 text-xs">{prop.desc}</p>
+                  <p className="text-slate-500 text-xs">{prop.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -181,84 +204,30 @@ export default function HomePage() {
         {/* Package Carousels */}
         <section className="py-12 bg-slate-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Live from Database */}
-            {backendPackages.length > 0 && (
-              <PackageCarousel
-                title="Live from Database"
-                subtitle="Packages loaded from the GoRASA backend API — real data, live prices."
-                icon={<Sparkles className="w-3.5 h-3.5 text-violet-600" />}
-                items={backendPackages}
-                badgeColor="bg-violet-50 text-violet-600 border border-violet-100"
-                badgeText="Live Data"
-                onInterested={setInquiryPackage}
-              />
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={32} className="animate-spin text-brand-saffron" />
+              </div>
+            ) : (
+              categoryOrder.map((cat) => {
+                const items = carouselPackages[cat];
+                if (!items || items.length === 0) return null;
+                const meta = categories[cat];
+                if (!meta) return null;
+                return (
+                  <PackageCarousel
+                    key={cat}
+                    title={meta.title}
+                    subtitle={meta.subtitle}
+                    icon={ICON_MAP[meta.icon]}
+                    items={items}
+                    badgeColor={meta.badgeColor}
+                    badgeText={meta.badgeText}
+                    onInterested={setInquiryPackage}
+                  />
+                );
+              })
             )}
-
-            {/* Top Deals */}
-            <PackageCarousel
-              title="Top Holiday Deals"
-              subtitle="Our most selected and highly discounted luxury seasonal packages."
-              icon={<TrendingUp className="w-3.5 h-3.5 text-orange-600" />}
-              items={TOP_DEALS}
-              badgeColor="bg-orange-50 text-orange-600 border border-orange-100"
-              badgeText="Top Deals"
-              onInterested={setInquiryPackage}
-            />
-
-            {/* Weekend Deals */}
-            <PackageCarousel
-              title="Weekend Gateways"
-              subtitle="Fast mini-vacations, premium nature stays, and heritage wellness boutique villas."
-              icon={<Calendar className="w-3.5 h-3.5 text-emerald-600" />}
-              items={WEEKEND_DEALS}
-              badgeColor="bg-emerald-50 text-emerald-600 border border-emerald-100"
-              badgeText="Weekend Deals"
-              onInterested={setInquiryPackage}
-            />
-
-            {/* International */}
-            <PackageCarousel
-              title="International Packages"
-              subtitle="Epic bucket-list escapes from Dubai, Maldives waters and cold Swiss Alps."
-              icon={<Compass className="w-3.5 h-3.5 text-blue-600" />}
-              items={INTERNATIONAL_PACKAGES}
-              badgeColor="bg-blue-50 text-blue-600 border border-blue-100"
-              badgeText="International"
-              onInterested={setInquiryPackage}
-            />
-
-            {/* All Inclusive */}
-            <PackageCarousel
-              title="All-Inclusive Stays"
-              subtitle="Indulge with peace-of-mind package structures providing transfers, unlimited gourmet, flights, and activities."
-              icon={<Sparkles className="w-3.5 h-3.5 text-purple-600" />}
-              items={ALL_INCLUSIVE_DEALS}
-              badgeColor="bg-purple-50 text-purple-600 border border-purple-100"
-              badgeText="All Inclusive"
-              onInterested={setInquiryPackage}
-            />
-
-            {/* Beach */}
-            <PackageCarousel
-              title="Beach Vacations"
-              subtitle="Golden sands, private beachfront villas, surfing instructions, and incredible sunset waters."
-              icon={<Sun className="w-3.5 h-3.5 text-amber-600" />}
-              items={BEACH_VACATIONS}
-              badgeColor="bg-amber-50 text-amber-600 border border-amber-100"
-              badgeText="Beach"
-              onInterested={setInquiryPackage}
-            />
-
-            {/* GoRASA Select */}
-            <PackageCarousel
-              title="GoRASA Select Exclusives"
-              subtitle="Handpicked, ultra-VIP heritage palace suites, Michelin eco-retreats, and butler-serviced packages."
-              icon={<Award className="w-3.5 h-3.5 text-rose-600" />}
-              items={GORASA_SELECT}
-              badgeColor="bg-rose-50 text-rose-600 border border-rose-100"
-              badgeText="GoRASA Select"
-              onInterested={setInquiryPackage}
-            />
           </div>
         </section>
 
@@ -275,9 +244,9 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {TESTIMONIALS.map((testimonial, i) => (
+              {(testimonials.length > 0 ? testimonials : []).map((testimonial, i) => (
                 <motion.div
-                  key={testimonial.name}
+                  key={testimonial.id || testimonial.name}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -377,7 +346,7 @@ export default function HomePage() {
                         <Shield size={20} className="text-green-600" />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 text-lg">500+</p>
+                        <p className="font-bold text-slate-900 text-lg">{stats.companies}</p>
                         <p className="text-slate-500 text-xs">Corporate Partners</p>
                       </div>
                     </div>
@@ -388,7 +357,7 @@ export default function HomePage() {
                         <Building2 size={20} className="text-blue-600" />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 text-lg">50K+</p>
+                        <p className="font-bold text-slate-900 text-lg">{stats.bookings}</p>
                         <p className="text-slate-500 text-xs">Bookings Made</p>
                       </div>
                     </div>
@@ -399,7 +368,7 @@ export default function HomePage() {
                         <Star size={20} className="text-amber-600" />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 text-lg">4.9</p>
+                        <p className="font-bold text-slate-900 text-lg">{stats.rating}</p>
                         <p className="text-slate-500 text-xs">Client Rating</p>
                       </div>
                     </div>

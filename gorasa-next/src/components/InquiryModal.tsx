@@ -2,13 +2,25 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { formatCurrency } from "@/lib";
 import { X, Send, CheckCircle } from "lucide-react";
-import type { TravelPackage } from "@/lib/packages-data";
+
+interface InquiryPackage {
+  id: string;
+  title: string;
+  duration: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  imageUrl: string;
+  provider: string;
+  inclusions: string[];
+}
 
 interface InquiryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  pkg: TravelPackage | null;
+  pkg: InquiryPackage | null;
   userName?: string;
   userEmail?: string;
 }
@@ -102,7 +114,7 @@ export default function InquiryModal({ isOpen, onClose, pkg, userName, userEmail
                   {pkg.title}
                 </h2>
                 <p className="text-slate-500 text-sm">
-                  {pkg.duration} • Starting From ₹{pkg.price.toLocaleString()}* Per Person
+                  {pkg.duration} • Starting From {formatCurrency(pkg.price)}* Per Person
                 </p>
               </div>
 
@@ -169,7 +181,7 @@ export default function InquiryModal({ isOpen, onClose, pkg, userName, userEmail
                   )}
                 </button>
                 <p className="text-[10px] text-slate-400 text-center">
-                  * Pricing displayed as &ldquo;Starting From ₹{pkg.price.toLocaleString()}* Per Person on Twin Sharing Basis&rdquo;
+                  * Pricing displayed as &ldquo;Starting From {formatCurrency(pkg.price)}* Per Person on Twin Sharing Basis&rdquo;
                 </p>
               </form>
             </>

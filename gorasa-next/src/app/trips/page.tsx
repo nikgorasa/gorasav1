@@ -9,6 +9,7 @@ import InvoiceModal from "@/components/InvoiceModal";
 import WhatsAppModal from "@/components/WhatsAppModal";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "motion/react";
+import { formatCurrency, formatDate, formatTravelDates } from "@/lib";
 import { Plane, Package, CreditCard, MapPin, Calendar, Users, FileText, X, Ticket, Receipt, MessageSquare } from "lucide-react";
 
 interface Booking {
@@ -36,6 +37,9 @@ export default function TripsPage() {
   const [boardingPassBooking, setBoardingPassBooking] = useState<Booking | null>(null);
   const [invoiceBooking, setInvoiceBooking] = useState<Booking | null>(null);
   const [whatsappBooking, setWhatsappBooking] = useState<Booking | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -145,7 +149,7 @@ export default function TripsPage() {
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider">Wallet</p>
-                      <p className="text-lg font-bold text-slate-900">₹{user.walletBalance?.toLocaleString()}</p>
+                      <p className="text-lg font-bold text-slate-900">{formatCurrency(user.walletBalance)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider">Total Bookings</p>
@@ -185,7 +189,7 @@ export default function TripsPage() {
                                 {booking.travelDates && (
                                   <span className="text-xs text-slate-500 flex items-center gap-1">
                                     <Calendar size={12} />
-                                    {booking.travelDates}
+                                    {formatTravelDates(booking.travelDates)}
                                   </span>
                                 )}
                                 <span className="text-xs text-slate-500 flex items-center gap-1">
@@ -200,11 +204,11 @@ export default function TripsPage() {
                               {booking.status}
                             </span>
                             <p className="text-xl font-bold text-slate-900 mt-2">
-                              ₹{booking.price?.toLocaleString()}
+                              {formatCurrency(booking.price)}
                             </p>
                             {booking.originalPrice && booking.originalPrice > booking.price && (
                               <p className="text-xs text-slate-400 line-through">
-                                ₹{booking.originalPrice.toLocaleString()}
+                                {formatCurrency(booking.originalPrice)}
                               </p>
                             )}
                           </div>
@@ -293,7 +297,7 @@ export default function TripsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wider">Travel Dates</p>
-                  <p className="font-medium text-slate-900">{selectedBooking.travelDates || "N/A"}</p>
+                  <p className="font-medium text-slate-900">{formatTravelDates(selectedBooking.travelDates)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wider">Passengers</p>
@@ -306,7 +310,7 @@ export default function TripsPage() {
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wider">Booked On</p>
                   <p className="font-medium text-slate-900">
-                    {new Date(selectedBooking.bookedAt).toLocaleDateString("en-IN")}
+                    {formatDate(selectedBooking.bookedAt)}
                   </p>
                 </div>
               </div>
@@ -316,17 +320,52 @@ export default function TripsPage() {
                   <div>
                     {selectedBooking.originalPrice && selectedBooking.originalPrice > selectedBooking.price && (
                       <p className="text-sm text-slate-400 line-through">
-                        ₹{selectedBooking.originalPrice.toLocaleString()}
+                        {formatCurrency(selectedBooking.originalPrice)}
                       </p>
                     )}
                     <p className="text-3xl font-black font-mono text-slate-900">
-                      ₹{selectedBooking.price?.toLocaleString()}
+                      {formatCurrency(selectedBooking.price)}
                     </p>
                   </div>
-                  {selectedBooking.status === "CONFIRMED" && (
-                    <button className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 transition-colors cursor-pointer">
-                      Request Cancellation
-                    </button>
+                  {selectedBooking.status === "CONFIRMED" && !cancelSuccess && (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="Reason for cancellation..."
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!cancelReason || !user) return;
+                          setCancelling(true);
+                          try {
+                            const res = await fetch("/api/cancellations", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ bookingId: selectedBooking.id, userId: user.id, reason: cancelReason }),
+                            });
+                            if (res.ok) {
+                              setCancelSuccess(true);
+                              setBookings(bookings.map((b) => b.id === selectedBooking.id ? { ...b, status: "CANCELLATION_REQUESTED" } : b));
+                              setSelectedBooking({ ...selectedBooking, status: "CANCELLATION_REQUESTED" });
+                            }
+                          } catch (err) {
+                            console.error("Cancellation failed:", err);
+                          } finally {
+                            setCancelling(false);
+                          }
+                        }}
+                        disabled={cancelling || !cancelReason}
+                        className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {cancelling ? "Requesting..." : "Request Cancellation"}
+                      </button>
+                    </div>
+                  )}
+                  {cancelSuccess && (
+                    <p className="text-sm text-green-600 font-medium">Cancellation request submitted!</p>
                   )}
                 </div>
               </div>

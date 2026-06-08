@@ -17,21 +17,12 @@ interface Lead {
   assignedUser?: { id: string; name: string; email: string };
 }
 
-const STAGES = [
-  { id: "NEW", label: "New", color: "bg-blue-100 text-blue-700 border-blue-200" },
-  { id: "QUALIFIED", label: "Qualified", color: "bg-cyan-100 text-cyan-700 border-cyan-200" },
-  { id: "CONTACTED", label: "Contacted", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
-  { id: "MEETING", label: "Meeting", color: "bg-orange-100 text-orange-700 border-orange-200" },
-  { id: "QUOTED", label: "Quoted", color: "bg-purple-100 text-purple-700 border-purple-200" },
-  { id: "NEGOTIATION", label: "Negotiation", color: "bg-pink-100 text-pink-700 border-pink-200" },
-  { id: "SUCCESS", label: "Won", color: "bg-green-100 text-green-700 border-green-200" },
-];
-
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [activeStage, setActiveStage] = useState<string>("all");
+  const [stages, setStages] = useState<{ id: string; label: string; color: string }[]>([]);
 
   useEffect(() => {
     fetch("/api/leads")
@@ -41,6 +32,13 @@ export default function LeadsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/leads/stages")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setStages(data); })
+      .catch(() => {});
   }, []);
 
   const updateLeadStage = async (leadId: string, newStage: string) => {
@@ -88,7 +86,7 @@ export default function LeadsPage() {
           <p className="text-2xl font-bold">{leads.length}</p>
           <p className="text-xs opacity-80">All Leads</p>
         </button>
-        {STAGES.map((stage) => (
+        {stages.map((stage) => (
           <button
             key={stage.id}
             onClick={() => setActiveStage(stage.id)}
@@ -104,12 +102,12 @@ export default function LeadsPage() {
 
       {/* Pipeline Flow */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-        {STAGES.map((stage, i) => (
+        {stages.map((stage, i) => (
           <React.Fragment key={stage.id}>
             <div className={`px-4 py-2 rounded-full text-sm font-medium ${stage.color} border whitespace-nowrap`}>
               {stage.label} ({getStageCount(stage.id)})
             </div>
-            {i < STAGES.length - 1 && <ChevronRight size={16} className="text-slate-300 shrink-0" />}
+            {i < stages.length - 1 && <ChevronRight size={16} className="text-slate-300 shrink-0" />}
           </React.Fragment>
         ))}
       </div>
@@ -126,7 +124,7 @@ export default function LeadsPage() {
       ) : (
         <div className="space-y-3">
           {filteredLeads.map((lead, i) => {
-            const stage = STAGES.find((s) => s.id === lead.stage);
+            const stage = stages.find((s) => s.id === lead.stage);
             return (
               <motion.div
                 key={lead.id}
@@ -231,7 +229,7 @@ export default function LeadsPage() {
             <div className="pt-4 border-t border-slate-200">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">Update Stage</label>
               <div className="flex gap-2 flex-wrap">
-                {STAGES.map((stage) => (
+                {stages.map((stage) => (
                   <button
                     key={stage.id}
                     onClick={() => updateLeadStage(selectedLead.id, stage.id)}

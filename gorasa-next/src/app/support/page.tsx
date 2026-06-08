@@ -15,34 +15,19 @@ interface Message {
   timestamp: Date;
 }
 
-const QUICK_REPLIES = [
-  { label: "Flight booking help", query: "How do I book a flight?" },
-  { label: "Hotel search", query: "How do I search for hotels?" },
-  { label: "Cancel booking", query: "How do I cancel my booking?" },
-  { label: "Loyalty points", query: "How do loyalty points work?" },
-  { label: "Corporate travel", query: "Tell me about corporate travel" },
-  { label: "Contact support", query: "I need to speak to someone" },
-];
-
-const AI_RESPONSES: Record<string, string> = {
-  flight: "To book a flight on GoRASA:\n\n1. Click **Flights** in the navigation bar\n2. Select your origin and destination cities\n3. Choose your travel date\n4. Click **Search Flights**\n5. Browse results and click on a flight to see details\n6. Click **Book Now** to proceed\n\nWe currently show Indigo and Air India flights. TBO integration for real-time pricing is coming soon!",
-  hotel: "To search for hotels:\n\n1. Click **Hotels** in the navigation bar\n2. Select your destination\n3. Choose check-in and check-out dates\n4. Filter by brand (Premium, Budget/OYO, or Global)\n5. Click **Search Hotels**\n6. Browse results with photos, ratings, and prices\n\nAll hotels include a 22% markup. Prices adjust automatically based on your stay duration.",
-  cancel: "To cancel a booking:\n\n1. Go to **Reservation Desk** (My Trips)\n2. Find the booking you want to cancel\n3. Click on it to view details\n4. Click **Request Cancellation**\n\nOur team will review and process the request through TBO. Cancellation policies vary by provider.",
-  loyalty: "GoRASA Loyalty Program:\n\n🥉 **Silver** — 0-999 points\n🥈 **Gold** — 1,000-4,999 points\n🥇 **Platinum** — 5,000+ points\n\n**How to earn:**\n• Book flights/hotels → earn 1 point per ₹100\n• Refer friends → earn 500 points per referral\n• Birthday bonus → 500 points\n\n**Redeem points** for lounge access, meal upgrades, and more in your Profile & Loyalty tab.",
-  corporate: "GoRASA Corporate Travel:\n\n• **Direct booking** for approved companies\n• **Corporate wallet** with pre-loaded balance\n• **Negotiated rates** on flights and hotels\n• **Dedicated account manager**\n• **Expense management** dashboard\n\nTo get started, your company admin needs to register and get approved. Contact us at rasatravelindia@gmail.com for corporate accounts.",
-  contact: "You can reach GoRASA support through:\n\n📞 **Phone:** +91 95285 00383\n📧 **Email:** rasatravelindia@gmail.com\n💬 **WhatsApp:** Click the WhatsApp icon to chat with us directly\n\nOur team is available 24/7 for premium travelers.",
-  default: "I'm the GoRASA AI Concierge! I can help you with:\n\n• **Flight booking** — search and book flights\n• **Hotel search** — find luxury stays\n• **Holiday packages** — curated experiences\n• **Loyalty program** — earn and redeem points\n• **Corporate travel** — business travel management\n• **Booking support** — cancellations, changes\n\nWhat would you like to know?",
-};
-
-function getAIResponse(query: string): string {
+async function getAIResponse(query: string, categories: { id: string; label: string; keywords: string }[]): Promise<string> {
   const lower = query.toLowerCase();
-  if (lower.includes("flight") || lower.includes("book") || lower.includes("air")) return AI_RESPONSES.flight;
-  if (lower.includes("hotel") || lower.includes("stay") || lower.includes("room")) return AI_RESPONSES.hotel;
-  if (lower.includes("cancel") || lower.includes("refund")) return AI_RESPONSES.cancel;
-  if (lower.includes("loyalty") || lower.includes("point") || lower.includes("reward")) return AI_RESPONSES.loyalty;
-  if (lower.includes("corporate") || lower.includes("business") || lower.includes("b2b")) return AI_RESPONSES.corporate;
-  if (lower.includes("contact") || lower.includes("support") || lower.includes("speak") || lower.includes("call")) return AI_RESPONSES.contact;
-  return AI_RESPONSES.default;
+  let matchedId = "default";
+  for (const cat of categories) {
+    const kws: string[] = JSON.parse(cat.keywords || "[]");
+    if (kws.some((k) => lower.includes(k))) { matchedId = cat.id; break; }
+  }
+  try {
+    const res = await fetch(`/api/faq?keyword=${matchedId}`);
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) return data[0].answer;
+  } catch {}
+  return "I'm the GoRASA AI Concierge! I can help you with flights, hotels, packages, and more. What would you like to know?";
 }
 
 export default function SupportPage() {
@@ -59,13 +44,25 @@ export default function SupportPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [faqCategories, setFaqCategories] = useState<{ id: string; label: string; keywords: string }[]>([]);
+  const [siteConfig, setSiteConfig] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = (text: string) => {
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/faq/categories").then(r => r.json()),
+      fetch("/api/site-config").then(r => r.json()),
+    ]).then(([cats, config]) => {
+      if (Array.isArray(cats)) setFaqCategories(cats);
+      if (config && !config.error) setSiteConfig(config);
+    }).catch(() => {});
+  }, []);
+
+  const sendMessage = async (text: string) => {
     if (!text.trim()) return;
 
     const userMsg: Message = {
@@ -78,16 +75,15 @@ export default function SupportPage() {
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: "ai",
-        text: getAIResponse(text),
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, 1000);
+    const response = await getAIResponse(text, faqCategories);
+    const aiMsg: Message = {
+      id: (Date.now() + 1).toString(),
+      sender: "ai",
+      text: response,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, aiMsg]);
+    setIsTyping(false);
   };
 
   const speakText = (text: string) => {
@@ -180,10 +176,10 @@ export default function SupportPage() {
 
                   {/* Quick Replies */}
                   <div className="px-4 py-2 border-t border-slate-100 flex gap-2 overflow-x-auto">
-                    {QUICK_REPLIES.map((qr) => (
+                    {faqCategories.map((qr) => (
                       <button
-                        key={qr.label}
-                        onClick={() => sendMessage(qr.query)}
+                        key={qr.id}
+                        onClick={() => sendMessage(qr.label)}
                         className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium hover:bg-slate-200 whitespace-nowrap cursor-pointer"
                       >
                         {qr.label}
@@ -226,7 +222,7 @@ export default function SupportPage() {
                     Chat with us directly on WhatsApp for instant support.
                   </p>
                   <a
-                    href="https://wa.me/919528500383?text=Hi%20GoRASA%2C%20I%20need%20help"
+                    href={`https://wa.me/${siteConfig.whatsapp_number || "+919528500383"}?text=Hi%20GoRASA%2C%20I%20need%20help`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 transition-colors"
@@ -240,8 +236,8 @@ export default function SupportPage() {
                 <div className="bg-white rounded-2xl p-4 border border-slate-200">
                   <h3 className="font-bold text-slate-900 text-sm mb-3">Contact Info</h3>
                   <div className="space-y-2 text-sm text-slate-600">
-                    <p>📞 +91 95285 00383</p>
-                    <p>📧 rasatravelindia@gmail.com</p>
+                    <p>📞 {siteConfig.contact_phone || "+91 95285 00383"}</p>
+                    <p>📧 {siteConfig.contact_email || "rasatravelindia@gmail.com"}</p>
                     <p>🏢 RASA Travel Services India Pvt Ltd</p>
                   </div>
                 </div>

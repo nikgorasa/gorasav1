@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { formatCurrency, formatTravelDates } from "@/lib";
 import { X, Phone, Send, CheckCircle, MessageSquare } from "lucide-react";
 
 interface Booking {
@@ -37,11 +38,11 @@ export default function WhatsAppModal({ isOpen, onClose, booking, userName }: Wh
   const handleWhatsAppDirect = () => {
     const message = encodeURIComponent(
       `Hi GoRASA, I need help with my booking:\n\n` +
-      `📋 booking: ${booking.itemName}\n` +
+      `📋 Booking: ${booking.itemName}\n` +
       `🎫 PNR: ${booking.pnr || "N/A"}\n` +
-      `📅 Dates: ${booking.travelDates || "N/A"}\n` +
+      `📅 Dates: ${formatTravelDates(booking.travelDates)}\n` +
       `👥 Passengers: ${booking.paxCount}\n` +
-      `💰 Amount: ₹${booking.price.toLocaleString()}\n` +
+      `💰 Amount: ${formatCurrency(booking.price)}\n` +
       `✅ Status: ${booking.status}`
     );
     window.open(`https://wa.me/919528500383?text=${message}`, "_blank");
@@ -100,7 +101,7 @@ export default function WhatsAppModal({ isOpen, onClose, booking, userName }: Wh
                 <div className="mt-2 bg-slate-50 rounded-lg p-3 text-xs">
                   <p><strong>booking:</strong> {booking.itemName}</p>
                   <p><strong>PNR:</strong> {booking.pnr || "N/A"}</p>
-                  <p><strong>Dates:</strong> {booking.travelDates || "N/A"}</p>
+                  <p><strong>Dates:</strong> {formatTravelDates(booking.travelDates)}</p>
                   <p><strong>Passengers:</strong> {booking.paxCount}</p>
                   <p><strong>Status:</strong> {booking.status}</p>
                 </div>

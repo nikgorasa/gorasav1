@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { formatDate, formatTravelDates } from "@/lib";
 import { X, Download, Printer, Plane, User, Calendar, MapPin, QrCode } from "lucide-react";
 
 interface Booking {
@@ -87,7 +88,7 @@ export default function BoardingPassModal({ isOpen, onClose, booking, userName }
                   <p className="text-slate-500 text-[10px] uppercase tracking-wider">Travel Dates</p>
                   <p className="text-white font-medium text-sm flex items-center gap-1">
                     <Calendar size={14} className="text-brand-saffron" />
-                    {booking.travelDates || "N/A"}
+                    {formatTravelDates(booking.travelDates)}
                   </p>
                 </div>
                 <div>
@@ -131,7 +132,7 @@ export default function BoardingPassModal({ isOpen, onClose, booking, userName }
                   {booking.status}
                 </span>
                 <p className="text-slate-500 text-xs">
-                  Booked: {new Date(booking.bookedAt).toLocaleDateString("en-IN")}
+                  Booked: {formatDate(booking.bookedAt)}
                 </p>
               </div>
             </div>
