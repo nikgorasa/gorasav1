@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import HomePageClient from "@/components/HomePageClient";
 
 export const revalidate = 300; // ISR: cache for 5 minutes
@@ -79,6 +79,7 @@ function mapCategories(rows: Record<string, unknown>[]): {
 }
 
 export default async function HomePage() {
+  const supabase = await createClient();
   try {
     const [packagesResult, testimonialsResult, categoriesResult, valuePropsResult, dashboardResult] =
       await Promise.all([
