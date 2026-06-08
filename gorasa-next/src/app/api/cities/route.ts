@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
 
-    let query = supabase.from("City").select("id, name, country, type").eq("isActive", true).order("name", { ascending: true });
+    let query = supabase.from("City").select("id, name, country, type").eq("isactive", true).order("name", { ascending: true });
 
     if (type === "domestic" || type === "international") {
       query = query.eq("type", type);
