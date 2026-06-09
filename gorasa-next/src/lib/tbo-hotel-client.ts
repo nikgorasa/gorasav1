@@ -12,7 +12,7 @@ import type {
 import * as api from "./tbo-hotel-api";
 import * as mock from "./tbo-hotel-mock";
 
-const hasCredentials = !!(process.env.TBO_USERNAME && process.env.TBO_PASSWORD);
+const hasCredentials = !!(process.env.TBO_USERNAME && process.env.TBO_PASSWORD) && process.env.TBO_FORCE_MOCK !== "true";
 
 function mapHotelResult(r: TBOHotelResult, index: number): TBODisplayHotel {
   const starMap: Record<string, number> = {
