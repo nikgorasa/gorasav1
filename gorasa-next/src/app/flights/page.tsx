@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/lib";
 import { Plane, Search, Calendar, Users, ArrowRight, Star, Clock, Luggage, X, Loader2 } from "lucide-react";
+import FlightBookingModal from "@/components/FlightBookingModal";
 
 interface Flight {
   id: string;
@@ -35,6 +36,7 @@ export default function FlightsPage() {
   const [searched, setSearched] = useState(false);
   const [searching, setSearching] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
   const [cities, setCities] = useState<string[]>([]);
   const [citiesLoading, setCitiesLoading] = useState(true);
 
@@ -313,7 +315,7 @@ export default function FlightsPage() {
                       if (!user) {
                         setShowLogin(true);
                       } else {
-                        alert("Booking flow coming soon!");
+                        setShowBookingModal(true);
                       }
                     }}
                     className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors cursor-pointer"
@@ -326,6 +328,16 @@ export default function FlightsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Flight Booking Modal */}
+      <FlightBookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        flight={selectedFlight!}
+        user={user}
+        date={date}
+        passengerCount={parseInt(passengers)}
+      />
 
       <Footer />
     </>
