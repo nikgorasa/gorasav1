@@ -17,7 +17,7 @@
 | **Vercel Project Name** | `gorasa-next` | `.vercel/project.json` |
 | **Vercel Project ID** | `prj_WLoI80KaCmVZSudP17ohcPbzTpSe` | `.vercel/project.json` |
 | **Vercel Team ID** | `team_0pR3Xnbjx12q8H8pZF9xgE5S` | `.vercel/project.json` |
-| **Vercel Root Directory** | **`gorasa-next/`** (currently broken — set to `.`) | Needs `vercel.json` at root |
+| **Vercel Root Directory** | **`gorasa-next/`** | Set via API (not vercel.json) |
 | **Vercel Env: TBO_FORCE_MOCK** | `true` (set to force mock data) | Vercel dashboard |
 | **Deploy target** | `git push neworigin main` → Vercel auto-deploy | Vercel Git integration |
 | **Git remote (deploy)** | `neworigin → https://github.com/nikgorasa/gorasav1.git` | `git remote -v` |
@@ -144,29 +144,37 @@ Use the supabase_get_advisors tool.
 - **Project:** `gorasa-next` (ID: `prj_WLoI80KaCmVZSudP17ohcPbzTpSe`)
 - **Team:** `nikhil-gorasa-s-projects` (ID: `team_0pR3Xnbjx12q8H8pZF9xgE5S`)
 
-### CURRENT ISSUE — Deployments Are Failing
+### ❗ Critical: Root Directory Setting
 
-**Problem:** The `gorasa-next` Vercel project has its **Root Directory** set to `.` instead of `gorasa-next/`. The root `package.json` is a monorepo workspace and does NOT have `next` as a dependency, so Vercel fails with:
+The `gorasa-next` Vercel project MUST have **Root Directory** set to `gorasa-next/`. Without this, Vercel builds from the repo root (a monorepo without Next.js) and fails with `Error: No Next.js version detected.`
 
-```
-Error: No Next.js version detected.
-```
+**NOTE:** `rootDirectory` is a **dashboard/API setting** — it is NOT a valid property in `vercel.json`. Never put it in a `vercel.json` file (Vercel will reject the build with schema validation error).
 
-**Root cause:** A root `vercel.json` with `rootDirectory: "gorasa-next"` was deleted in commit `56bd759`. The dashboard setting got reset to `.` afterward.
-
-**Fix (not yet applied):**
+**How to fix if reset:**
 ```bash
-# Create root vercel.json (declarative — survives resets)
-echo '{"rootDirectory": "gorasa-next"}' > /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/vercel.json
-git add vercel.json && git commit -m "fix: set rootDirectory to gorasa-next"
-git push neworigin main
+cd gorasa-next
+npx vercel project inspect   # Check current rootDirectory
+```
+If it's `.`, update via API (using Vercel access token):
+```bash
+curl -X PATCH "https://api.vercel.com/v1/projects/prj_WLoI80KaCmVZSudP17ohcPbzTpSe?teamId=team_0pR3Xnbjx12q8H8pZF9xgE5S" \
+  -H "Authorization: Bearer $VERCEL_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"rootDirectory":"gorasa-next"}'
 ```
 
-**Also:** There's a **second** Vercel project (`rasa-zero-app-main`) connected to the same repo. It should be deleted to stop duplicate failing builds.
+Or set in Vercel Dashboard → gorasa-next → Settings → General → Root Directory.
+
+### Status (as of 2026-06-09)
+
+- **Root Directory:** Set to `gorasa-next` ✅ (via API)
+- **Rasa-zero-app-main project:** Git disconnected ✅ (no longer triggers duplicate builds)
+- **Production API:** Returning 6 mock hotels ✅
+- **Build command:** `npx prisma generate && npx next build` (in `gorasa-next/vercel.json`)
 
 ### How to Deploy
 
-**Option A — Push to GitHub (auto-deploy):**
+**Auto-deploy (via Git push — preferred):**
 ```bash
 cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main
 git add <files>
@@ -174,7 +182,7 @@ git commit -m "message"
 git push neworigin main
 ```
 
-**Option B — Vercel CLI (direct deploy):**
+**Direct deploy (via Vercel CLI):**
 ```bash
 cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/gorasa-next
 npx vercel --prod --yes
@@ -255,8 +263,10 @@ cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/gorasa-next
 - The real Vercel config is in `gorasa-next/.vercel/`
 
 ### Step 5: Vercel deployment failures
-- If Vercel build fails with "No Next.js version detected" → Root Directory is wrong
-- Fix: ensure root `vercel.json` has `{"rootDirectory": "gorasa-next"}`
+- If Vercel build fails with "No Next.js version detected" → Root Directory is `.` instead of `gorasa-next/`
+- Fix: update via API — `curl -X PATCH "https://api.vercel.com/v1/projects/prj_WLoI80KaCmVZSudP17ohcPbzTpSe?teamId=team_0pR3Xnbjx12q8H8pZF9xgE5S" -H "Authorization: Bearer $VERCEL_TOKEN" -d '{"rootDirectory":"gorasa-next"}'`
+- Or set in Vercel Dashboard → gorasa-next → Settings → General → Root Directory
+- **Do NOT put `rootDirectory` in vercel.json** — it's not a valid property and will fail schema validation
 
 ### Step 6: TBO mock vs live
 - `TBO_FORCE_MOCK=true` on Vercel → always uses mock data
