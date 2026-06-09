@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/lib";
 import { Building2, Search, MapPin, X, Star, Wifi, Coffee, Car, Loader2, ChevronDown, ChevronUp, Bed, Users } from "lucide-react";
+import HotelBookingModal from "@/components/HotelBookingModal";
 import type { TBODisplayHotel, TBODisplayRoom } from "@/lib/tbo-hotel-types";
 
 const STAR_LABELS: Record<string, string> = {
@@ -37,6 +38,7 @@ export default function HotelsPage() {
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<TBODisplayRoom | null>(null);
   const [sessionId, setSessionId] = useState("");
+  const [showBookingModal, setShowBookingModal] = useState(false);
   const [error, setError] = useState("");
   const [cities, setCities] = useState<string[]>([]);
   const [citiesLoading, setCitiesLoading] = useState(true);
@@ -433,7 +435,7 @@ export default function HotelsPage() {
                         if (!user) {
                           setShowLogin(true);
                         } else {
-                          alert("Booking flow coming soon!");
+                          setShowBookingModal(true);
                         }
                       }}
                       className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors cursor-pointer"
@@ -447,6 +449,20 @@ export default function HotelsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Booking Modal */}
+      <HotelBookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        hotel={selectedHotel!}
+        room={selectedRoom!}
+        sessionId={sessionId}
+        user={user}
+        location={location}
+        checkIn={checkIn}
+        checkOut={checkOut}
+        guestCount={parseInt(guests)}
+      />
 
       <Footer />
     </>
