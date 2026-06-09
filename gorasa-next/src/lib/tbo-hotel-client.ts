@@ -56,8 +56,11 @@ export async function searchHotels(req: TBOHotelSearchRequest): Promise<{
   try {
     if (hasCredentials) {
       const res = await api.hotelSearch(req);
-      const hotels = (res.HotelResultList?.HotelResult || []).map(mapHotelResult);
-      return { sessionId: res.SessionId, hotels, raw: res };
+      if (res.Status?.StatusCode === "01") {
+        const hotels = (res.HotelResultList?.HotelResult || []).map(mapHotelResult);
+        return { sessionId: res.SessionId, hotels, raw: res };
+      }
+      throw new Error(`TBO error: ${res.Status?.StatusCode} - ${res.Status?.Description}`);
     }
   } catch (e) {
     console.warn("TBO API call failed, falling back to mock:", e);
@@ -80,8 +83,11 @@ export async function getHotelRooms(
   try {
     if (hasCredentials) {
       const res = await api.availableHotelRooms({ SessionId: sessionId, ResultIndex: resultIndex, HotelCode: hotelCode, ResponseTime: 10 });
-      const rooms = (res.HotelRooms?.HotelRoom || []).map(mapRoom);
-      return { rooms, cancellationPolicy: res.HotelCancellationPolicies, raw: res };
+      if (res.Status?.StatusCode === "01") {
+        const rooms = (res.HotelRooms?.HotelRoom || []).map(mapRoom);
+        return { rooms, cancellationPolicy: res.HotelCancellationPolicies, raw: res };
+      }
+      throw new Error(`TBO error: ${res.Status?.StatusCode} - ${res.Status?.Description}`);
     }
   } catch (e) {
     console.warn("TBO rooms API failed, falling back to mock:", e);
@@ -119,7 +125,10 @@ export async function blockAndPrice(
         },
         ResponseTime: 10,
       });
-      return { success: res.Status.StatusCode === "01", isPriceChanged: res.IsPriceChanged, cancellationPolicy: res.HotelCancellationPolicies };
+      if (res.Status?.StatusCode === "01") {
+        return { success: true, isPriceChanged: res.IsPriceChanged, cancellationPolicy: res.HotelCancellationPolicies };
+      }
+      throw new Error(`TBO error: ${res.Status?.StatusCode} - ${res.Status?.Description}`);
     }
   } catch (e) {
     console.warn("TBO block API failed, falling back to mock:", e);
@@ -135,7 +144,10 @@ export async function bookHotel(
   try {
     if (hasCredentials) {
       const res = await api.hotelBook(req);
-      return { success: res.Status.StatusCode === "01", bookingId: res.BookingId, confirmationNo: res.ConfirmationNo, tripId: res.TripId, status: res.BookingStatus };
+      if (res.Status?.StatusCode === "01") {
+        return { success: true, bookingId: res.BookingId, confirmationNo: res.ConfirmationNo, tripId: res.TripId, status: res.BookingStatus };
+      }
+      throw new Error(`TBO error: ${res.Status?.StatusCode} - ${res.Status?.Description}`);
     }
   } catch (e) {
     console.warn("TBO book API failed, falling back to mock:", e);
