@@ -1,0 +1,89 @@
+{
+  "request": {
+    "EndUserIp": "192.168.1.1",
+    "TokenId": "DEMO_TOKEN_ID",
+    "TraceId": "DEMO_TRACE_ID",
+    "ResultIndex": "1"
+  },
+  "response": {
+    "Response": {
+      "ResponseStatus": 1,
+      "Error": null,
+      "TraceId": "DEMO_TRACE_ID",
+      "IsPriceChanged": false,
+      "Results": [
+        {
+          "ResultIndex": "1",
+          "Source": 1,
+          "IsLCC": true,
+          "IsRefundable": false,
+          "Fare": {
+            "Currency": "INR",
+            "BaseFare": 12705,
+            "Tax": 1761,
+            "YQTax": 0,
+            "AdditionalTxnFeeOfrd": 90,
+            "AdditionalTxnFeePub": 0,
+            "OtherCharges": 0,
+            "Discount": 0,
+            "PublishedFare": 15623,
+            "CommissionEarned": 0,
+            "PLBEarned": 0,
+            "IncentiveEarned": 0,
+            "OfferedFare": 15623,
+            "TdsOnCommission": 0,
+            "TdsOnPLB": 0,
+            "TdsOnIncentive": 0,
+            "ServiceFee": 0,
+            "ChargeBU": []
+          },
+          "FareBreakdown": [
+            {
+              "Currency": "INR",
+              "PassengerType": 1,
+              "PassengerCount": 1,
+              "BaseFare": 4235,
+              "Tax": 587,
+              "YQTax": 0,
+              "AdditionalTxnFeeOfrd": 30,
+              "AdditionalTxnFeePub": 0,
+              "OtherCharges": 0,
+              "Discount": 0,
+              "PublishedFare": 5208,
+              "CommissionEarned": 0,
+              "PLBEarned": 0,
+              "IncentiveEarned": 0,
+              "OfferedFare": 5208,
+              "TdsOnCommission": 0,
+              "TdsOnPLB": 0,
+              "TdsOnIncentive": 0,
+              "ServiceFee": 0
+            }
+          ],
+          "Segments": [
+            {
+              "TripIndicator": 1,
+              "SegmentIndicator": 1,
+              "Airline": "IndiGo",
+              "AirlineCode": "6E",
+              "Origin": "DEL",
+              "Destination": "DXB",
+              "DepTime": "2026-06-24T06:00:00",
+              "ArrTime": "2026-06-24T07:45:00",
+              "FlightNumber": "6E-2137",
+              "OperatingCarrier": "6E",
+              "Baggage": "15 KG",
+              "CabinBaggage": "7 KG",
+              "CabinClass": "Economy",
+              "BookingClass": "Q",
+              "Duration": "1hr 45min"
+            }
+          ],
+          "LastTicketDate": "2026-06-21T23:59:00",
+          "Penalty": "Non Refundable",
+          "FareRules": "Available through FareRule API"
+        }
+      ]
+    }
+  }
+}

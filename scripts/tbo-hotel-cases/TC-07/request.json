@@ -1,0 +1,22 @@
+{
+  "testCaseId": "TC-07",
+  "title": "International — 2 Rooms, 1 Adult each",
+  "domestic": false,
+  "checkIn": "2025-06-20",
+  "checkOut": "2025-06-22",
+  "city": "Singapore",
+  "rooms": [
+    {
+      "adults": 1,
+      "children": 0,
+      "childrenAges": []
+    },
+    {
+      "adults": 1,
+      "children": 0,
+      "childrenAges": []
+    }
+  ],
+  "guestNationality": "IN",
+  "preferredCurrency": "USD"
+}

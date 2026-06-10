@@ -1,0 +1,25 @@
+{
+  "testCaseId": "TC-04",
+  "title": "Domestic — 2 Rooms (1A+2C / 2A)",
+  "domestic": true,
+  "checkIn": "2025-06-20",
+  "checkOut": "2025-06-22",
+  "city": "Jaipur",
+  "rooms": [
+    {
+      "adults": 1,
+      "children": 2,
+      "childrenAges": [
+        4,
+        7
+      ]
+    },
+    {
+      "adults": 2,
+      "children": 0,
+      "childrenAges": []
+    }
+  ],
+  "guestNationality": "IN",
+  "preferredCurrency": "INR"
+}

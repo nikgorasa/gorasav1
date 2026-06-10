@@ -1,0 +1,89 @@
+{
+  "request": {
+    "EndUserIp": "192.168.1.1",
+    "TokenId": "DEMO_TOKEN_ID",
+    "TraceId": "DEMO_TRACE_ID",
+    "ResultIndex": "1"
+  },
+  "response": {
+    "Response": {
+      "ResponseStatus": 1,
+      "Error": null,
+      "TraceId": "DEMO_TRACE_ID",
+      "IsPriceChanged": false,
+      "Results": [
+        {
+          "ResultIndex": "1",
+          "Source": 1,
+          "IsLCC": false,
+          "IsRefundable": true,
+          "Fare": {
+            "Currency": "INR",
+            "BaseFare": 5400,
+            "Tax": 823,
+            "YQTax": 0,
+            "AdditionalTxnFeeOfrd": 30,
+            "AdditionalTxnFeePub": 0,
+            "OtherCharges": 0,
+            "Discount": 0,
+            "PublishedFare": 6721,
+            "CommissionEarned": 0,
+            "PLBEarned": 0,
+            "IncentiveEarned": 0,
+            "OfferedFare": 6721,
+            "TdsOnCommission": 0,
+            "TdsOnPLB": 0,
+            "TdsOnIncentive": 0,
+            "ServiceFee": 0,
+            "ChargeBU": []
+          },
+          "FareBreakdown": [
+            {
+              "Currency": "INR",
+              "PassengerType": 1,
+              "PassengerCount": 1,
+              "BaseFare": 5400,
+              "Tax": 823,
+              "YQTax": 0,
+              "AdditionalTxnFeeOfrd": 30,
+              "AdditionalTxnFeePub": 0,
+              "OtherCharges": 0,
+              "Discount": 0,
+              "PublishedFare": 6721,
+              "CommissionEarned": 0,
+              "PLBEarned": 0,
+              "IncentiveEarned": 0,
+              "OfferedFare": 6721,
+              "TdsOnCommission": 0,
+              "TdsOnPLB": 0,
+              "TdsOnIncentive": 0,
+              "ServiceFee": 0
+            }
+          ],
+          "Segments": [
+            {
+              "TripIndicator": 1,
+              "SegmentIndicator": 1,
+              "Airline": "Air India",
+              "AirlineCode": "AI",
+              "Origin": "DEL",
+              "Destination": "BOM",
+              "DepTime": "2026-06-24T06:00:00",
+              "ArrTime": "2026-06-24T07:45:00",
+              "FlightNumber": "AI-865",
+              "OperatingCarrier": "AI",
+              "Baggage": "25 KG",
+              "CabinBaggage": "7 KG",
+              "CabinClass": "Economy",
+              "BookingClass": "Q",
+              "Duration": "1hr 45min"
+            }
+          ],
+          "LastTicketDate": "2026-06-21T23:59:00",
+          "Penalty": "As per airline policy",
+          "FareRules": "Available through FareRule API"
+        }
+      ]
+    }
+  }
+}

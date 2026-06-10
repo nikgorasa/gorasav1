@@ -1,0 +1,22 @@
+{
+  "testCaseId": "TC-03",
+  "title": "Domestic — 2 Rooms, 1 Adult each",
+  "domestic": true,
+  "checkIn": "2025-06-20",
+  "checkOut": "2025-06-22",
+  "city": "Delhi",
+  "rooms": [
+    {
+      "adults": 1,
+      "children": 0,
+      "childrenAges": []
+    },
+    {
+      "adults": 1,
+      "children": 0,
+      "childrenAges": []
+    }
+  ],
+  "guestNationality": "IN",
+  "preferredCurrency": "INR"
+}

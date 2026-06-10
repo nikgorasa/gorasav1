@@ -1,0 +1,25 @@
+{
+  "request": {
+    "EndUserIp": "192.168.1.1",
+    "TokenId": "DEMO_TOKEN_ID",
+    "TraceId": "DEMO_TRACE_ID",
+    "ResultIndex": "1"
+  },
+  "response": {
+    "Response": {
+      "ResponseStatus": 1,
+      "Error": null,
+      "TraceId": "DEMO_TRACE_ID",
+      "FareRules": [
+        {
+          "Airline": "AI",
+          "Origin": "DEL",
+          "Destination": "BOM",
+          "FareBasisCode": "REF",
+          "FareRestriction": "Refundable with penalty",
+          "FareRuleDetail": "CANCELLATION: Before 24hrs - INR 3000 + GST per passenger; Within 24hrs - Non Refundable\nDATE CHANGE: Before 24hrs - INR 2500 + GST + fare diff; Within 24hrs - Not allowed\nREISSUE: Allowed with penalty as per fare rules\nBAGGAGE: As per fare basis"
+        }
+      ]
+    }
+  }
+}

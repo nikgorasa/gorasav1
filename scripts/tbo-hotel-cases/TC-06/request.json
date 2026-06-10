@@ -1,0 +1,20 @@
+{
+  "testCaseId": "TC-06",
+  "title": "International — 1 Room, 2 Adults + 2 Children",
+  "domestic": false,
+  "checkIn": "2025-06-20",
+  "checkOut": "2025-06-22",
+  "city": "Bangkok",
+  "rooms": [
+    {
+      "adults": 2,
+      "children": 2,
+      "childrenAges": [
+        6,
+        9
+      ]
+    }
+  ],
+  "guestNationality": "IN",
+  "preferredCurrency": "USD"
+}
