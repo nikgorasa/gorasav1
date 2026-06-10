@@ -1,0 +1,17 @@
+{
+  "testCaseId": "TC-01",
+  "title": "Domestic — 1 Room, 1 Adult",
+  "domestic": true,
+  "checkIn": "2025-06-20",
+  "checkOut": "2025-06-22",
+  "city": "Goa",
+  "rooms": [
+    {
+      "adults": 1,
+      "children": 0,
+      "childrenAges": []
+    }
+  ],
+  "guestNationality": "IN",
+  "preferredCurrency": "INR"
+}

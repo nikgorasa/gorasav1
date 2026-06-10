@@ -1,0 +1,14 @@
+{
+  "request": {
+    "ClientId": "ApiIntegrationNew",
+    "UserName": "RasaTAPI",
+    "Password": "RasaT@123",
+    "EndUserIp": "192.168.1.1"
+  },
+  "response": {
+    "Status": 1,
+    "TokenId": "DEMO_TOKEN_ID",
+    "Error": null,
+    "Member": null
+  }
+}

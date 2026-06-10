@@ -1,0 +1,25 @@
+{
+  "testCaseId": "TC-08",
+  "title": "International — 2 Rooms (1A+2C / 2A)",
+  "domestic": false,
+  "checkIn": "2025-06-20",
+  "checkOut": "2025-06-22",
+  "city": "Kuala Lumpur",
+  "rooms": [
+    {
+      "adults": 1,
+      "children": 2,
+      "childrenAges": [
+        3,
+        6
+      ]
+    },
+    {
+      "adults": 2,
+      "children": 0,
+      "childrenAges": []
+    }
+  ],
+  "guestNationality": "IN",
+  "preferredCurrency": "USD"
+}

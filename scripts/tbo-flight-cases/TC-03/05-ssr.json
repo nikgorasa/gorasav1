@@ -1,0 +1,112 @@
+{
+  "request": {
+    "EndUserIp": "192.168.1.1",
+    "TokenId": "DEMO_TOKEN_ID",
+    "TraceId": "DEMO_TRACE_ID",
+    "ResultIndex": "1"
+  },
+  "response": {
+    "Response": {
+      "ResponseStatus": 1,
+      "Error": null,
+      "TraceId": "DEMO_TRACE_ID",
+      "IsLCC": true,
+      "SSR": {
+        "Baggage": [
+          {
+            "WayType": 1,
+            "Code": "BK15",
+            "Weight": "15 KG",
+            "Currency": "INR",
+            "Price": 0,
+            "Origin": "DEL",
+            "Destination": "BOM",
+            "AirlineCode": "6E",
+            "FlightNumber": "6E-2137"
+          },
+          {
+            "WayType": 1,
+            "Code": "BK20",
+            "Weight": "20 KG",
+            "Currency": "INR",
+            "Price": 900,
+            "Origin": "DEL",
+            "Destination": "BOM",
+            "AirlineCode": "6E",
+            "FlightNumber": "6E-2137"
+          },
+          {
+            "WayType": 1,
+            "Code": "BK25",
+            "Weight": "25 KG",
+            "Currency": "INR",
+            "Price": 1800,
+            "Origin": "DEL",
+            "Destination": "BOM",
+            "AirlineCode": "6E",
+            "FlightNumber": "6E-2137"
+          }
+        ],
+        "MealDynamic": [
+          {
+            "WayType": 1,
+            "Code": "ML01",
+            "Description": "Vegetarian Meal",
+            "AirlineDescription": "Veg Meal",
+            "Quantity": 1,
+            "Price": 350,
+            "Currency": "INR"
+          },
+          {
+            "WayType": 1,
+            "Code": "ML02",
+            "Description": "Non-Vegetarian Meal",
+            "AirlineDescription": "Non-Veg Meal",
+            "Quantity": 1,
+            "Price": 450,
+            "Currency": "INR"
+          },
+          {
+            "WayType": 1,
+            "Code": "ML03",
+            "Description": "Special Meal",
+            "AirlineDescription": "Special Meal",
+            "Quantity": 1,
+            "Price": 600,
+            "Currency": "INR"
+          }
+        ],
+        "SeatDynamic": [
+          {
+            "SegmentSeatId": 1,
+            "RowSeats": {
+              "RowSeats": [
+                {
+                  "Code": "ST01",
+                  "RowNo": "1",
+                  "SeatNo": "A",
+                  "SeatType": "Window",
+                  "Price": 500
+                },
+                {
+                  "Code": "ST02",
+                  "RowNo": "1",
+                  "SeatNo": "B",
+                  "SeatType": "Middle",
+                  "Price": 300
+                },
+                {
+                  "Code": "ST03",
+                  "RowNo": "1",
+                  "SeatNo": "C",
+                  "SeatType": "Aisle",
+                  "Price": 400
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

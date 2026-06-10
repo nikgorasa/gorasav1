@@ -1,0 +1,17 @@
+{
+  "testCaseId": "TC-05",
+  "title": "International — 1 Room, 1 Adult",
+  "domestic": false,
+  "checkIn": "2025-06-20",
+  "checkOut": "2025-06-22",
+  "city": "Dubai",
+  "rooms": [
+    {
+      "adults": 1,
+      "children": 0,
+      "childrenAges": []
+    }
+  ],
+  "guestNationality": "IN",
+  "preferredCurrency": "USD"
+}

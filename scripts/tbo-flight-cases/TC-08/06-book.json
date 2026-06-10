@@ -1,0 +1,91 @@
+{
+  "request": {
+    "EndUserIp": "192.168.1.1",
+    "TokenId": "DEMO_TOKEN_ID",
+    "TraceId": "DEMO_TRACE_ID",
+    "ResultIndex": "1",
+    "Passengers": [
+      {
+        "Title": "Mr",
+        "FirstName": "Test",
+        "LastName": "Passenger1",
+        "PaxType": 1,
+        "DateOfBirth": "1990-01-15",
+        "Gender": 1,
+        "AddressLine1": "123 Test Street",
+        "City": "New Delhi",
+        "CountryCode": "IN",
+        "CountryName": "India",
+        "ContactNo": "9876543210",
+        "Email": "test@example.com",
+        "IsLeadPax": true,
+        "Nationality": "IN",
+        "Fare": {
+          "BaseFare": 0,
+          "Tax": 0,
+          "TransactionFee": 0,
+          "YQTax": 0,
+          "AdditionalTxnFeeOfrd": 0,
+          "AdditionalTxnFeePub": 0,
+          "AirTransFee": 0
+        }
+      },
+      {
+        "Title": "Mr",
+        "FirstName": "Test",
+        "LastName": "Passenger2",
+        "PaxType": 1,
+        "DateOfBirth": "1990-01-15",
+        "Gender": 1,
+        "AddressLine1": "123 Test Street",
+        "City": "New Delhi",
+        "CountryCode": "IN",
+        "CountryName": "India",
+        "ContactNo": "9876543210",
+        "Email": "test@example.com",
+        "IsLeadPax": false,
+        "Nationality": "IN",
+        "Fare": {
+          "BaseFare": 0,
+          "Tax": 0,
+          "TransactionFee": 0,
+          "YQTax": 0,
+          "AdditionalTxnFeeOfrd": 0,
+          "AdditionalTxnFeePub": 0,
+          "AirTransFee": 0
+        }
+      }
+    ]
+  },
+  "response": {
+    "Response": {
+      "ResponseStatus": 1,
+      "Error": null,
+      "TraceId": "DEMO_TRACE_ID",
+      "IsPriceChanged": false,
+      "IsTimeChanged": false,
+      "FlightItinerary": {
+        "BookingId": "B100001",
+        "PNR": "ABC123",
+        "IsLCC": false,
+        "IsDomestic": true,
+        "Passenger": [
+          {
+            "PaxId": 1,
+            "Title": "Mr",
+            "FirstName": "Test",
+            "LastName": "Passenger1",
+            "Ticket": null
+          },
+          {
+            "PaxId": 2,
+            "Title": "Mr",
+            "FirstName": "Test",
+            "LastName": "Passenger2",
+            "Ticket": null
+          }
+        ]
+      }
+    }
+  }
+}

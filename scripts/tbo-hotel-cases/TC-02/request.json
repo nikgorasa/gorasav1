@@ -1,0 +1,20 @@
+{
+  "testCaseId": "TC-02",
+  "title": "Domestic — 1 Room, 2 Adults + 2 Children",
+  "domestic": true,
+  "checkIn": "2025-06-20",
+  "checkOut": "2025-06-22",
+  "city": "Mumbai",
+  "rooms": [
+    {
+      "adults": 2,
+      "children": 2,
+      "childrenAges": [
+        5,
+        8
+      ]
+    }
+  ],
+  "guestNationality": "IN",
+  "preferredCurrency": "INR"
+}

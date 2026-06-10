@@ -1,0 +1,139 @@
+{
+  "request": {
+    "EndUserIp": "192.168.1.1",
+    "TokenId": "DEMO_TOKEN_ID",
+    "TraceId": "DEMO_TRACE_ID",
+    "ResultIndex": "1",
+    "Passengers": [
+      {
+        "Origin": "DEL",
+        "Destination": "BOM",
+        "FlightCabinClass": 1,
+        "PreferredDepartureTime": "2026-06-24T06:00:00",
+        "PreferredArrivalTime": ""
+      }
+    ]
+  },
+  "response": {
+    "Response": {
+      "ResponseStatus": 1,
+      "Error": null,
+      "TraceId": "DEMO_TRACE_ID",
+      "IsPriceChanged": false,
+      "PNR": "ABC123",
+      "BookingId": "B100001",
+      "FlightItinerary": {
+        "BookingId": "B100001",
+        "PNR": "ABC123",
+        "IsLCC": true,
+        "IsDomestic": true,
+        "Passenger": [
+          {
+            "PaxId": 1,
+            "Title": "Mr",
+            "FirstName": "Test",
+            "LastName": "Passenger1",
+            "Ticket": {
+              "TicketId": 1000000,
+              "TicketNumber": "1000000000",
+              "TicketStatus": "Ticketed",
+              "TicketType": "E-Ticket",
+              "ConjunctionNumber": "",
+              "ValidOn": "2026-06-24"
+            }
+          },
+          {
+            "PaxId": 2,
+            "Title": "Mr",
+            "FirstName": "Test",
+            "LastName": "Passenger2",
+            "Ticket": {
+              "TicketId": 1000001,
+              "TicketNumber": "1000000000",
+              "TicketStatus": "Ticketed",
+              "TicketType": "E-Ticket",
+              "ConjunctionNumber": "",
+              "ValidOn": "2026-06-24"
+            }
+          },
+          {
+            "PaxId": 3,
+            "Title": "Mr",
+            "FirstName": "Test",
+            "LastName": "Passenger3",
+            "Ticket": {
+              "TicketId": 1000002,
+              "TicketNumber": "1000000000",
+              "TicketStatus": "Ticketed",
+              "TicketType": "E-Ticket",
+              "ConjunctionNumber": "",
+              "ValidOn": "2026-06-24"
+            }
+          }
+        ],
+        "Segments": [
+          {
+            "TripIndicator": 1,
+            "SegmentIndicator": 1,
+            "Airline": "IndiGo",
+            "AirlineCode": "6E",
+            "Origin": "DEL",
+            "Destination": "BOM",
+            "DepTime": "2026-06-24T06:00:00",
+            "ArrTime": "2026-06-24T07:45:00",
+            "FlightNumber": "6E-2137",
+            "OperatingCarrier": "6E",
+            "Baggage": "15 KG",
+            "CabinBaggage": "7 KG",
+            "CabinClass": "Economy",
+            "BookingClass": "Q",
+            "Duration": "1hr 45min"
+          }
+        ],
+        "Fare": {
+          "Currency": "INR",
+          "BaseFare": 12705,
+          "Tax": 1761,
+          "YQTax": 0,
+          "AdditionalTxnFeeOfrd": 90,
+          "AdditionalTxnFeePub": 0,
+          "OtherCharges": 0,
+          "Discount": 0,
+          "PublishedFare": 14466,
+          "CommissionEarned": 0,
+          "PLBEarned": 0,
+          "IncentiveEarned": 0,
+          "OfferedFare": 14466,
+          "TdsOnCommission": 0,
+          "TdsOnPLB": 0,
+          "TdsOnIncentive": 0,
+          "ServiceFee": 0,
+          "ChargeBU": []
+        },
+        "FareBreakdown": [
+          {
+            "Currency": "INR",
+            "PassengerType": 1,
+            "PassengerCount": 2,
+            "BaseFare": 8470,
+            "Tax": 1174,
+            "YQTax": 0,
+            "AdditionalTxnFeeOfrd": 60,
+            "AdditionalTxnFeePub": 0,
+            "OtherCharges": 0,
+            "Discount": 0,
+            "PublishedFare": 9644,
+            "CommissionEarned": 0,
+            "PLBEarned": 0,
+            "IncentiveEarned": 0,
+            "OfferedFare": 9644,
+            "TdsOnCommission": 0,
+            "TdsOnPLB": 0,
+            "TdsOnIncentive": 0,
+            "ServiceFee": 0
+          }
+        ]
+      }
+    }
+  }
+}
