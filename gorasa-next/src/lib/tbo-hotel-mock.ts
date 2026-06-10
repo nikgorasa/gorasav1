@@ -63,6 +63,7 @@ interface MockHotelDef {
   rating: number;
   location: string;
   currency: string;
+  imageUrl: string;
   rooms: {
     name: string;
     refundable: boolean;
@@ -79,6 +80,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 1279415, name: "Fairfield by Marriott Goa", rating: 4, location: "Calangute, Goa",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Deluxe Room, 1 King Bed", refundable: false, mealType: "Room_Only", inclusion: "Free parking", basePrice: 3500, tax: 650, amenities: ["Free WiFi", "Free Parking", "Air Conditioning"] },
         { name: "Premium Room, 1 King Bed", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast, Free parking", basePrice: 4800, tax: 850, amenities: ["Free WiFi", "Free Parking", "Breakfast", "Air Conditioning"] },
@@ -87,6 +89,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 2235336, name: "The Zuri White Sands Goa", rating: 5, location: "Cavelossim, Goa",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Garden View Room", refundable: false, mealType: "Half_Board", inclusion: "Breakfast & Dinner", basePrice: 6500, tax: 1200, amenities: ["Free WiFi", "Pool Access", "Breakfast", "Dinner", "Air Conditioning"] },
       ],
@@ -96,6 +99,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 3382101, name: "The Taj Mahal Palace", rating: 5, location: "Colaba, Mumbai",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Heritage Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 12000, tax: 2100, amenities: ["Free WiFi", "Breakfast", "Gym", "Pool", "Air Conditioning", "Airport Transfer"] },
         { name: "Sea View Suite", refundable: true, mealType: "Half_Board", inclusion: "Breakfast & Dinner", basePrice: 22000, tax: 3800, amenities: ["Free WiFi", "Breakfast", "Dinner", "Gym", "Pool", "Butler Service"] },
@@ -104,6 +108,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 4478923, name: "ITC Grand Central", rating: 5, location: "Lower Parel, Mumbai",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Executive Room", refundable: false, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 8500, tax: 1500, amenities: ["Free WiFi", "Breakfast", "Gym", "Air Conditioning"] },
       ],
@@ -113,6 +118,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 5567341, name: "The Lalit New Delhi", rating: 5, location: "Connaught Place, New Delhi",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Superior Room", refundable: false, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 6000, tax: 1050, amenities: ["Free WiFi", "Breakfast", "Gym", "Pool", "Air Conditioning"] },
       ],
@@ -120,6 +126,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 6628345, name: "Claridges New Delhi", rating: 5, location: "Lutyens Delhi, New Delhi",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Deluxe Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast, Free minibar", basePrice: 7500, tax: 1300, amenities: ["Free WiFi", "Breakfast", "Minibar", "Air Conditioning"] },
         { name: "Suite", refundable: true, mealType: "Half_Board", inclusion: "Breakfast & Dinner", basePrice: 14000, tax: 2500, amenities: ["Free WiFi", "Breakfast", "Dinner", "Butler Service", "Air Conditioning"] },
@@ -130,6 +137,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 7712398, name: "Rambagh Palace", rating: 5, location: "Bhawani Singh Road, Jaipur",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Palace Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 15000, tax: 2600, amenities: ["Free WiFi", "Breakfast", "Pool", "Spa", "Air Conditioning", "Heritage Walk"] },
       ],
@@ -137,6 +145,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 8834567, name: "ITC Rajputana", rating: 5, location: "Palace Road, Jaipur",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Classic Room", refundable: false, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 5500, tax: 950, amenities: ["Free WiFi", "Breakfast", "Pool", "Air Conditioning"] },
         { name: "Executive Suite", refundable: true, mealType: "Half_Board", inclusion: "Breakfast & Dinner", basePrice: 10000, tax: 1800, amenities: ["Free WiFi", "Breakfast", "Dinner", "Pool", "Spa", "Air Conditioning"] },
@@ -147,6 +156,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 9901234, name: "The Oberoi Bangalore", rating: 5, location: "MG Road, Bangalore",
       currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Premier Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 9000, tax: 1600, amenities: ["Free WiFi", "Breakfast", "Gym", "Pool", "Air Conditioning"] },
       ],
@@ -156,6 +166,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 10928374, name: "JW Marriott Marquis Dubai", rating: 5, location: "Business Bay, Dubai",
       currency: "AED",
+      imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Deluxe Room", refundable: false, mealType: "Room_Only", inclusion: "Free parking", basePrice: 550, tax: 75, amenities: ["Free WiFi", "Free Parking", "Gym", "Pool", "Air Conditioning", "Beach Access"] },
         { name: "Executive Suite", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast, Lounge access", basePrice: 950, tax: 130, amenities: ["Free WiFi", "Breakfast", "Lounge", "Gym", "Pool"] },
@@ -164,6 +175,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 20938475, name: "Rove Downtown", rating: 4, location: "Downtown Dubai",
       currency: "AED",
+      imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Standard Room", refundable: false, mealType: "Room_Only", inclusion: "", basePrice: 320, tax: 45, amenities: ["Free WiFi", "Gym", "Pool"] },
       ],
@@ -173,6 +185,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 30948576, name: "Centara Grand at CentralWorld", rating: 5, location: "Pathum Wan, Bangkok",
       currency: "THB",
+      imageUrl: "https://images.unsplash.com/photo-1563492065599-3520f775eeed?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Superior Room", refundable: false, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 3200, tax: 500, amenities: ["Free WiFi", "Breakfast", "Gym", "Pool", "Air Conditioning", "Spa"] },
         { name: "Deluxe Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast, Free minibar", basePrice: 4500, tax: 700, amenities: ["Free WiFi", "Breakfast", "Minibar", "Gym", "Pool", "Spa"] },
@@ -181,6 +194,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 40192837, name: "Novotel Bangkok Platinum", rating: 4, location: "Siam, Bangkok",
       currency: "THB",
+      imageUrl: "https://images.unsplash.com/photo-1563492065599-3520f775eeed?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Standard Room", refundable: false, mealType: "Room_Only", inclusion: "", basePrice: 1800, tax: 300, amenities: ["Free WiFi", "Gym", "Pool", "Air Conditioning"] },
       ],
@@ -190,6 +204,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 50384756, name: "Marina Bay Sands", rating: 5, location: "Marina Bay, Singapore",
       currency: "SGD",
+      imageUrl: "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Deluxe Room", refundable: false, mealType: "Room_Only", inclusion: "Free parking", basePrice: 400, tax: 50, amenities: ["Free WiFi", "Free Parking", "Gym", "Pool", "Air Conditioning", "Infinity Pool"] },
         { name: "Premier Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 550, tax: 70, amenities: ["Free WiFi", "Breakfast", "Gym", "Pool", "Infinity Pool"] },
@@ -198,6 +213,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 60493827, name: "Pan Pacific Singapore", rating: 5, location: "Marina Square, Singapore",
       currency: "SGD",
+      imageUrl: "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Harbour View Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 320, tax: 45, amenities: ["Free WiFi", "Breakfast", "Gym", "Pool", "Air Conditioning", "Bay View"] },
       ],
@@ -207,6 +223,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 70192834, name: "The Kuala Lumpur Journal", rating: 4, location: "Bukit Bintang, Kuala Lumpur",
       currency: "MYR",
+      imageUrl: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Studio Room", refundable: false, mealType: "Room_Only", inclusion: "Free parking", basePrice: 250, tax: 35, amenities: ["Free WiFi", "Free Parking", "Gym", "Pool", "Air Conditioning"] },
       ],
@@ -214,6 +231,7 @@ const HOTELS: Record<string, MockHotelDef[]> = {
     {
       code: 80293847, name: "Grand Hyatt Kuala Lumpur", rating: 5, location: "KLCC, Kuala Lumpur",
       currency: "MYR",
+      imageUrl: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80",
       rooms: [
         { name: "Grand Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 480, tax: 65, amenities: ["Free WiFi", "Breakfast", "Gym", "Pool", "Spa", "Air Conditioning", "KLCC View"] },
         { name: "Suite", refundable: true, mealType: "Half_Board", inclusion: "Breakfast & Dinner", basePrice: 800, tax: 110, amenities: ["Free WiFi", "Breakfast", "Dinner", "Lounge", "Gym", "Pool", "Spa"] },
@@ -573,7 +591,7 @@ export function getMockCities(countryCode: string): { CityCode: number; CityName
   return cities[countryCode] || [];
 }
 
-export function getMockHotelCodes(cityCode: number): { HotelCode: number; HotelName: string; CityName: string; HotelRating: number }[] {
+export function getMockHotelCodes(cityCode: number): { HotelCode: number; HotelName: string; CityName: string; HotelRating: number; imageUrl: string }[] {
   const cityMap: Record<number, string> = {};
   for (const [name, code] of Object.entries(CITY_CODES)) {
     cityMap[code] = name;
@@ -589,6 +607,7 @@ export function getMockHotelCodes(cityCode: number): { HotelCode: number; HotelN
     HotelName: h.name,
     CityName: cityName,
     HotelRating: h.rating,
+    imageUrl: h.imageUrl,
   }));
 }
 
