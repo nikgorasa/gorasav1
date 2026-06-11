@@ -18,7 +18,7 @@ interface DemoUser {
 }
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signInDemo, signUpWithEmail } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -42,12 +42,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   }, []);
 
   const DEMO_FALLBACK: DemoUser[] = [
-    { id: "1", name: "Nikhil Gorasa", email: "nikhil@gorasa.com", role: "SUPER_ADMIN" },
-    { id: "2", name: "Priya Sharma", email: "priya@gorasa.com", role: "ADMIN" },
-    { id: "3", name: "Rahul Verma", email: "rahul@gorasa.com", role: "SALES" },
-    { id: "4", name: "Ananya Patel", email: "ananya@gorasa.com", role: "CORPORATE_USER" },
-    { id: "5", name: "Vikram Singh", email: "vikram@gorasa.com", role: "CUSTOMER" },
-    { id: "6", name: "Demo User", email: "demo@gorasa.com", role: "CUSTOMER" },
+    { id: "1", name: "Harsh Mittal", email: "hmittal@gorasa.in", role: "SUPER_ADMIN" },
+    { id: "2", name: "Admin User", email: "admin@gorasa.in", role: "ADMIN" },
+    { id: "3", name: "Sales User", email: "sales@gorasa.in", role: "SALES" },
+    { id: "4", name: "Neha Corporate", email: "neha@corp.in", role: "CORPORATE_USER" },
+    { id: "5", name: "Amit Customer", email: "amit@example.com", role: "CUSTOMER" },
+    { id: "6", name: "Priya Customer", email: "priya@example.com", role: "CUSTOMER" },
   ];
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setError("");
     setLoading(true);
     try {
-      await signInWithEmail(demoEmail, "demo123");
+      await signInDemo(demoEmail);
       onClose();
     } catch (err: any) {
       setError(err.message || "Demo login failed");
