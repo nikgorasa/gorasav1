@@ -43,9 +43,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const now = new Date().toISOString();
     const { data: lead, error } = await supabase
       .from("Lead")
       .insert({
+        id: crypto.randomUUID(),
         destination,
         travelerName,
         travelerEmail,
@@ -55,6 +57,8 @@ export async function POST(request: Request) {
         specificDemands,
         notes,
         stage: "NEW",
+        createdAt: now,
+        updatedAt: now,
       })
       .select()
       .single();

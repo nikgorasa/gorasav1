@@ -660,13 +660,20 @@ Uses remote connection with project ref `isubgeemvhvhnhikxbjb`. No token needed 
 
 **Prisma Schema:** `gorasa-next/prisma/schema.prisma` (10 tables: User, Company, Lead, Activity, Package, Booking, Payment, Invoice, CancellationRequest, PricingRule)
 
-**Supabase-only tables** (27+ tables, queried via raw Supabase client):
-Testimonial, PackageCategory, ValueProposition, City, Flight, Faq, FaqCategory, FooterLink, NavigationItem, Role, SiteConfig, PromoCode, LoyaltyReward, Redemption, LeadStage, PreferenceOption, QuickTopUpAmount
+**Supabase-only tables** (30+ tables, queried via raw Supabase client):
+Testimonial, PackageCategory, ValueProposition, City, Flight, Faq, FaqCategory, FooterLink, NavigationItem, Role, SiteConfig, PromoCode, LoyaltyReward, Redemption, LeadStage, PreferenceOption, QuickTopUpAmount, tickets, ticket_notes, ticket_activities
 
 **Naming convention:**
 - Prisma tables → camelCase columns
 - Raw Supabase tables → lowercase snake_case columns
 - API routes map between them
+
+**RLS Status: ENABLED on all Supabase tables**
+- All tables have Row Level Security enabled
+- Permissive "Full access" policies for public role (matches Lead table pattern)
+- Ticket tables (tickets, ticket_notes, ticket_activities): RLS enabled with "Full access" policy
+- Lead table: RLS enabled with "Full access" policy (replaced service_role-only policy)
+- API routes use anon key (RLS policies allow public access)
 
 ---
 
@@ -725,6 +732,10 @@ All routes under `gorasa-next/src/app/api/` (27+ endpoints):
 | `/api/categories` | GET | None | Package categories |
 | `/api/tbo` | POST | None | **TBO flight search** (search, fare-rule, fare-quote, book, ticket) |
 | `/api/tbo-hotels` | POST | None | **TBO hotel search** (search, pre-book, book, booking-detail, static data) |
+| `/api/support` | POST | None | Smart support (FAQ + intent routing) |
+| `/api/tickets` | GET/POST | None | Ticket CRUD |
+| `/api/tickets/[id]` | GET/PATCH | None | Single ticket |
+| `/api/tickets/[id]/notes` | GET/POST | None | Ticket notes |
 | `/api/companies` | GET | None | Active companies |
 | `/api/companies/[id]` | PATCH | None | Wallet update |
 | `/api/profile` | GET/PATCH | `x-user-email` header | User profile |

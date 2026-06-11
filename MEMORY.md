@@ -1,7 +1,7 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-12 05:30 IST
+> **Last updated:** 2026-06-12 06:45 IST
 
 ---
 
@@ -43,6 +43,12 @@
 | Staging environments | 3 Vercel projects (prod, dev, qa) with NEON databases for dev/qa | 2026-06-12 |
 | Staging deployment | GitHub Actions workflows for dev/qa, Vercel Git integration for prod | 2026-06-12 |
 | Staging database | NEON (gorasa-dev, gorasa-qa) with 28+ tables, 210 rows each | 2026-06-12 |
+| Ticket system RLS | Permissive "Full access" policy (matches Lead table pattern), anon key | 2026-06-12 |
+| Ticket user_id type | TEXT (not UUID) — app uses string IDs from own User table, not Supabase Auth | 2026-06-12 |
+| AI Holiday Planner | Integrated to /holidays route (was at /planner) | 2026-06-12 |
+| Governance hooks | session.start + session.idle + session.end enforce preflight + post-task | 2026-06-12 |
+| Post-task checks | 15 compulsory checks (docs, env, TSC, build, DB, RLS, API, components, hooks) | 2026-06-12 |
+| Pre-flight checks | 10 compulsory checks (docs, env, TSC, git, critical files, hooks) | 2026-06-12 |
 
 ---
 
@@ -88,6 +94,16 @@
 | `scripts/migrate-via-sql.js` | Copies data from Supabase to NEON via SQL |
 | `scripts/create-full-schema.js` | Creates all tables in NEON matching Supabase schema |
 | `scripts/verify-migration.js` | Verifies row counts match between databases |
+| `gorasa-next/src/lib/ticket/serverManager.ts` | Ticket CRUD operations (Supabase, anon key, RLS enabled) |
+| `gorasa-next/src/lib/ticket/types.ts` | Ticket type definitions (Ticket, TicketNote, TicketActivity) |
+| `gorasa-next/src/app/api/tickets/route.ts` | Ticket list/create API |
+| `gorasa-next/src/app/api/tickets/[id]/route.ts` | Single ticket GET/PATCH API |
+| `gorasa-next/src/app/api/tickets/[id]/notes/route.ts` | Ticket notes GET/POST API |
+| `gorasa-next/src/app/admin/tickets/page.tsx` | Admin ticket dashboard |
+| `gorasa-next/src/lib/ai/holidayPlanner.ts` | Rule-based holiday planner (no API key needed) |
+| `gorasa-next/src/lib/ai/holidayPlannerAI.ts` | AI-powered holiday planner (requires API key) |
+| `gorasa-next/src/lib/support/smartRouter.ts` | Support FAQ + intent routing |
+| `gorasa-next/src/components/HolidayPlanner.tsx` | AI Holiday Planner chat UI |
 
 ---
 
@@ -175,6 +191,26 @@ QA:          qa-gorasa    → qa branch   → NEON gorasa-qa
 - QA: https://qa-gorasa-*.vercel.app
 
 **Status:** All 3 environments active and verified (HTTP 200, database connectivity confirmed)
+
+### Session 2026-06-12 — Ticket System Productionization + AI Planner Integration
+
+**Duration:** ~2 hours
+**Problem:** Ticket system had missing `await` on async calls, invalid UUID format for IDs, column type mismatches, and RLS blocking inserts.
+
+**Changes:**
+1. Integrated AI Holiday Planner to `/holidays` route (copied from `/planner`)
+2. Created Supabase migration: `tickets`, `ticket_notes`, `ticket_activities` tables
+3. Fixed `serverManager.ts`: use `crypto.randomUUID()` for IDs, use anon key
+4. Fixed all 3 ticket API routes: added `await` on all async serverManager calls
+5. Changed `user_id` and `assigned_to` columns from UUID to TEXT (app uses string IDs)
+6. Dropped FK constraints to `auth.users` (app uses own User table)
+7. Enabled RLS with permissive "Full access" policies (matches Lead table pattern)
+8. Fixed `payment/success/page.tsx`: wrapped `useSearchParams` in Suspense boundary
+9. Verified all APIs: tickets GET/POST, support, intent classification, holiday planner
+
+**Key Lesson:** Always `await` async functions in API routes. Missing `await` returns a Promise object (serialized as `{}`) instead of the actual data.
+
+**Status:** Ticket system fully functional with RLS enabled, AI planner at /holidays, all APIs verified.
 
 ---
 

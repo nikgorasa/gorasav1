@@ -1,22 +1,38 @@
 hooks:
+  # ═══════════════════════════════════════════════════════
+  # SESSION START — Pre-Flight Check (COMPULSORY)
+  # ═══════════════════════════════════════════════════════
+  - event: session.start
+    scope: main
+    actions:
+      - bash:
+          command: "echo '═══ GoRASA SESSION START ═══' && bash /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/scripts/preflight-check.sh"
+          timeout: 120000
+
+  # ═══════════════════════════════════════════════════════
+  # FILE CHANGED — TypeScript Check
+  # ═══════════════════════════════════════════════════════
   - event: file.changed
     scope: all
     conditions:
       - matchesCodeFiles
     actions:
       - bash:
-          command: "cd gorasa-next && npx tsc --noEmit"
+          command: "cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/gorasa-next && npx tsc --noEmit"
           timeout: 30000
 
+  # ═══════════════════════════════════════════════════════
+  # FILE CHANGED — Documentation Check (Strict)
+  # ═══════════════════════════════════════════════════════
   - event: file.changed
     scope: main
     actions:
       - bash:
           command: |
             echo '=== GoRASA Documentation Check (Strict) ==='
-            cd gorasa-next
+            cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main
             MISSING=0
-            for f in CHANGE-LOG.md ../MEMORY.md ../LEARNING-FROM-MISTAKES.md ../DEPLOYMENT_LOG.md ../CONFIG-REFERENCE.md; do
+            for f in CHANGE-LOG.md MEMORY.md LEARNING-FROM-MISTAKES.md DEPLOYMENT_LOG.md CONFIG-REFERENCE.md Sprint-1.md; do
               if [ ! -f "$f" ]; then
                 echo "❌ MISSING: $f"
                 MISSING=1
@@ -26,13 +42,26 @@ hooks:
               echo "❌ FAIL: One or more governance docs missing"
               exit 1
             else
-              echo "✅ All 7 governance docs present"
+              echo "✅ All governance docs present"
             fi
           timeout: 10000
 
+  # ═══════════════════════════════════════════════════════
+  # SESSION IDLE — Post-Task Check (COMPULSORY)
+  # ═══════════════════════════════════════════════════════
   - event: session.idle
     scope: main
     actions:
       - bash:
-          command: "echo '=== GoRASA Governance Post-Task ===' && cd gorasa-next && bash scripts/post-task-check.sh && echo '=== Done ==='"
-          timeout: 15000
+          command: "echo '═══ GoRASA SESSION IDLE — POST-TASK CHECK ═══' && bash /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/scripts/post-task-check.sh"
+          timeout: 180000
+
+  # ═══════════════════════════════════════════════════════
+  # SESSION END — Final Post-Task Check (COMPULSORY)
+  # ═══════════════════════════════════════════════════════
+  - event: session.end
+    scope: main
+    actions:
+      - bash:
+          command: "echo '═══ GoRASA SESSION END — FINAL CHECK ═══' && bash /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/scripts/post-task-check.sh && echo '═══ SESSION COMPLETE ═══'"
+          timeout: 180000

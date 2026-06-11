@@ -7,6 +7,7 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-12 | (pending) | feat: ticket system productionization + AI planner integration |
 | 2026-06-12 | 80f9033 | ci: fix Vercel deploy path in GitHub Actions |
 | 2026-06-12 | 36e4e0c | ci: update GitHub Actions workflows for Vercel deployment |
 | 2026-06-12 | 3e6470a | ci: add GitHub Actions workflows for dev/qa deployments |
@@ -133,6 +134,35 @@ Files changed:
 .github/workflows/deploy-qa.yml
 
 Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+## 2026-06-12 06:20 IST
+
+### feat: ticket system productionization + AI planner integration
+
+Files changed:
+gorasa-next/src/lib/ticket/serverManager.ts
+gorasa-next/src/app/api/tickets/route.ts
+gorasa-next/src/app/api/tickets/[id]/route.ts
+gorasa-next/src/app/api/tickets/[id]/notes/route.ts
+gorasa-next/src/app/payment/success/page.tsx
+gorasa-next/src/app/holidays/page.tsx (copied from planner)
+
+Database changes:
+- Created tickets, ticket_notes, ticket_activities tables (Supabase migration)
+- Changed user_id and assigned_to columns from UUID to TEXT
+- Dropped FK constraints to auth.users
+- Enabled RLS with permissive "Full access" policies (matches Lead table pattern)
+
+Description:
+1. Integrated AI Holiday Planner to /holidays route (copied from /planner)
+2. Fixed ticket system: missing await on all async serverManager calls
+3. Fixed ticket ID format: UUID instead of TKT-xxx string
+4. Fixed column types: user_id/assigned_to UUID → TEXT (app uses string IDs)
+5. Enabled RLS with permissive policies matching existing database pattern
+6. Fixed payment/success Suspense boundary for useSearchParams
+7. Verified all APIs: tickets GET/POST, support, intent classification, holiday planner
 
 ---
 
