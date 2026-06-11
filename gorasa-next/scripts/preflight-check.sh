@@ -1,14 +1,9 @@
 #!/bin/bash
 
-# GoRASA Governance Pre-Flight Check
-# Run this before making any significant changes
+# GoRASA Pre-Flight Check Script
+# Must be run before starting ANY significant work
 
-set -e
-
-echo "========================================="
-echo "GoRASA Governance Pre-Flight Check"
-echo "========================================="
-echo ""
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -16,113 +11,135 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Check if we're in the right directory
-if [ ! -f "package.json" ] || [ ! -d "src" ]; then
-    echo -e "${RED}ERROR: Not in gorasa-next directory${NC}"
-    echo "Please run from: /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/gorasa-next"
+# Helper function to print colored output
+print_status() {
+    echo -e "${GREEN}[PRE-FLIGHT]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Change to project root
+cd "$(dirname "$0")/.."
+
+print_status "Starting GoRASA pre-flight checks..."
+
+# Check 1: Read project documentation
+print_status "1. Checking project documentation..."
+
+REQUIRED_DOCS=(
+    "../Sprint-1.md"
+    "../LEARNING-FROM-MISTAKES.md"
+    "../CONFIG-REFERENCE.md"
+    "../DEPLOYMENT_LOG.md"
+    "../MEMORY.md"
+    "CHANGE-LOG.md"
+)
+
+MISSING_DOCS=()
+
+for doc in "${REQUIRED_DOCS[@]}"; do
+    if [[ ! -f "$doc" ]]; then
+        MISSING_DOCS+=("$doc")
+        print_warning "Missing documentation: $doc"
+    fi
+done
+
+if [[ ${#MISSING_DOCS[@]} -gt 0 ]]; then
+    print_error "Missing required documentation files: ${MISSING_DOCS[*]}"
+    print_error "Run: cat ../Sprint-1.md ../LEARNING-FROM-MISTAKES.md ../CONFIG-REFERENCE.md ../DEPLOYMENT_LOG.md ../MEMORY.md"
     exit 1
 fi
 
-echo -e "${YELLOW}Step 1: Checking project documentation...${NC}"
+print_status "✓ All required documentation files exist"
 
-# Check if governance files exist
-if [ ! -f "../Sprint-1.md" ]; then
-    echo -e "${RED}WARNING: Sprint-1.md not found${NC}"
+# Check 2: Generate context brief
+print_status "2. Checking for context brief..."
+
+CONTEXT_BRIEF_FILES=("../CONTEXT-BRIEF-*.md")
+
+if ls "../CONTEXT-BRIEF-*.md" 1> /dev/null 2>&1; then
+    print_warning "Found existing context brief files:"
+    ls "../CONTEXT-BRIEF-*.md"
 else
-    echo -e "${GREEN}✓ Sprint-1.md found${NC}"
+    print_warning "No context brief found. Create one with:
+    touch ../CONTEXT-BRIEF-[ISSUE-NAME].md
+    Then populate with:
+    - Problem statement
+    - Investigation summary
+    - Root cause analysis
+    - Resolution path
+    - Lessons learned
+    - Action items"
 fi
 
-if [ ! -f "../LEARNING-FROM-MISTAKES.md" ]; then
-    echo -e "${RED}WARNING: LEARNING-FROM-MISTAKES.md not found${NC}"
-else
-    echo -e "${GREEN}✓ LEARNING-FROM-MISTAKES.md found${NC}"
-fi
+# Check 3: Check current state
+print_status "3. Checking current project state..."
 
-if [ ! -f "../CONFIG-REFERENCE.md" ]; then
-    echo -e "${RED}WARNING: CONFIG-REFERENCE.md not found${NC}"
-else
-    echo -e "${GREEN}✓ CONFIG-REFERENCE.md found${NC}"
-fi
-
-if [ ! -f "../DEPLOYMENT_LOG.md" ]; then
-    echo -e "${RED}WARNING: DEPLOYMENT_LOG.md not found${NC}"
-else
-    echo -e "${GREEN}✓ DEPLOYMENT_LOG.md found${NC}"
-fi
-
-if [ ! -f "../MEMORY.md" ]; then
-    echo -e "${RED}WARNING: MEMORY.md not found${NC}"
-else
-    echo -e "${GREEN}✓ MEMORY.md found${NC}"
-fi
-
-if [ ! -f "CHANGE-LOG.md" ]; then
-    echo -e "${RED}WARNING: CHANGE-LOG.md not found${NC}"
-else
-    echo -e "${GREEN}✓ CHANGE-LOG.md found${NC}"
-fi
-
-echo ""
-echo -e "${YELLOW}Step 2: Checking current state...${NC}"
-
-# Check git status
-echo "Git status:"
-git status --short
-
-echo ""
-echo "Recent commits:"
-git log --oneline -5
-
-echo ""
-echo -e "${YELLOW}Step 3: Checking TypeScript compilation...${NC}"
-
-# Run TypeScript check
-if npx tsc --noEmit 2>/dev/null; then
-    echo -e "${GREEN}✓ TypeScript compilation passes${NC}"
-else
-    echo -e "${RED}✗ TypeScript compilation fails${NC}"
-    echo "Please fix TypeScript errors before proceeding"
+if ! git status >/dev/null 2>&1; then
+    print_error "Not in a git repository or git not available"
     exit 1
 fi
 
-echo ""
-echo -e "${YELLOW}Step 4: Checking for existing context brief...${NC}"
+print_status "✓ Git status available"
 
-# Check if context brief exists for current issue
-CONTEXT_BRIEFS=$(ls -1 ../CONTEXT-BRIEF-*.md 2>/dev/null | wc -l)
-if [ "$CONTEXT_BRIEFS" -gt 0 ]; then
-    echo -e "${GREEN}✓ Found $CONTEXT_BRIEFS context brief(s)${NC}"
-    ls -1 ../CONTEXT-BRIEF-*.md
+# Check recent commits
+RECENT_COMMITS=$(git log --oneline -5 2>/dev/null || echo "0 commits")
+print_status "Recent commits:"
+print_status "$RECENT_COMMITS"
+
+# Check TypeScript compilation
+print_status "4. Checking TypeScript compilation..."
+
+if command -v npx >/dev/null 2>&1; then
+    if npx tsc --noEmit 2>&1; then
+        print_status "✓ TypeScript compilation successful"
+    else
+        print_error "TypeScript compilation failed"
+        print_error "Fix TypeScript errors before proceeding"
+        exit 1
+    fi
 else
-    echo -e "${YELLOW}⚠ No context briefs found${NC}"
-    echo "Consider creating one if working on a new issue"
+    print_warning "npx not available, skipping TypeScript check"
 fi
 
-echo ""
-echo -e "${YELLOW}Step 5: Checking deployment status...${NC}"
+# Final validation
+print_status "5. Final validation..."
 
-# Check if deployment log exists
-if [ -f "../DEPLOYMENT_LOG.md" ]; then
-    echo -e "${GREEN}✓ Deployment log exists${NC}"
-    echo "Last deployment entry:"
-    grep -A 2 "^|" ../DEPLOYMENT_LOG.md | tail -3
+# Check for governance scripts
+if [[ -f "scripts/preflight-check.sh" ]]; then
+    print_status "✓ Preflight check script exists"
 else
-    echo -e "${RED}✗ Deployment log not found${NC}"
+    print_error "Preflight check script not found: scripts/preflight-check.sh"
+    exit 1
 fi
 
-echo ""
-echo "========================================="
-echo -e "${GREEN}Pre-flight check complete!${NC}"
-echo "========================================="
-echo ""
-echo "Next steps:"
-echo "1. Read the project documentation if you haven't already"
-echo "2. Create a context brief if working on a new issue"
-echo "3. Make your changes"
-echo "4. Update CHANGE-LOG.md with a summary of changes"
-echo "5. Update LEARNING-FROM-MISTAKES.md if debugging >30 min"
-echo "6. Update DEPLOYMENT_LOG.md if deployment changed"
-echo "7. Update MEMORY.md with session context"
-echo "8. Create ADR if making architectural decisions"
-echo ""
-echo "Run './scripts/post-task-check.sh' after completing work"
+if [[ -f "scripts/post-task-check.sh" ]]; then
+    print_status "✓ Post-task check script exists"
+else
+    print_error "Post-task check script not found: scripts/post-task-check.sh"
+    exit 1
+fi
+
+# Check opencode hooks
+if [[ -f ".opencode/hook/hooks.yaml" ]]; then
+    print_status "✓ Opencode hooks configuration exists"
+else
+    print_warning "Opencode hooks configuration not found. Create with: mkdir -p .opencode/hook && cat > .opencode/hook/hooks.yaml"
+fi
+
+print_status "6. Summary..."
+print_status "Pre-flight checks completed successfully!"
+print_status ""
+print_status "Next steps:"
+print_status "1. Complete your task"
+print_status "2. Run: bash scripts/post-task-check.sh"
+print_status ""
+print_status "Remember: This is MANDATORY for ALL work on the GoRASA project."
+
+exit 0
