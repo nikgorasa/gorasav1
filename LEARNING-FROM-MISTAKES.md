@@ -291,6 +291,44 @@
 
 ---
 
+## Issue #8: Fallback Hotel Names Show "Unknown" Instead of City Name
+
+**Date:** June 12, 2026
+**Duration:** ~2 hours
+**Severity:** Medium — fallback hotels displayed "Hotel in Unknown" instead of "Hotel in Ayodhya"
+
+### Symptoms
+- Cities without TBO inventory (like Ayodhya) returned fallback hotels
+- Hotel names showed "Hotel in Unknown" instead of "Hotel in Ayodhya"
+- Debug log confirmed `params.city: Ayodhya` was correct
+- But output showed "Unknown" as city name
+
+### Root Cause
+- `getHotelInfoByCode()` function was hardcoded to call `generateFallbackHotels("Unknown")`
+- The function didn't know the actual city name from the search request
+- So it always generated fallback hotels with "Unknown" as the city
+
+### Resolution Steps
+1. Added debug logging to trace `params.city` value — confirmed it was "Ayodhya"
+2. Traced code flow: `searchHotels()` → `mockSearchHotels()` → `getHotelInfoByCode()`
+3. Found `getHotelInfoByCode()` line 676: `generateFallbackHotels("Unknown")` — hardcoded!
+4. Fixed by using `fallbackHotels` array directly instead of calling `getHotelInfoByCode()`
+5. Removed debug logging after fix confirmed
+
+### Lessons Learned
+1. **Don't pass data through multiple layers if you can use it directly** — `fallbackHotels` already had the correct city name
+2. **Debug logging is essential** — without it, would have spent hours guessing
+3. **Check hardcoded values first** — "Unknown" was a dead giveaway
+4. **Test with cities that trigger fallback paths** — Goa works (mock data), Ayodhya triggers fallback
+
+### Prevention Measures
+1. Always pass context (like city name) through function parameters
+2. Avoid hardcoded fallback values in utility functions
+3. Test with multiple cities including ones without inventory
+4. Use debug logging to trace data flow through multiple layers
+
+---
+
 | Issue | Duration | Root Cause |
 |-------|----------|------------|
 | Homepage carousels blank | ~8 hours | Multiple issues (column casing, Footer, Promise.all, motion opacity) |
@@ -301,7 +339,8 @@
 | Demo login broken | ~2 hours | Phase 1: Supabase Auth used instead of direct DB lookup; Phase 2: Anon key used as service key (RLS blocked); Phase 3: Service key JWT signature stale |
 | TBO Hotel API auth mismatch | ~3 hours | Wrong auth method (TokenId vs Basic), wrong creds (shared flight vs dedicated hotel), wrong username |
 | Hotel search param extraction | ~30 min | Route extracted from `body` root, not `body.params`; field names differed (CityName vs city) |
-| **Total** | **~24.5 hours** | |
+| Fallback hotel names "Unknown" | ~2 hours | `getHotelInfoByCode()` hardcoded to `generateFallbackHotels("Unknown")` instead of using actual city name |
+| **Total** | **~27 hours** | |
 
 ---
 
@@ -330,3 +369,8 @@
 21. **Frontend sends nested params** — `{ action: "search", params: { CityName, ... } }` — route must extract from `body.params`, not `body`
 22. **Static data endpoints need POST** — CountryList uses GET, but CityList and TBOHotelCodeList need POST with JSON body
 23. **HotelCode is string not number** — TBO API returns "1279415" as string, not 1279415 as number; update all types accordingly
+24. **Don't pass data through multiple layers if you can use it directly** — `fallbackHotels` already had correct city name; `getHotelInfoByCode()` didn't
+25. **Debug logging saves hours** — Added `console.log` to trace `params.city` value; found the issue immediately
+26. **Check hardcoded values first** — "Unknown" in `generateFallbackHotels("Unknown")` was the smoking gun
+27. **Test with cities that trigger fallback paths** — Goa works (mock), Ayodhya triggers fallback; test both
+28. **Operational modes matter** — Plan mode (read-only) vs Build mode (read-write); always check system reminders
