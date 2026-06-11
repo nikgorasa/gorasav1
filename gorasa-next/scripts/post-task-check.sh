@@ -245,7 +245,7 @@ fi
 # Check 7: Verify governance hooks
 print_status "7. Checking governance hooks..."
 
-HOOKS_FILE="../../.opencode/hook/hooks.yaml"
+HOOKS_FILE="../../../.opencode/hook/hooks.yaml"
 if [[ -f "$HOOKS_FILE" ]]; then
     print_status "✓ Opencode hooks configuration exists"
 

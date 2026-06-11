@@ -7,6 +7,7 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-11 | 530ac44 | feat: flights use IATA codes from Supabase City table via TBO API |
 | 2026-06-11 | da14b48 | feat: dynamic city code resolution - remove hardcoded mapping dependency |
 | 2026-06-11 | 4ae87e4 | feat: add 30+ Indian cities to hotel search (Ayodhya, Haridwar, Dehradun, etc.) |
 | 2026-06-11 | 90c03f4 | docs: update CONFIG-REFERENCE.md with live TBO API status |

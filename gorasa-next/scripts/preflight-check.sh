@@ -127,10 +127,11 @@ else
 fi
 
 # Check opencode hooks
-if [[ -f ".opencode/hook/hooks.yaml" ]]; then
+HOOKS_FILE="../../../.opencode/hook/hooks.yaml"
+if [[ -f "$HOOKS_FILE" ]]; then
     print_status "✓ Opencode hooks configuration exists"
 else
-    print_warning "Opencode hooks configuration not found. Create with: mkdir -p .opencode/hook && cat > .opencode/hook/hooks.yaml"
+    print_warning "Opencode hooks configuration not found at $HOOKS_FILE"
 fi
 
 print_status "6. Summary..."
