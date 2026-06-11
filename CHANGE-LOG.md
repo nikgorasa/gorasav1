@@ -7,10 +7,11 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
-| 2026-06-11 | (uncommitted) | TBO Hotel API refactor: dedicated types/client/route files, Basic Auth |
-| 2026-06-11 | (uncommitted) | Fix TBO hotel auth: use Basic Auth on `api.tbotechnology.in`, separate creds |
-| 2026-06-11 | (uncommitted) | Fix flight API credentials: `RasaT` not `RasaTAPI` |
-| 2026-06-11 | (uncommitted) | Add `TBO_HOTEL_USERNAME`/`TBO_HOTEL_PASSWORD` to `.env.local` |
+| 2026-06-11 | e54df33 | fix: /api/tbo route now uses flight client (not hotel) |
+| 2026-06-11 | a6918ff | fix: extract hotel search params from body.params (frontend nested format) |
+| 2026-06-11 | 7e7a93d | fix: TBO hotel search with real API - resolve hotel codes from city name |
+| 2026-06-11 | fe561cc | chore: trigger redeploy with TBO hotel env vars |
+| 2026-06-11 | 6d0bfe6 | feat: TBO hotel API live integration + governance fixes |
 | 2026-06-11 | b45bba7 | Add MEMORY.md + CHANGE-LOG.md, update governance hooks and docs |
 | 2026-06-11 | 28eb748 | fix: use correct SUPABASE_SERVICE_ROLE_KEY |
 | 2026-06-11 | 130bafd | fix: update SUPABASE_SERVICE_ROLE_KEY in Vercel |

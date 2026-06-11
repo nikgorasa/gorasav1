@@ -8,7 +8,7 @@
 ## Current Sprint Context
 
 **Sprint:** Sprint -1 — Full Stack Migration & Foundation (June 8–12)
-**Status:** Phase 6 — TBO Hotel API live integration. Search working, PreBook reachable (insufficient balance — expected for test).
+**Status:** Phase 6 — TBO Hotel and Flight APIs LIVE. Real prices returning.
 **Live URL:** https://gorasa-next.vercel.app
 
 ---
@@ -120,6 +120,6 @@
 |----------|--------|-------|
 | Flight search (live) | ✅ Working | `api.tektravels.com` with TokenId auth |
 | Hotel search (live) | ✅ Working | `api.tbotechnology.in` with Basic Auth |
-| Hotel static data | ✅ Working | CountryList, CityList via Basic Auth |
+| Hotel static data | ✅ Working | CountryList, CityList, HotelCodeList via Basic Auth |
 | Real TBO flight API | ✅ Working | TokenId from authenticate, search returns live flights |
-| Real TBO hotel API | ✅ Working | Basic Auth, search returns live rooms |
+| Real TBO hotel API | ✅ Working | Basic Auth, search returns live rooms with real prices |
