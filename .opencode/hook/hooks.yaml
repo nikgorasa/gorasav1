@@ -1,0 +1,16 @@
+hooks:
+  - event: file.changed
+    scope: all
+    conditions:
+      - matchesCodeFiles
+    actions:
+      - bash:
+          command: "cd gorasa-next && npx tsc --noEmit"
+          timeout: 30000
+
+  - event: session.idle
+    scope: main
+    actions:
+      - bash:
+          command: "echo '=== GoRASA Governance Post-Task ===' && bash gorasa-next/scripts/post-task-check.sh && echo '=== Done ==='"
+          timeout: 15000
