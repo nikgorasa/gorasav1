@@ -16,6 +16,7 @@ import type {
 } from "./tbo-flight-types";
 import * as api from "./tbo-flight-api";
 import * as mock from "./tbo-flight-mock";
+import { calculatePrice } from "./pricing";
 
 const hasCredentials = !!(process.env.TBO_USERNAME && process.env.TBO_PASSWORD)
   && process.env.TBO_FLIGHT_FORCE_MOCK !== "true";
@@ -47,10 +48,10 @@ async function ensureToken(): Promise<string> {
   return res.TokenId;
 }
 
-function toDisplay(
+async function toDisplay(
   r: TBOFlightResult,
   leg: "outbound" | "inbound" | "oneway",
-): TBOFlightDisplay {
+): Promise<TBOFlightDisplay> {
   return {
     resultIndex: r.ResultIndex,
     leg,
