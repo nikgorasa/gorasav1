@@ -16,16 +16,22 @@
 | **Supabase MCP** | Global opencode config (not in repo `.mcp.json`) | `~/.config/opencode/opencode.jsonc` |
 | **Vercel Project Name** | `gorasa-next` | `.vercel/project.json` |
 | **Vercel Project ID** | `prj_WLoI80KaCmVZSudP17ohcPbzTpSe` | `.vercel/project.json` |
+| **Vercel Dev Project ID** | `prj_BWE4hfy72DwYF39XamAwGYi3qg63` | Vercel API |
+| **Vercel QA Project ID** | `prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN` | Vercel API |
 | **Vercel Team ID** | `team_0pR3Xnbjx12q8H8pZF9xgE5S` | `.vercel/project.json` |
 | **Vercel Root Directory** | **`gorasa-next/`** | Set via API (not vercel.json) |
 | **Vercel Env: TBO_FORCE_MOCK** | Removed (was `true`) | Vercel dashboard — removed Jun 11, 2026 |
-| **Deploy target** | `git push neworigin main` → Vercel auto-deploy | Vercel Git integration |
+| **Deploy target (Production)** | `git push neworigin main` → Vercel auto-deploy | Vercel Git integration |
+| **Deploy target (Dev)** | `git push neworigin dev` → GitHub Actions → Vercel | `.github/workflows/deploy-dev.yml` |
+| **Deploy target (QA)** | `git push neworigin qa` → GitHub Actions → Vercel | `.github/workflows/deploy-qa.yml` |
 | **Git remote (deploy)** | `neworigin → https://github.com/nikgorasa/gorasav1.git` | `git remote -v` |
 | **Git remote (origin)** | `origin → https://github.com/nikjp2021/gorasa-app.git` | `git remote -v` |
 | **App working directory** | `gorasa-next/` (NOT repo root) | All `npm`/`next` commands |
 | **Node version** | 24.x (Vercel), 24.15.0 (local) | No `.nvmrc` |
 | **Render MCP token** | In `.mcp.json` (gitignored) | Repo root `.mcp.json` |
 | **Env vars file** | `gorasa-next/.env.local` (gitignored) | Contains Supabase + TBO creds |
+| **NEON Dev DB** | `gorasa-dev` on `ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech` | GitHub env secrets |
+| **NEON QA DB** | `gorasa-qa` on `ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech` | GitHub env secrets |
 
 ---
 
@@ -53,6 +59,7 @@
 20. [Legacy Code (packages/)](#20-legacy-code-packages)
 21. [Seed Data & Demo Users](#21-seed-data--demo-users)
 22. [Key Architectural Notes](#22-key-architectural-notes)
+23. [Staging Environments (Dev/QA)](#23-staging-environments-devqa)
 
 ---
 
@@ -892,10 +899,164 @@ Not the primary app. Old Vite+Express monorepo. Still referenced but should not 
 3. **Motion** library — Framer Motion successor. Import from `motion/react`.
 4. **Dual DB access** — Prisma (10 tables) + raw Supabase queries (27+ tables). Mixed.
 5. **Inconsistent auth** — most API routes have no auth. Security concern for production.
-6. **No CI/CD** — no GitHub Actions, no Docker.
+6. **CI/CD via GitHub Actions** — `deploy-dev.yml` and `deploy-qa.yml` for staging environments.
 7. **App Router** — Next.js App Router with `src/` directory.
 8. **AGENTS.md** — exists in `gorasa-next/AGENTS.md`, currently just warns about Next.js version differences.
+9. **Multi-environment** — 3 Vercel projects (prod, dev, qa) with separate databases (Supabase, NEON dev, NEON QA).
 
 ---
 
 *End of GoRASA Configuration Reference. Generated 2026-06-09. Update this file when configuration changes.*
+
+---
+
+## 23. Staging Environments (Dev/QA)
+
+> **Added:** 2026-06-12  
+> **Purpose:** Isolated Development and QA environments for testing before production deployment.
+
+### Architecture
+
+```
+Production:  gorasa-next  → main branch → Supabase (isubgeemvhvhnhikxbjb)
+Development: dev-gorasa   → dev branch  → NEON (gorasa-dev)
+QA:          qa-gorasa    → qa branch   → NEON (gorasa-qa)
+```
+
+### Vercel Projects
+
+| Project | ID | Branch | Database | Root Dir | Build Command |
+|---------|-----|--------|----------|----------|---------------|
+| gorasa-next | `prj_WLoI80KaCmVZSudP17ohcPbzTpSe` | main | Supabase | gorasa-next/ | `npx prisma generate && npx next build` |
+| dev-gorasa | `prj_BWE4hfy72DwYF39XamAwGYi3qg63` | dev | NEON gorasa-dev | gorasa-next/ | `npx prisma generate && npx next build` |
+| qa-gorasa | `prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN` | qa | NEON gorasa-qa | gorasa-next/ | `npx prisma generate && npx next build` |
+
+### Deployment URLs
+
+| Environment | URL | Status |
+|-------------|-----|--------|
+| Production | https://gorasa-next.vercel.app | ✅ Active |
+| Development | https://dev-gorasa-*.vercel.app | ✅ Active |
+| QA | https://qa-gorasa-*.vercel.app | ✅ Active |
+
+### NEON Databases
+
+| Database | Host | Region | Tables | Rows | Status |
+|----------|------|--------|--------|------|--------|
+| gorasa-dev | ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech | US East | 29 | 210 | ✅ Active |
+| gorasa-qa | ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech | US East | 28 | 210 | ✅ Active |
+
+**Connection Strings (stored in GitHub environment secrets):**
+```
+DEV (pooled):  postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq-pooler.c-4.us-east-1.aws.neon.tech/gorasa-dev?sslmode=require&pgbouncer=true
+DEV (direct):  postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech/gorasa-dev?sslmode=require
+QA  (pooled):  postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq-pooler.c-4.us-east-1.aws.neon.tech/gorasa-qa?sslmode=require&pgbouncer=true
+QA  (direct):  postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech/gorasa-qa?sslmode=require
+```
+
+### GitHub Actions Workflows
+
+| Workflow | File | Trigger | Environment | Status |
+|----------|------|---------|-------------|--------|
+| Deploy Dev | `.github/workflows/deploy-dev.yml` | push to `dev` | Production – dev-gorasa | ✅ Working |
+| Deploy QA | `.github/workflows/deploy-qa.yml` | push to `qa` | Production – qa-gorasa | ✅ Working |
+
+**Workflow steps:**
+1. Checkout code
+2. Setup Node.js 24
+3. Install dependencies (`npm install` in gorasa-next/)
+4. Install Vercel CLI
+5. Deploy to Vercel (`vercel deploy --prod --yes`)
+
+### GitHub Environment Secrets
+
+Both `Production – dev-gorasa` and `Production – qa-gorasa` have 13 secrets:
+
+| Secret | Purpose | Source |
+|--------|---------|--------|
+| `DATABASE_URL` | NEON pooled connection | NEON dashboard |
+| `DIRECT_URL` | NEON direct connection | NEON dashboard |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Supabase dashboard |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Supabase dashboard |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Supabase dashboard |
+| `TBO_USERNAME` | TBO flight API login | TBO support |
+| `TBO_PASSWORD` | TBO flight API password | TBO support |
+| `TBO_HOTEL_USERNAME` | TBO hotel API login | TBO support |
+| `TBO_HOTEL_PASSWORD` | TBO hotel API password | TBO support |
+| `TBO_ENDPOINT` | TBO hotel API endpoint | TBO docs |
+| `VERCEL_TOKEN` | Vercel deployment token | Vercel dashboard |
+| `VERCEL_ORG_ID` | Vercel organization ID | Vercel API |
+| `VERCEL_DEV_PROJECT_ID` / `VERCEL_QA_PROJECT_ID` | Vercel project ID | Vercel API |
+
+### How to Deploy
+
+```bash
+# Deploy to Development
+git checkout dev
+# make changes...
+git push neworigin dev  →  GitHub Action → dev-gorasa.vercel.app
+
+# Deploy to QA
+git checkout qa
+git merge dev
+git push neworigin qa   →  GitHub Action → qa-gorasa.vercel.app
+
+# Deploy to Production
+git checkout main
+git merge qa
+git push neworigin main →  Vercel auto-deploy → gorasa-next.vercel.app
+```
+
+### Database Sync
+
+When new tables are added to Supabase, run the sync script to update NEON databases:
+
+```bash
+cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/gorasa-next
+
+# Sync schema to dev
+node ../scripts/create-full-schema.js "postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech/gorasa-dev?sslmode=require"
+
+# Sync schema to QA
+node ../scripts/create-full-schema.js "postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech/gorasa-qa?sslmode=require"
+
+# Copy data from Supabase to NEON
+node ../scripts/migrate-via-sql.js "postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq-pooler.c-4.us-east-1.aws.neon.tech/gorasa-dev?sslmode=require&pgbouncer=true"
+node ../scripts/migrate-via-sql.js "postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq-pooler.c-4.us-east-1.aws.neon.tech/gorasa-qa?sslmode=require&pgbouncer=true"
+```
+
+### Vercel Project Settings (API)
+
+```bash
+# Set root directory (if reset)
+VERCEL_TOKEN="vca_****"
+curl -X PATCH "https://api.vercel.com/v1/projects/<PROJECT_ID>?teamId=team_0pR3Xnbjx12q8H8pZF9xgE5S" \
+  -H "Authorization: Bearer $VERCEL_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"rootDirectory":"gorasa-next","buildCommand":"npx prisma generate && npx next build","framework":"nextjs"}'
+
+# Disable SSO protection (for public access)
+curl -X PATCH "https://api.vercel.com/v1/projects/<PROJECT_ID>?teamId=team_0pR3Xnbjx12q8H8pZF9xgE5S" \
+  -H "Authorization: Bearer $VERCEL_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"ssoProtection":null}'
+```
+
+### Scripts
+
+| Script | Purpose | Location |
+|--------|---------|----------|
+| `create-full-schema.js` | Creates all tables in NEON matching Supabase schema | `gorasa-next/` |
+| `migrate-via-sql.js` | Copies data from Supabase to NEON via SQL | `gorasa-next/` |
+| `fix-schema.js` | Adds missing columns to NEON tables | `gorasa-next/` |
+| `create-neon-dbs.js` | Creates gorasa-dev and gorasa-qa databases in NEON | `gorasa-next/` |
+| `setup-github-secrets.sh` | Helper script for GitHub environment secrets | `scripts/` |
+| `export-supabase-schema.sh` | Exports Supabase schema using pg_dump | `scripts/` |
+| `verify-migration.js` | Verifies row counts match between databases | `scripts/` |
+
+### Security Notes
+
+- NEON connection strings are stored in **GitHub environment secrets** (not in code)
+- Vercel environment variables are set per-project in Vercel dashboard
+- SSO protection is disabled for staging projects (public access)
+- All projects share the same Supabase credentials for auth

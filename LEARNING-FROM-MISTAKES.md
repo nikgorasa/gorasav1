@@ -340,7 +340,9 @@
 | TBO Hotel API auth mismatch | ~3 hours | Wrong auth method (TokenId vs Basic), wrong creds (shared flight vs dedicated hotel), wrong username |
 | Hotel search param extraction | ~30 min | Route extracted from `body` root, not `body.params`; field names differed (CityName vs city) |
 | Fallback hotel names "Unknown" | ~2 hours | `getHotelInfoByCode()` hardcoded to `generateFallbackHotels("Unknown")` instead of using actual city name |
-| **Total** | **~27 hours** | |
+| GitHub Actions Vercel deploy path | ~30 min | `vercel deploy` from `gorasa-next/` subdirectory with `rootDirectory: gorasa-next` doubled the path to `gorasa-next/gorasa-next` |
+| Hardcoded PostgreSQL URIs in scripts | ~15 min | GitGuardian detected NEON connection strings committed in `setup-github-secrets.sh` |
+| **Total** | **~28 hours** | |
 
 ---
 
@@ -374,3 +376,8 @@
 26. **Check hardcoded values first** — "Unknown" in `generateFallbackHotels("Unknown")` was the smoking gun
 27. **Test with cities that trigger fallback paths** — Goa works (mock), Ayodhya triggers fallback; test both
 28. **Operational modes matter** — Plan mode (read-only) vs Build mode (read-write); always check system reminders
+29. **Vercel rootDirectory doubles when deploying from subdirectory** — If project has `rootDirectory: gorasa-next` and you run `vercel deploy` from `gorasa-next/`, it tries `gorasa-next/gorasa-next`. Always deploy from repo root.
+30. **Never commit database connection strings** — GitGuardian detects PostgreSQL URIs. Use environment variables and GitHub secrets instead.
+31. **GitHub Actions needs `npm install` before `vercel deploy`** — The Vercel CLI needs node_modules to be installed first.
+32. **Vercel API doesn't support setting production branch** — Must be set via dashboard UI, not programmatically.
+33. **SSO protection enabled by default on Vercel team projects** — Disable via API: `{"ssoProtection":null}` for public staging environments.
