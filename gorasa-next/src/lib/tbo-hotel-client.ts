@@ -94,96 +94,70 @@ const CITY_TO_CODE: Record<string, number> = {
   mumbai: 13484,
   delhi: 13482,
   "new delhi": 13482,
-  jaipur: 15197,
   bangalore: 14565,
   bengaluru: 14565,
   chennai: 14564,
   hyderabad: 15664,
+  jaipur: 15197,
   kolkata: 13543,
   pune: 14612,
-  ahmedabad: 15584,
-  dubai: 10471,
-  bangkok: 10285,
-  singapore: 12346,
-  "kuala lumpur": 11234,
   kodaikanal: 123608,
   ooty: 13014,
   manali: 12597,
-  shimla: 13692,
-  darjeeling: 11781,
   varanasi: 14312,
-  agra: 15094,
-  udaipur: 14172,
-  rishikesh: 13272,
-  mysore: 12813,
-  mysuru: 12813,
-  pondicherry: 13120,
-  puducherry: 13120,
-  coimbatore: 11473,
-  madurai: 12551,
-  trivandrum: 14005,
-  thiruvananthapuram: 14005,
-  kochi: 11234,
-  cochin: 11234,
-  munnar: 12768,
-  wayanad: 14410,
-  hampi: 12249,
-  jaisalmer: 12232,
-  jodhpur: 12241,
-  pushkar: 13177,
-  lonavala: 12404,
-  mahabaleshwar: 12518,
-  ayodhya: 110358,
-  haridwar: 12217,
-  dehradun: 11800,
-  mussoorie: 12761,
-  nainital: 12777,
-  ranthambore: 13201,
-  bandhavgarh: 10769,
-  corbett: 11541,
-  coonoor: 11508,
-  kovalam: 12318,
-  thane: 13924,
-  nagpur: 12774,
-  surat: 13847,
-  vadodara: 14198,
-  rajkot: 13192,
-  bhopal: 10954,
-  indore: 12210,
-  lucknow: 12428,
-  patna: 13071,
-  ranchi: 13209,
-  guwahati: 12152,
-  bhubaneswar: 10930,
-  visakhapatnam: 14375,
-  vijayawada: 14362,
-  tirupati: 13960,
-  mangalore: 12544,
-  hubli: 12192,
 };
 
 let _hotelCodesCache: Record<string, string> = {};
 let _hotelDetailsCache: Record<string, { name: string; rating: string; address: string; city: string }> = {};
 
-async function resolveHotelCodes(city?: string, hotelCodes?: string): Promise<string> {
+async function resolveHotelCodes(city?: string, hotelCodes?: string, cityCode?: string): Promise<string> {
+  // 1. If hotel codes provided directly, use them
   if (hotelCodes) return hotelCodes;
-  if (!city) return "";
 
+  // 2. If city code provided from dropdown, use it directly
+  if (cityCode) {
+    const cacheKey = `code:${cityCode}`;
+    if (_hotelCodesCache[cacheKey]) return _hotelCodesCache[cacheKey];
+
+    try {
+      const res = await api.getHotelCodeList(cityCode);
+      if (res.Status?.Code === 200 && res.Hotels?.length > 0) {
+        const codeStr = res.Hotels.slice(0, 50).map(c => c.HotelCode).join(",");
+        _hotelCodesCache[cacheKey] = codeStr;
+        for (const h of res.Hotels) {
+          _hotelDetailsCache[h.HotelCode] = {
+            name: h.HotelName,
+            rating: h.HotelRating,
+            address: h.Address || "",
+            city: h.CityName || city || "",
+          };
+        }
+        console.log(`Resolved ${res.Hotels.length} hotel codes for city code ${cityCode} (showing first 50)`);
+        return codeStr;
+      }
+      console.warn(`No hotel codes returned for city code ${cityCode}:`, res.Status?.Description);
+    } catch (e) {
+      console.warn(`Failed to fetch hotel codes for city code ${cityCode}:`, e);
+    }
+    return "";
+  }
+
+  // 3. Fallback: try hardcoded mapping by city name
+  if (!city) return "";
   const key = city.toLowerCase().trim();
   if (_hotelCodesCache[key]) return _hotelCodesCache[key];
 
-  const cityCode = CITY_TO_CODE[key];
-  if (!cityCode) {
-    console.warn(`No city code mapping for "${city}"`);
+  const mappedCode = CITY_TO_CODE[key];
+  if (!mappedCode) {
+    console.warn(`No city code mapping for "${city}" and no cityCode provided`);
     return "";
   }
 
   try {
-    const res = await api.getHotelCodeList(String(cityCode));
+    const res = await api.getHotelCodeList(String(mappedCode));
     if (res.Status?.Code === 200 && res.Hotels?.length > 0) {
       const codeStr = res.Hotels.slice(0, 50).map(c => c.HotelCode).join(",");
       _hotelCodesCache[key] = codeStr;
-      // Cache hotel details for display
       for (const h of res.Hotels) {
         _hotelDetailsCache[h.HotelCode] = {
           name: h.HotelName,
@@ -208,13 +182,14 @@ export async function searchHotels(params: {
   checkOut: string;
   hotelCodes?: string;
   city?: string;
+  cityCode?: string;
   rooms: { adults: number; children: number; childrenAges: number[] }[];
   guestNationality?: string;
   preferredCurrency?: string;
 }): Promise<TBOHotelSearchOutput> {
   if (hasCredentials) {
     try {
-      const resolvedCodes = await resolveHotelCodes(params.city, params.hotelCodes);
+      const resolvedCodes = await resolveHotelCodes(params.city, params.hotelCodes, params.cityCode);
       if (!resolvedCodes) {
         console.warn("No hotel codes resolved for city:", params.city, "— falling back to mock");
       } else {

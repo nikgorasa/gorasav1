@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib";
 import { Building2, Search, MapPin, X, Star, Wifi, Coffee, Car, Loader2, ChevronDown, ChevronUp, Bed, Users } from "lucide-react";
 import HotelBookingModal from "@/components/HotelBookingModal";
 import CitySearchDropdown from "@/components/CitySearchDropdown";
+import type { City } from "@/components/CitySearchDropdown";
 import type { TBODisplayHotel, TBODisplayRoom } from "@/lib/tbo-hotel-types";
 
 const STAR_LABELS: Record<string, string> = {
@@ -27,7 +28,7 @@ const STAR_MAP: Record<string, number> = {
 export default function HotelsPage() {
   const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
-  const [location, setLocation] = useState("Goa");
+  const [selectedCity, setSelectedCity] = useState<City>({ code: "15648", name: "Goa", state: "Goa", source: "fallback" });
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("2");
@@ -43,7 +44,7 @@ export default function HotelsPage() {
   const [error, setError] = useState("");
 
   const handleSearch = async () => {
-    if (!location) return;
+    if (!selectedCity.name) return;
     setLoading(true);
     setSearched(true);
     setError("");
@@ -58,7 +59,8 @@ export default function HotelsPage() {
             CheckInDate: checkIn || "2026-06-10",
             CheckOutDate: checkOut || "2026-06-11",
             CountryName: "India",
-            CityName: location,
+            CityName: selectedCity.name,
+            CityCode: selectedCity.code,
             IsNearBySearchAllowed: false,
             NoOfRooms: 1,
             GuestNationality: "IN",
@@ -153,8 +155,8 @@ export default function HotelsPage() {
             >
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <CitySearchDropdown
-                  value={location}
-                  onChange={setLocation}
+                  value={selectedCity.name}
+                  onChange={setSelectedCity}
                   placeholder="Search cities..."
                   label="Location"
                 />
@@ -214,7 +216,7 @@ export default function HotelsPage() {
             ) : loading ? (
               <div className="text-center py-16">
                 <Loader2 size={40} className="mx-auto text-emerald-600 mb-4 animate-spin" />
-                <p className="text-slate-500">Searching TBO inventory for {location}...</p>
+                <p className="text-slate-500">Searching TBO inventory for {selectedCity.name}...</p>
               </div>
             ) : error ? (
               <div className="text-center py-16">
@@ -231,7 +233,7 @@ export default function HotelsPage() {
             ) : (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-slate-500">{results.length} hotels found in {location}</p>
+                  <p className="text-sm text-slate-500">{results.length} hotels found in {selectedCity.name}</p>
                   <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">TBO Inventory</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -266,7 +268,7 @@ export default function HotelsPage() {
                         </h3>
                         <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
                           <MapPin size={12} />
-                          {hotel.address || location}
+                          {hotel.address || selectedCity.name}
                         </p>
                         {hotel.tripAdvisorRating > 0 && (
                           <div className="flex items-center gap-1 mt-1">
@@ -327,7 +329,7 @@ export default function HotelsPage() {
                 <h2 className="text-2xl font-serif font-bold text-slate-900 mb-1">{selectedHotel.name}</h2>
                 <p className="text-sm text-slate-500 flex items-center gap-1 mb-3">
                   <MapPin size={14} />
-                  {selectedHotel.address || location}
+                  {selectedHotel.address || selectedCity.name}
                 </p>
 
                 <div className="flex items-center gap-3 mb-4">
@@ -443,7 +445,7 @@ export default function HotelsPage() {
         room={selectedRoom!}
         sessionId={sessionId}
         user={user}
-        location={location}
+        location={selectedCity.name}
         checkIn={checkIn}
         checkOut={checkOut}
         guestCount={parseInt(guests)}

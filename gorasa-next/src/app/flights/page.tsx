@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib";
 import { Plane, Search, Calendar, Users, ArrowRight, Star, Clock, Luggage, X, Loader2 } from "lucide-react";
 import FlightBookingModal from "@/components/FlightBookingModal";
 import CitySearchDropdown from "@/components/CitySearchDropdown";
+import type { City } from "@/components/CitySearchDropdown";
 
 interface Flight {
   id: string;
@@ -28,8 +29,8 @@ interface Flight {
 export default function FlightsPage() {
   const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
-  const [origin, setOrigin] = useState("Mumbai");
-  const [destination, setDestination] = useState("Delhi");
+  const [originCity, setOriginCity] = useState<City>({ code: "13484", name: "Mumbai", state: "Maharashtra", source: "fallback" });
+  const [destinationCity, setDestinationCity] = useState<City>({ code: "13482", name: "Delhi", state: "Delhi", source: "fallback" });
   const [date, setDate] = useState("");
   const [passengers, setPassengers] = useState("1");
   const [tripType, setTripType] = useState<"one-way" | "return">("one-way");
@@ -42,7 +43,7 @@ export default function FlightsPage() {
   const handleSearch = async () => {
     setSearching(true);
     try {
-      const res = await fetch(`/api/flights?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`);
+      const res = await fetch(`/api/flights?origin=${encodeURIComponent(originCity.name)}&destination=${encodeURIComponent(destinationCity.name)}`);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
       setSearched(true);
@@ -107,14 +108,14 @@ export default function FlightsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <CitySearchDropdown
-                  value={origin}
-                  onChange={setOrigin}
+                  value={originCity.name}
+                  onChange={setOriginCity}
                   placeholder="Search cities..."
                   label="From"
                 />
                 <CitySearchDropdown
-                  value={destination}
-                  onChange={setDestination}
+                  value={destinationCity.name}
+                  onChange={setDestinationCity}
                   placeholder="Search cities..."
                   label="To"
                 />
@@ -158,7 +159,7 @@ export default function FlightsPage() {
               <div className="text-center py-16">
                 <Loader2 size={32} className="mx-auto animate-spin text-blue-600 mb-4" />
                 <h2 className="text-xl font-bold text-slate-900 mb-2">Searching flights...</h2>
-                <p className="text-slate-500">Checking available routes between {origin} and {destination}.</p>
+                <p className="text-slate-500">Checking available routes between {originCity.name} and {destinationCity.name}.</p>
               </div>
             ) : !searched ? (
               <div className="text-center py-16">

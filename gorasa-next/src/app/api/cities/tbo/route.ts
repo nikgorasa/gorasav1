@@ -11,11 +11,18 @@ interface TBOCity {
   Name: string;
 }
 
-let _tboCitiesCache: { code: string; name: string; state: string }[] | null = null;
+interface CityResult {
+  code: string;
+  name: string;
+  state: string;
+  source: "tbo" | "fallback";
+}
+
+let _tboCitiesCache: CityResult[] | null = null;
 let _tboCitiesCacheTime = 0;
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
-async function fetchTBOCities(): Promise<{ code: string; name: string; state: string }[]> {
+async function fetchTBOCities(): Promise<CityResult[]> {
   const now = Date.now();
   if (_tboCitiesCache && now - _tboCitiesCacheTime < CACHE_TTL) {
     return _tboCitiesCache;
@@ -41,6 +48,7 @@ async function fetchTBOCities(): Promise<{ code: string; name: string; state: st
       code: c.Code,
       name: parts[0],
       state: parts[1] || "",
+      source: "tbo" as const,
     };
   });
 
@@ -59,7 +67,7 @@ async function fetchTBOCities(): Promise<{ code: string; name: string; state: st
   return unique;
 }
 
-async function fetchSupabaseCities(): Promise<{ code: string; name: string; state: string }[]> {
+async function fetchSupabaseCities(): Promise<CityResult[]> {
   const { data, error } = await supabase
     .from("City")
     .select("id, name, country")
@@ -74,6 +82,7 @@ async function fetchSupabaseCities(): Promise<{ code: string; name: string; stat
     code: c.id,
     name: c.name,
     state: c.country || "",
+    source: "fallback" as const,
   }));
 }
 

@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
       case "search": {
         const p = body.params || body;
         const cityName = p.CityName || p.cityName || p.city;
+        const cityCode = p.CityCode || p.cityCode;
         const hotelCodes = p.HotelCodes || p.hotelCodes;
         const checkIn = formatDate(p.CheckInDate || p.CheckIn || p.checkIn);
         const checkOut = formatDate(p.CheckOutDate || p.CheckOut || p.checkOut);
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
           checkOut,
           hotelCodes,
           city: cityName,
+          cityCode,
           rooms: roomsArray,
           guestNationality: p.GuestNationality || p.guestNationality || "IN",
           preferredCurrency: p.PreferredCurrency || p.preferredCurrency || "INR",
