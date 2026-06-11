@@ -7,6 +7,15 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-12 | 80f9033 | ci: fix Vercel deploy path in GitHub Actions |
+| 2026-06-12 | 36e4e0c | ci: update GitHub Actions workflows for Vercel deployment |
+| 2026-06-12 | 3e6470a | ci: add GitHub Actions workflows for dev/qa deployments |
+| 2026-06-12 | d89d75a | security: remove hardcoded Supabase keys from codebase |
+| 2026-06-12 | 4b38848 | chore: staging environment setup complete |
+| 2026-06-12 | 45f8a49 | docs: update deployment log with staging setup |
+| 2026-06-12 | abdd0e4 | chore: add NEON database creation helper script |
+| 2026-06-12 | 4181188 | feat: add migration scripts and env templates for staging |
+| 2026-06-12 | c89fbb1 | docs: add context brief for staging/qa environment setup |
 | 2026-06-12 | (pending) | docs: add operational modes (plan/build) to governance protocol |
 | 2026-06-11 | 530ac44 | feat: flights use IATA codes from Supabase City table via TBO API |
 | 2026-06-11 | da14b48 | feat: dynamic city code resolution - remove hardcoded mapping dependency |
@@ -109,6 +118,19 @@ Description: Governance protocol implementation - GoRASA pre-flight and post-tas
 Files changed:
 CHANGE-LOG.md
 gorasa-next/AGENTS.md
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+
+## 2026-06-12 05:23:27 +0900
+
+### Commit: 80f9033 ci: fix Vercel deploy path in GitHub Actions
+
+Files changed:
+.github/workflows/deploy-dev.yml
+.github/workflows/deploy-qa.yml
 
 Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
 

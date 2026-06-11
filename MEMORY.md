@@ -1,7 +1,7 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-12 02:00 IST
+> **Last updated:** 2026-06-12 05:30 IST
 
 ---
 
@@ -40,6 +40,9 @@
 | Hotel API credentials | Separate from flight: `TBO_HOTEL_USERNAME`/`TBO_HOTEL_PASSWORD` in `.env.local` | 2026-06-11 |
 | Hotel code architecture | `tbo-hotel-types.ts` (types) → `tbo-hotel-api.ts` (HTTP client) → `tbo-hotel-client.ts` (orchestration) → route | 2026-06-11 |
 | Flight API credentials | Corrected `RasaT` (not `RasaTAPI` as previously used) | 2026-06-11 |
+| Staging environments | 3 Vercel projects (prod, dev, qa) with NEON databases for dev/qa | 2026-06-12 |
+| Staging deployment | GitHub Actions workflows for dev/qa, Vercel Git integration for prod | 2026-06-12 |
+| Staging database | NEON (gorasa-dev, gorasa-qa) with 28+ tables, 210 rows each | 2026-06-12 |
 
 ---
 
@@ -53,7 +56,7 @@
 | Vercel root dir must be `gorasa-next/` | Deploy from repo root or git push only (CLI from subdir fails) |
 | JWT secret may rotate | Service role key must be kept in sync with Supabase dashboard |
 | Git remotes: `neworigin` = prod, `origin` = fork | Push to `neworigin main` to deploy |
-| No CI/CD pipeline | Manual git push → Vercel auto-deploy |
+| CI/CD via GitHub Actions | `deploy-dev.yml` and `deploy-qa.yml` for staging environments |
 | Hotel API uses Basic Auth (not TokenId) | `Authorization: Basic base64(TBO_HOTEL_USERNAME:TBO_HOTEL_PASSWORD)` |
 | Hotel test creds have no balance | PreBook returns "Insufficient Balance" — expected with `TBOStaticAPITest` |
 | Flight API needs `ClientId: ApiIntegrationNew` in Auth body | Without it, authenticate returns Status: 3 |
@@ -79,6 +82,12 @@
 | `gorasa-next/src/lib/tbo-hotel-client.ts` | TBO hotel orchestrator (auth cache, search→prebook→book) |
 | `gorasa-next/src/app/api/tbo-hotels/route.ts` | TBO hotel API proxy route |
 | `gorasa-next/src/app/api/tbo/route.ts` | Legacy TBO route (flight + hotel, migrated to dedicated routes) |
+| `.github/workflows/deploy-dev.yml` | GitHub Actions workflow for dev deployment |
+| `.github/workflows/deploy-qa.yml` | GitHub Actions workflow for QA deployment |
+| `scripts/setup-github-secrets.sh` | Helper script for GitHub environment secrets |
+| `scripts/migrate-via-sql.js` | Copies data from Supabase to NEON via SQL |
+| `scripts/create-full-schema.js` | Creates all tables in NEON matching Supabase schema |
+| `scripts/verify-migration.js` | Verifies row counts match between databases |
 
 ---
 
@@ -134,6 +143,38 @@
 10. Updated all governance docs (MEMORY, CHANGE-LOG, LEARNING-FROM-MISTAKES, DEPLOYMENT_LOG)
 
 **Status:** Hotel search ✅ (all cities), Flight search ✅ (IATA codes), City dropdown ✅ (1,083+ cities)
+
+### Session 2026-06-12 — Staging Environment Setup (Dev/QA)
+
+**Duration:** ~4 hours
+**Problem:** Need isolated Dev and QA environments for testing before production deployment.
+
+**Changes:**
+1. Created `dev` and `qa` git branches
+2. Created NEON project with 2 databases (`gorasa-dev`, `gorasa-qa`)
+3. Migrated full schema (28 tables) from Supabase to NEON
+4. Copied 210 rows of data from Supabase to both NEON databases
+5. Created Vercel projects (`dev-gorasa`, `qa-gorasa`) with correct settings
+6. Configured environment variables for both projects
+7. Created GitHub Actions workflows (`deploy-dev.yml`, `deploy-qa.yml`)
+8. Set up GitHub environment secrets (13 secrets per environment)
+9. Disabled SSO protection for public access
+10. Fixed Vercel deploy path issue (rootDirectory doubling)
+11. Removed hardcoded credentials from scripts (security fix)
+
+**Architecture:**
+```
+Production:  gorasa-next  → main branch → Supabase
+Development: dev-gorasa   → dev branch  → NEON gorasa-dev
+QA:          qa-gorasa    → qa branch   → NEON gorasa-qa
+```
+
+**Deployment URLs:**
+- Production: https://gorasa-next.vercel.app
+- Development: https://dev-gorasa-*.vercel.app
+- QA: https://qa-gorasa-*.vercel.app
+
+**Status:** All 3 environments active and verified (HTTP 200, database connectivity confirmed)
 
 ---
 
