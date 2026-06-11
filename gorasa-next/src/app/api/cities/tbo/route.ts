@@ -16,11 +16,30 @@ interface CityResult {
   name: string;
   state: string;
   source: "tbo" | "fallback";
+  iata_code?: string;
 }
 
 let _tboCitiesCache: CityResult[] | null = null;
 let _tboCitiesCacheTime = 0;
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+async function fetchIATACodes(): Promise<Record<string, string>> {
+  const { data, error } = await supabase
+    .from("City")
+    .select("name, iata_code")
+    .eq("isactive", true)
+    .not("iata_code", "is", null);
+
+  if (error || !data) {
+    return {};
+  }
+
+  const iataMap: Record<string, string> = {};
+  for (const c of data) {
+    iataMap[c.name.toLowerCase()] = c.iata_code;
+  }
+  return iataMap;
+}
 
 async function fetchTBOCities(): Promise<CityResult[]> {
   const now = Date.now();
@@ -41,14 +60,19 @@ async function fetchTBOCities(): Promise<CityResult[]> {
   const data = await res.json();
   const cities: TBOCity[] = data.CityList || [];
 
+  // Fetch IATA codes from Supabase
+  const iataMap = await fetchIATACodes();
+
   // Parse "CityName,   State" format
   const parsed = cities.map(c => {
     const parts = c.Name.split(",").map(s => s.trim());
+    const name = parts[0];
     return {
       code: c.Code,
-      name: parts[0],
+      name,
       state: parts[1] || "",
       source: "tbo" as const,
+      iata_code: iataMap[name.toLowerCase()] || undefined,
     };
   });
 
@@ -70,7 +94,7 @@ async function fetchTBOCities(): Promise<CityResult[]> {
 async function fetchSupabaseCities(): Promise<CityResult[]> {
   const { data, error } = await supabase
     .from("City")
-    .select("id, name, country")
+    .select("id, name, country, iata_code")
     .eq("isactive", true)
     .order("name", { ascending: true });
 
@@ -78,11 +102,12 @@ async function fetchSupabaseCities(): Promise<CityResult[]> {
     return [];
   }
 
-  return data.map((c: { id: string; name: string; country: string }) => ({
+  return data.map((c: { id: string; name: string; country: string; iata_code: string | null }) => ({
     code: c.id,
     name: c.name,
     state: c.country || "",
     source: "fallback" as const,
+    iata_code: c.iata_code || undefined,
   }));
 }
 

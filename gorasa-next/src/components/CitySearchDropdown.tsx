@@ -8,6 +8,7 @@ export interface City {
   name: string;
   state: string;
   source: "tbo" | "fallback";
+  iata_code?: string;
 }
 
 interface CitySearchDropdownProps {
@@ -19,15 +20,15 @@ interface CitySearchDropdownProps {
 }
 
 const FALLBACK_CITIES: City[] = [
-  { code: "15648", name: "Goa", state: "Goa", source: "fallback" },
-  { code: "13484", name: "Mumbai", state: "Maharashtra", source: "fallback" },
-  { code: "13482", name: "Delhi", state: "Delhi", source: "fallback" },
-  { code: "14565", name: "Bangalore", state: "Karnataka", source: "fallback" },
-  { code: "15664", name: "Hyderabad", state: "Telangana", source: "fallback" },
-  { code: "14564", name: "Chennai", state: "Tamil Nadu", source: "fallback" },
-  { code: "15197", name: "Jaipur", state: "Rajasthan", source: "fallback" },
-  { code: "13543", name: "Kolkata", state: "West Bengal", source: "fallback" },
-  { code: "14612", name: "Pune", state: "Maharashtra", source: "fallback" },
+  { code: "15648", name: "Goa", state: "Goa", source: "fallback", iata_code: "GOI" },
+  { code: "13484", name: "Mumbai", state: "Maharashtra", source: "fallback", iata_code: "BOM" },
+  { code: "13482", name: "Delhi", state: "Delhi", source: "fallback", iata_code: "DEL" },
+  { code: "14565", name: "Bangalore", state: "Karnataka", source: "fallback", iata_code: "BLR" },
+  { code: "15664", name: "Hyderabad", state: "Telangana", source: "fallback", iata_code: "HYD" },
+  { code: "14564", name: "Chennai", state: "Tamil Nadu", source: "fallback", iata_code: "MAA" },
+  { code: "15197", name: "Jaipur", state: "Rajasthan", source: "fallback", iata_code: "JAI" },
+  { code: "13543", name: "Kolkata", state: "West Bengal", source: "fallback", iata_code: "CCU" },
+  { code: "14612", name: "Pune", state: "Maharashtra", source: "fallback", iata_code: "PNQ" },
   { code: "123608", name: "Kodaikanal", state: "Tamil Nadu", source: "fallback" },
   { code: "13014", name: "Ooty", state: "Tamil Nadu", source: "fallback" },
   { code: "12597", name: "Manali", state: "Himachal Pradesh", source: "fallback" },
@@ -91,6 +92,11 @@ export default function CitySearchDropdown({
         </span>
         {city.state && (
           <span className="text-[11px] text-slate-400 truncate">· {city.state}</span>
+        )}
+        {city.iata_code && (
+          <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">
+            {city.iata_code}
+          </span>
         )}
       </div>
       <span

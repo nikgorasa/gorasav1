@@ -131,6 +131,7 @@ If making significant architectural decisions, create an ADR in `../docs/adr/`:
 4. `../DEPLOYMENT_LOG.md` - If deployment changed
 5. `../docs/adr/` - If architectural decision
 6. `../CONTEXT-BRIEF-*.md` - For new issues
+7. `../CONFIG-REFERENCE.md` - If config/keys changed (auto-detected)
 
 ### Commands to Run
 ```bash
