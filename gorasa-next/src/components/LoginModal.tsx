@@ -41,21 +41,23 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       .catch(() => {});
   }, []);
 
+  const DEMO_FALLBACK: DemoUser[] = [
+    { id: "1", name: "Nikhil Gorasa", email: "nikhil@gorasa.com", role: "SUPER_ADMIN" },
+    { id: "2", name: "Priya Sharma", email: "priya@gorasa.com", role: "ADMIN" },
+    { id: "3", name: "Rahul Verma", email: "rahul@gorasa.com", role: "SALES" },
+    { id: "4", name: "Ananya Patel", email: "ananya@gorasa.com", role: "CORPORATE_USER" },
+    { id: "5", name: "Vikram Singh", email: "vikram@gorasa.com", role: "CUSTOMER" },
+    { id: "6", name: "Demo User", email: "demo@gorasa.com", role: "CUSTOMER" },
+  ];
+
   useEffect(() => {
     if (isOpen) {
       fetch("/api/users/demo")
         .then((res) => res.json())
         .then((data) => {
-          if (Array.isArray(data)) setDemoUsers(data);
+          setDemoUsers(Array.isArray(data) && data.length > 0 ? data : DEMO_FALLBACK);
         })
-        .catch(() => setDemoUsers([
-          { id: "1", name: "Nikhil Gorasa", email: "nikhil@gorasa.com", role: "SUPER_ADMIN" },
-          { id: "2", name: "Priya Sharma", email: "priya@gorasa.com", role: "ADMIN" },
-          { id: "3", name: "Rahul Verma", email: "rahul@gorasa.com", role: "SALES" },
-          { id: "4", name: "Ananya Patel", email: "ananya@gorasa.com", role: "CORPORATE_USER" },
-          { id: "5", name: "Vikram Singh", email: "vikram@gorasa.com", role: "CUSTOMER" },
-          { id: "6", name: "Demo User", email: "demo@gorasa.com", role: "CUSTOMER" },
-        ]));
+        .catch(() => setDemoUsers(DEMO_FALLBACK));
     }
   }, [isOpen]);
 
