@@ -29,12 +29,13 @@ cd "$(dirname "$0")/.."
 
 print_status "Starting GoRASA post-task checks..."
 
-# Check 1: Update Change-LOG.md
+# Check 1: Update Change-LOG.md (ROOT LEVEL)
 print_status "1. Updating Change-LOG.md..."
 
-if [[ ! -f "CHANGE-LOG.md" ]]; then
-    print_warning "CHANGE-LOG.md not found - creating it..."
-    cat > CHANGE-LOG.md << 'EOF'
+CHANGE_LOG="../CHANGE-LOG.md"
+if [[ ! -f "$CHANGE_LOG" ]]; then
+    print_warning "CHANGE-LOG.md not found at root - creating it..."
+    cat > "$CHANGE_LOG" << 'EOF'
 # GoRASA Change Log
 
 ## Initial Setup
@@ -52,9 +53,9 @@ if [[ "$GIT_LOG" != "unknown commit" ]]; then
     print_status "Adding change log entry for commit: $GIT_LOG"
 
     # Create backup and add entry
-    cp CHANGE-LOG.md "CHANGE-LOG.md.backup"
+    cp "$CHANGE_LOG" "$CHANGE_LOG.backup"
 
-    cat >> CHANGE-LOG.md << EOF
+    cat >> "$CHANGE_LOG" << EOF
 
 ## $(date "+%Y-%m-%d %H:%M:%S %z")
 
@@ -69,17 +70,18 @@ Description: Governance protocol implementation - GoRASA pre-flight and post-tas
 
 EOF
 
-    rm "CHANGE-LOG.md.backup" 2>/dev/null || true
+    rm "$CHANGE_LOG.backup" 2>/dev/null || true
 else
     print_warning "Cannot get git log, skipping change log entry"
 fi
 
-# Check 2: Update MEMORY.md
+# Check 2: Update MEMORY.md (ROOT LEVEL)
 print_status "2. Updating MEMORY.md..."
 
-if [[ ! -f "MEMORY.md" ]]; then
-    print_warning "MEMORY.md not found - creating it..."
-    cat > MEMORY.md << 'EOF'
+MEMORY_FILE="../MEMORY.md"
+if [[ ! -f "$MEMORY_FILE" ]]; then
+    print_warning "MEMORY.md not found at root - creating it..."
+    cat > "$MEMORY_FILE" << 'EOF'
 # GoRASA Project Memory
 
 This document contains persistent cross-session context for the GoRASA project.
@@ -114,8 +116,8 @@ fi
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S %z")
 SESSION=$(date "+%H:%M:%S")
 
-if ! grep -q "Session completed:" "MEMORY.md"; then
-    cat >> MEMORY.md << EOF
+if ! grep -q "Session completed:" "$MEMORY_FILE"; then
+    cat >> "$MEMORY_FILE" << EOF
 
 ## Session completed: $TIMESTAMP
 
@@ -200,8 +202,8 @@ print_warning "If you made architectural decisions, create ADR in docs/adr/:
 print_status "6. Verifying documentation..."
 
 REQUIRED_DOCS=(
-    "MEMORY.md"
-    "CHANGE-LOG.md"
+    "../MEMORY.md"
+    "../CHANGE-LOG.md"
     "../CONFIG-REFERENCE.md"
     "../LEARNING-FROM-MISTAKES.md"
     "../DEPLOYMENT_LOG.md"
@@ -211,7 +213,7 @@ REQUIRED_DOCS=(
 ALL_DOCS_OK=true
 
 for doc_pattern in "${REQUIRED_DOCS[@]}"; do
-    if ls "$doc_pattern" 1> /dev/null 2>&1; then
+    if compgen -G "$doc_pattern" > /dev/null; then
         print_status "✓ $doc_pattern exists"
     else
         if [[ "$doc_pattern" != "../CONTEXT-BRIEF-*.md" ]]; then

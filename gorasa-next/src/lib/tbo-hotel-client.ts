@@ -256,70 +256,51 @@ export async function searchHotels(params: {
 
   // Check if mock returned fallback hotels (no real inventory for this city)
   const isFallback = mockRes.Status.Description === "Fallback";
-  console.log("[searchHotels] isFallback:", isFallback, "params.city:", params.city, "SearchedCities:", mockReq.SearchedCities);
 
   if (isFallback) {
     // Use fallback hotels with correct city name
     const fallbackCity = params.city || "Unknown";
     const fallbackHotels = mock.generateFallbackHotels(fallbackCity);
-    const fallbackResults = fallbackHotels.map(h => ({
-      HotelCode: String(h.code),
-      Currency: h.currency,
-      Rooms: h.rooms.map((r, ri) => ({
-        RoomID: [`${h.code}-${ri}`],
-        Name: [r.name],
-        BookingCode: `${h.code}!TB!${ri + 1}!TB!fallback`,
-        Inclusion: r.inclusion,
-        TotalFare: r.basePrice,
-        TotalTax: r.tax,
-        MealType: r.mealType,
-        IsRefundable: r.refundable,
-        DayRates: [[{ BasePrice: r.basePrice, ExtraGuest: 0, Child: 0 }]],
-        CancelPolicies: [],
-        Amenities: { Amenity: r.amenities },
-      })),
-    }));
 
-    const hotels = fallbackResults.map(h => {
-      const info = mock.getHotelInfoByCode(h.HotelCode);
-      const rooms: TBOHotelRoomDisplay[] = h.Rooms.map((r: any, ri: number) => ({
-        roomId: r.RoomID?.[0] || `${h.HotelCode}-${ri}`,
-        roomName: r.Name?.[0] || "Room",
-        name: r.Name?.[0] || "Room",
-        bookingCode: r.BookingCode || "",
-        mealType: r.MealType || "Room_Only",
-        isRefundable: r.IsRefundable ?? false,
-        totalFare: r.TotalFare || 0,
-        totalTax: r.TotalTax || 0,
-        inclusion: r.Inclusion || "",
-        dayRates: (r.DayRates?.[0] || []).map((dr: any) => ({ basePrice: dr.BasePrice || 0 })),
+    const hotels: TBOHotelDisplay[] = fallbackHotels.map((h, idx) => {
+      const rooms: TBOHotelRoomDisplay[] = h.rooms.map((r, ri) => ({
+        roomId: `${h.code}-${ri}`,
+        roomName: r.name,
+        name: r.name,
+        bookingCode: `${h.code}!TB!${ri + 1}!TB!fallback`,
+        mealType: r.mealType,
+        isRefundable: r.refundable,
+        totalFare: r.basePrice,
+        totalTax: r.tax,
+        inclusion: r.inclusion,
+        dayRates: [{ basePrice: r.basePrice }],
         cancelPolicy: "Non Refundable",
         cancellationPolicy: "Non Refundable",
         roomIndex: ri + 1,
         typeCode: "",
         ratePlanCode: "",
-        roomFare: r.DayRates?.[0]?.[0]?.BasePrice || 0,
-        roomTax: r.TotalTax || 0,
-        currency: h.Currency,
-        amenities: r.Amenities?.Amenity || [],
+        roomFare: r.basePrice,
+        roomTax: r.tax,
+        currency: h.currency,
+        amenities: r.amenities,
       }));
 
       return {
-        hotelCode: Number(h.HotelCode) || 0,
-        name: info?.HotelName || `Hotel ${h.HotelCode}`,
-        hotelRating: info?.HotelRating || 3,
-        location: info?.CityName || fallbackCity,
-        currency: h.Currency,
+        hotelCode: h.code,
+        name: h.name,
+        hotelRating: h.rating,
+        location: h.location,
+        currency: h.currency,
         minTotalFare: Math.min(...rooms.map(r => r.totalFare)),
         rooms,
-        resultIndex: 1,
-        picture: info?.imageUrl || "",
-        rating: "ThreeStar",
-        address: "",
+        resultIndex: idx + 1,
+        picture: h.imageUrl,
+        rating: h.rating === 5 ? "FiveStar" : h.rating === 4 ? "FourStar" : h.rating === 3 ? "ThreeStar" : "TwoStar",
+        address: h.location,
         tripAdvisorRating: 0,
         description: "",
         price: Math.min(...rooms.map(r => r.totalFare)),
-        starRating: info?.HotelRating || 3,
+        starRating: h.rating,
         originalPrice: Math.min(...rooms.map(r => r.totalFare)) * 1.2,
         source: "fallback" as const,
       };

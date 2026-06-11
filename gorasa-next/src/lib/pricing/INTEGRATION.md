@@ -1,46 +1,43 @@
 # GoRASA Pricing Module — Integration Instructions
 
-## Module Location
+## Module Structure
 
-All pricing module files are in:
 ```
-gorasa-next/src/lib/pricing/
-├── index.ts                    # Public exports
-├── types.ts                    # TypeScript interfaces
-├── pricing-service.ts          # Core engine: calculatePrice, validatePromoCode, etc.
-├── migration.sql               # SQL to run against Supabase
-├── api/
-│   ├── pricing-rules/
-│   │   ├── route.ts            # GET/POST /api/pricing-rules
-│   │   └── [id]/route.ts       # PATCH/DELETE /api/pricing-rules/:id
-│   ├── promos/
-│   │   └── validate/
-│   │       └── route.ts        # POST /api/promos/validate
-│   └── corporate-rates/
-│       └── route.ts            # GET/POST /api/corporate-rates
-└── admin/
-    └── pricing-rules-page.tsx  # Admin UI component (drop into app/admin/pricing/)
+src/lib/pricing/
+├── index.ts                          # Public exports
+├── types.ts                          # TypeScript interfaces
+├── pricing-service.ts                # Core engine
+├── migration.sql                     # SQL for Supabase
+├── INTEGRATION.md                    # This file
+├── api/                              # Copy to src/app/api/
+│   ├── pricing-rules/route.ts        # GET/POST
+│   ├── pricing-rules/[id]/route.ts   # PATCH/DELETE
+│   ├── promos/validate/route.ts      # POST
+│   └── corporate-rates/route.ts      # GET/POST
+└── admin/                            # Copy to src/app/admin/
+    ├── pricing-rules-page.tsx        # → admin/pricing/page.tsx
+    ├── enhanced-promos-page.tsx      # → admin/promos/page.tsx (replace existing)
+    └── corporate-rates-page.tsx      # → admin/corporate/page.tsx
 ```
 
 ---
 
-## Step 1: Run Database Migration
+## Phase 1: Database Migration
 
-Run the SQL in `src/lib/pricing/migration.sql` against your Supabase database.
+Run `src/lib/pricing/migration.sql` in Supabase SQL Editor.
 
-You can do this via:
-- Supabase Dashboard → SQL Editor → paste contents of `migration.sql`
-- Or: `psql $DATABASE_URL -f src/lib/pricing/migration.sql`
-
-This adds columns to existing tables and creates the `CorporateRate` table.
+What it does:
+- Adds `name`, `category`, `airlineCode`, `roomType`, `markupType`, `markupValue`, `minPrice`, `maxPrice`, `priority`, `validFrom`, `validTo` to `PricingRule`
+- Migrates existing `markupPercent` → `markupValue`
+- Adds `maxDiscount`, `maxUses`, `usedCount`, `applicableTo`, `isFirstBooking`, `validFrom`, `validTo` to `PromoCode`
+- Creates `CorporateRate` table
+- Seeds 3 default rules: Hotel 15%, Flight ₹500 flat, Package 20%
 
 ---
 
-## Step 2: Update Prisma Schema
+## Phase 2: Prisma Schema Update
 
-Add these changes to `prisma/schema.prisma`:
-
-### Replace the existing PricingRule model (lines 96-105):
+### 2a. Replace PricingRule model in `prisma/schema.prisma`:
 
 ```prisma
 model PricingRule {
@@ -65,9 +62,23 @@ model PricingRule {
 }
 ```
 
-### Add CorporateRate model after Company (after line 44):
+### 2b. Add CorporateRate model and update Company:
 
 ```prisma
+model Company {
+  id              String          @id @default(cuid())
+  name            String
+  domain          String?
+  walletBalance   Float           @default(0)
+  discountRate    Float           @default(0)
+  isActive        Boolean         @default(true)
+  approvedBy      String?
+  employees       User[]
+  corporateRates  CorporateRate[]  # ADD
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
 model CorporateRate {
   id            String   @id @default(cuid())
   companyId     String
@@ -83,59 +94,53 @@ model CorporateRate {
 }
 ```
 
-### Add corporateRates relation to Company model:
+### 2c. Run:
 
-```prisma
-model Company {
-  id              String          @id @default(cuid())
-  name            String
-  domain          String?
-  walletBalance   Float           @default(0)
-  discountRate    Float           @default(0)
-  isActive        Boolean         @default(true)
-  approvedBy      String?
-  employees       User[]
-  corporateRates  CorporateRate[]  # ADD THIS LINE
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-}
+```bash
+npx prisma generate
 ```
-
-Then run: `npx prisma generate`
 
 ---
 
-## Step 3: Copy API Routes to App Directory
-
-The API routes in `src/lib/pricing/api/` are written as Next.js App Router handlers but live in `lib/` for organization. Copy them to their proper locations:
+## Phase 3: Copy API Routes
 
 ```bash
 # Pricing rules CRUD
+mkdir -p src/app/api/pricing-rules/\[id\]
 cp src/lib/pricing/api/pricing-rules/route.ts    src/app/api/pricing-rules/route.ts
-cp -r src/lib/pricing/api/pricing-rules/\[id\]    src/app/api/pricing-rules/\[id\]/
+cp "src/lib/pricing/api/pricing-rules/[id]/route.ts" "src/app/api/pricing-rules/[id]/route.ts"
 
 # Promo validation
-cp -r src/lib/pricing/api/promos/validate         src/app/api/promos/validate/
+mkdir -p src/app/api/promos/validate
+cp src/lib/pricing/api/promos/validate/route.ts  src/app/api/promos/validate/route.ts
 
-# Corporate rates
+# Corporate rates CRUD
+mkdir -p src/app/api/corporate-rates
 cp src/lib/pricing/api/corporate-rates/route.ts  src/app/api/corporate-rates/route.ts
+```
+
+Then fix imports in copied files — change relative imports to `@/lib/pricing`:
+
+```typescript
+// In src/app/api/promos/validate/route.ts, change:
+import { validatePromoCode } from "../../../pricing-service";
+// To:
+import { validatePromoCode } from "@/lib/pricing";
 ```
 
 ---
 
-## Step 4: Integrate into Hotel Client
+## Phase 4: Integrate Pricing into Hotel Client
 
 **File:** `src/lib/tbo-hotel-client.ts`
 
-### 4a. Add import at top (after line 14):
+### 4a. Add import (after line 14):
 
 ```typescript
 import { calculatePrice } from "./pricing";
 ```
 
-### 4b. Make `toDisplay` accept context and become async.
-
-Replace the `toDisplay` function (lines 19-82) with:
+### 4b. Make `toDisplay` async with pricing context (replace lines 19-82):
 
 ```typescript
 async function toDisplay(
@@ -143,7 +148,7 @@ async function toDisplay(
   context?: { destination?: string; hotelName?: string },
 ): Promise<TBOHotelDisplay> {
   const rooms: TBOHotelRoomDisplay[] = h.Rooms.map((r: any, ri: number) => {
-    // ... existing room mapping code (unchanged) ...
+    // ... existing room mapping (unchanged) ...
   });
 
   const minFare = Math.min(...rooms.map(r => r.totalFare));
@@ -152,13 +157,11 @@ async function toDisplay(
     "OneStar": 1, "TwoStar": 2, "ThreeStar": 3, "FourStar": 4, "FiveStar": 5,
   };
 
-  // --- PRICING INTEGRATION ---
   const pricing = await calculatePrice(minFare, {
     category: "HOTEL",
     destination: context?.destination,
-    hotelName: details.name,
+    hotelName: details.name || context?.hotelName,
   });
-  // --- END PRICING INTEGRATION ---
 
   return {
     hotelCode: Number(h.HotelCode) || 0,
@@ -181,9 +184,11 @@ async function toDisplay(
 }
 ```
 
-### 4c. Update calls to `toDisplay` in `searchHotels`:
+### 4c. Update all `toDisplay` call sites to use `await`:
 
-In the TBO API path (around line 235), change:
+There are 3 call sites in `searchHotels`:
+
+**TBO API path (~line 235):**
 ```typescript
 // BEFORE:
 const hotels = res.HotelResult.map(h => ({ ...toDisplay(h), source: "tbo" as const }));
@@ -192,50 +197,72 @@ const hotels = res.HotelResult.map(h => ({ ...toDisplay(h), source: "tbo" as con
 const hotels = await Promise.all(
   res.HotelResult.map(h => toDisplay(h, { destination: params.city }))
 );
+return { hotels: hotels.map(h => ({ ...h, source: "tbo" as const })), traceId: _lastTraceId };
 ```
 
-In the mock path (around line 263), change the room mapping to also use pricing:
+**Fallback path (~line 283):**
 ```typescript
-// BEFORE (line 309-311):
-price: Math.min(...rooms.map(r => r.totalFare)),
-starRating: info?.HotelRating || 3,
-originalPrice: Math.min(...rooms.map(r => r.totalFare)) * 1.2,
+// BEFORE:
+const hotels = fallbackResults.map(h => { ... return { ...originalPrice: min * 1.2 }; });
 
 // AFTER:
-const minFare = Math.min(...rooms.map(r => r.totalFare));
-const pricing = await calculatePrice(minFare, {
-  category: "HOTEL",
-  destination: params.city || location,
-  hotelName: info?.HotelName,
-});
-// ... then use pricing.displayedPrice and pricing.originalPrice
+const hotels = await Promise.all(fallbackResults.map(async (h) => {
+  // ... existing room mapping ...
+  const minFare = Math.min(...rooms.map(r => r.totalFare));
+  const pricing = await calculatePrice(minFare, {
+    category: "HOTEL",
+    destination: fallbackCity,
+    hotelName: info?.HotelName,
+  });
+  return {
+    // ... use pricing.displayedPrice and pricing.originalPrice ...
+  };
+}));
+```
+
+**Mock path (~line 332):**
+```typescript
+// BEFORE:
+const hotels = mockRes.HotelResult.map(h => { ... return { ...originalPrice: min * 1.2 }; });
+
+// AFTER:
+const hotels = await Promise.all(mockRes.HotelResult.map(async (h) => {
+  // ... existing room mapping ...
+  const minFare = Math.min(...rooms.map(r => r.totalFare));
+  const pricing = await calculatePrice(minFare, {
+    category: "HOTEL",
+    destination: location,
+    hotelName: info?.HotelName,
+  });
+  return {
+    // ... use pricing.displayedPrice and pricing.originalPrice ...
+  };
+}));
 ```
 
 ---
 
-## Step 5: Integrate into Flight Client
+## Phase 5: Integrate Pricing into Flight Client
 
 **File:** `src/lib/tbo-flight-client.ts`
 
-### 5a. Add import at top (after line 18):
+### 5a. Add import (after line 18):
 
 ```typescript
 import { calculatePrice } from "./pricing";
 ```
 
-### 5b. Make `toDisplay` async and apply pricing:
+### 5b. Make `toDisplay` async (replace lines 50-81):
 
 ```typescript
 async function toDisplay(
   r: TBOFlightResult,
   leg: "outbound" | "inbound" | "oneway",
 ): Promise<TBOFlightDisplay> {
-  // --- PRICING INTEGRATION ---
   const pricing = await calculatePrice(r.Fare.PublishedFare, {
     category: "FLIGHT",
     airlineCode: r.Segments[0]?.AirlineCode,
   });
-  // --- END PRICING INTEGRATION ---
 
   return {
     resultIndex: r.ResultIndex,
@@ -256,8 +283,8 @@ async function toDisplay(
     baggage: r.Segments[0]?.Baggage ?? "",
     cabinBaggage: r.Segments[0]?.CabinBaggage ?? "",
     currency: r.Fare.Currency,
-    publishedFare: pricing.displayedPrice,  // CHANGED: was r.Fare.PublishedFare
-    offeredFare: pricing.displayedPrice,    // CHANGED: was r.Fare.OfferedFare
+    publishedFare: pricing.displayedPrice,
+    offeredFare: pricing.displayedPrice,
     baseFare: pricing.baseRate,
     tax: r.Fare.Tax,
     commissionEarned: r.Fare.CommissionEarned,
@@ -267,10 +294,10 @@ async function toDisplay(
 }
 ```
 
-### 5c. Update calls to `toDisplay` to use `await`:
+### 5c. Update both `toDisplay` call sites in `searchFlights`:
 
-In `searchFlights` (around line 115):
 ```typescript
+// TBO path (~line 121) and mock path (~line 146):
 // BEFORE:
 const flights = res.Response.Results.map(r => { ... return toDisplay(r, leg); });
 
@@ -288,11 +315,9 @@ const flights = await Promise.all(
 );
 ```
 
-Same change in the mock path (around line 140).
-
 ---
 
-## Step 6: Integrate into Booking API
+## Phase 6: Server-Side Booking Pricing
 
 **File:** `src/app/api/bookings/route.ts`
 
@@ -302,64 +327,51 @@ Same change in the mock path (around line 140).
 import { validatePromoCode, getCorporateDiscount, calculateTax } from "@/lib/pricing";
 ```
 
-### 6b. In the POST handler, after getting the user (line 61), add server-side pricing:
+### 6b. In POST handler, after destructuring body (~line 62), add:
 
 ```typescript
-// After line 62 (const body = await request.json()):
-const { type, itemName, providerOrAirline, price: clientPrice, originalPrice,
-  couponCodeUsed, pnr, seatOrRoom, paxCount, travelDates, paymentMethod } = body;
-
 // --- SERVER-SIDE PRICING ---
-let finalPrice = Number(clientPrice);
+let finalPrice = Number(price);
 let promoDiscount = 0;
 let taxAmount = 0;
 
-// Validate promo code server-side
 if (couponCodeUsed) {
-  const promoResult = await validatePromoCode(
-    couponCodeUsed, finalPrice, type, user.id
-  );
+  const promoResult = await validatePromoCode(couponCodeUsed, finalPrice, type, user.id);
   if (promoResult.valid) {
     promoDiscount = promoResult.discountAmount;
     finalPrice = promoResult.finalPrice;
   }
 }
 
-// Apply corporate rate
 if (user.companyId) {
-  const corpResult = await getCorporateDiscount(
-    user.companyId, type, undefined, finalPrice
-  );
+  const corpResult = await getCorporateDiscount(user.companyId, type, undefined, finalPrice);
   if (corpResult.discountAmount > 0) {
     promoDiscount += corpResult.discountAmount;
     finalPrice = corpResult.finalPrice;
   }
 }
 
-// Calculate tax
 taxAmount = calculateTax(finalPrice, type);
 const totalPrice = finalPrice + taxAmount;
 // --- END SERVER-SIDE PRICING ---
 ```
 
-### 6c. Use `totalPrice` in the Booking insert instead of `price`:
+### 6c. In the Booking insert, use computed values:
 
 ```typescript
-const { data: booking, error } = await supabase
-  .from("Booking")
-  .insert({
-    // ...
-    price: totalPrice,           // CHANGED: was Number(price)
-    originalPrice: Number(clientPrice),
-    discountApplied: promoDiscount,
-    couponCodeUsed: couponCodeUsed || null,
-    // ...
-  })
+.insert({
+  // ...
+  price: totalPrice,
+  originalPrice: Number(price),
+  discountApplied: promoDiscount,
+  couponCodeUsed: couponCodeUsed || null,
+  // ...
+})
 ```
 
 ---
 
-## Step 7: Fix InvoiceModal GST
+## Phase 7: Fix InvoiceModal GST
 
 **File:** `src/components/InvoiceModal.tsx`
 
@@ -375,7 +387,7 @@ const gstLabel = booking.type === "FLIGHT" ? "GST (18%)" : "GST (5%)";
 const gst = Math.round(subtotal * gstRate);
 ```
 
-### Update the GST display label (line 116):
+### Update the label (~line 116):
 
 ```typescript
 // BEFORE:
@@ -387,143 +399,80 @@ const gst = Math.round(subtotal * gstRate);
 
 ---
 
-## Step 8: Add Admin Pricing Page
-
-### 8a. Create the page file:
-
-Copy `src/lib/pricing/admin/pricing-rules-page.tsx` to `src/app/admin/pricing/page.tsx`:
+## Phase 8: Copy Admin Pages
 
 ```bash
+# Pricing rules admin
+mkdir -p src/app/admin/pricing
 cp src/lib/pricing/admin/pricing-rules-page.tsx src/app/admin/pricing/page.tsx
+
+# Enhanced promos (replaces existing admin/promos/page.tsx)
+cp src/lib/pricing/admin/enhanced-promos-page.tsx src/app/admin/promos/page.tsx
+
+# Corporate rates admin
+mkdir -p src/app/admin/corporate
+cp src/lib/pricing/admin/corporate-rates-page.tsx src/app/admin/corporate/page.tsx
 ```
 
-### 8b. Add navigation link:
+### Add admin navigation (in `src/app/api/navigation/route.ts` or Supabase NavigationItem table):
 
-In `src/app/api/navigation/route.ts`, add to the admin section array:
+Add these entries to the admin section:
 
-```typescript
-{
-  href: "/admin/pricing",
-  label: "Pricing Rules",
-  icon: "DollarSign",
-  section: "admin",
-},
+```json
+{ "href": "/admin/pricing", "label": "Pricing Rules", "icon": "DollarSign", "section": "admin" }
+{ "href": "/admin/corporate", "label": "Corporate Rates", "icon": "Building2", "section": "admin" }
 ```
 
-### 8c. Update admin layout icons:
-
-In `src/app/admin/layout.tsx`, add `DollarSign` to the imports and `ADMIN_ICONS`:
+### Update admin layout icons (`src/app/admin/layout.tsx`):
 
 ```typescript
-import { LayoutDashboard, BarChart3, Package, Tag, Star, Building2, Users, Settings, DollarSign } from "lucide-react";
+import { ..., DollarSign } from "lucide-react";
 
 const ADMIN_ICONS: Record<string, React.ReactNode> = {
-  // ... existing icons ...
+  // ... existing ...
   DollarSign: <DollarSign size={18} />,
 };
 ```
 
 ---
 
-## Step 9: Enhanced Promo Code Admin
-
-Update `src/app/admin/promos/page.tsx` to support the new fields. Add to the form:
-
-```tsx
-// Add these fields to the create form grid:
-<div>
-  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">
-    Applicable To
-  </label>
-  <select
-    value={newPromo.applicableTo}
-    onChange={(e) => setNewPromo({ ...newPromo, applicableTo: e.target.value })}
-    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-  >
-    <option value="ALL">All</option>
-    <option value="HOTEL">Hotel</option>
-    <option value="FLIGHT">Flight</option>
-    <option value="PACKAGE">Package</option>
-  </select>
-</div>
-<div>
-  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">
-    Max Discount (₹)
-  </label>
-  <input
-    type="number"
-    value={newPromo.maxDiscount || ""}
-    onChange={(e) => setNewPromo({ ...newPromo, maxDiscount: Number(e.target.value) })}
-    placeholder="Cap for % promos"
-    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-  />
-</div>
-<div>
-  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">
-    Max Uses
-  </label>
-  <input
-    type="number"
-    value={newPromo.maxUses || ""}
-    onChange={(e) => setNewPromo({ ...newPromo, maxUses: Number(e.target.value) })}
-    placeholder="Unlimited"
-    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-  />
-</div>
-<div className="flex items-center gap-2">
-  <input
-    type="checkbox"
-    checked={newPromo.isFirstBooking}
-    onChange={(e) => setNewPromo({ ...newPromo, isFirstBooking: e.target.checked })}
-    className="rounded"
-  />
-  <label className="text-sm text-slate-600">First booking only</label>
-</div>
-<div>
-  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Valid From</label>
-  <input
-    type="date"
-    value={newPromo.validFrom || ""}
-    onChange={(e) => setNewPromo({ ...newPromo, validFrom: e.target.value })}
-    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-  />
-</div>
-<div>
-  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Valid To</label>
-  <input
-    type="date"
-    value={newPromo.validTo || ""}
-    onChange={(e) => setNewPromo({ ...newPromo, validTo: e.target.value })}
-    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-  />
-</div>
-```
-
-Also update the promo display to show usage count and category.
-
----
-
 ## Verification Checklist
 
-After integration, verify:
-
-1. **TypeScript:** `npx tsc --noEmit` in gorasa-next/
-2. **DB migration ran:** Check Supabase for new columns in PricingRule, PromoCode, and CorporateRate table
-3. **Seed data exists:** Check that 3 default rules (hotel 15%, flight ₹500, package 20%) are in the table
-4. **Hotel search:** Search hotels → verify prices include markup (should be higher than raw TBO fare)
-5. **Flight search:** Search flights → verify publishedFare includes markup
-6. **Promo code:** Create a promo → validate via `/api/promos/validate` → verify discount applied
-7. **Invoice:** Check invoice shows 5% GST for hotels, 18% for flights
-8. **Admin pricing page:** Navigate to `/admin/pricing` → create/edit/delete rules
-9. **Fallback:** If pricing-service is down, hotel/flight search should still work (returns base rate)
+| # | Check | How |
+|---|-------|-----|
+| 1 | TypeScript clean | `npx tsc --noEmit` |
+| 2 | Migration ran | Supabase: PricingRule has new columns, CorporateRate exists |
+| 3 | Seed data | 3 default rules in PricingRule table |
+| 4 | Hotel pricing | Search hotels → prices include markup (higher than TBO raw) |
+| 5 | Flight pricing | Search flights → publishedFare includes markup |
+| 6 | Promo validation | POST `/api/promos/validate` with code + amount |
+| 7 | Invoice GST | Hotel invoice shows 5%, flight shows 18% |
+| 8 | Admin pricing | `/admin/pricing` — create/edit/delete rules |
+| 9 | Admin promos | `/admin/promos` — create with new fields (maxDiscount, applicableTo, etc.) |
+| 10 | Admin corporate | `/admin/corporate` — create rates per company |
+| 11 | Fallback | If pricing-service fails, search still works (returns base rate) |
 
 ---
 
-## Architecture Notes
+## Architecture Summary
 
-- **Pricing runs at display time** — markup applied when results are shown, ensuring consistency
-- **Server-side enforcement at booking** — the POST /api/bookings route re-validates prices
-- **Rule hierarchy: most specific wins** — hotel-specific > destination > category > global
-- **Fallback: base rate** — if pricing fails, TBO price is shown (never blocks booking)
-- **GST hardcoded per category** — 5% hotels, 18% flights (can be made dynamic later)
-- **60s cache on pricing rules** — reduces DB queries; call `invalidateRulesCache()` after admin changes
+```
+Search Time:                          Checkout Time:
+┌──────────────┐                     ┌──────────────────┐
+│ TBO/API      │                     │ POST /api/bookings│
+│ Base Rate    │                     │                  │
+│     ↓        │                     │ 1. Validate promo │
+│ calculatePrice()                   │ 2. Corp discount  │
+│ (rule lookup)│                     │ 3. Calculate tax  │
+│     ↓        │                     │ 4. Store final    │
+│ Displayed +  │                     └──────────────────┘
+│ Original     │
+└──────────────┘
+```
+
+- **Display time**: markup applied when results shown
+- **Booking time**: server re-validates, applies promos/corp rates, calculates tax
+- **Rule hierarchy**: most specific wins (hotel > destination > category > global)
+- **Fallback**: if pricing fails, base rate shown (never blocks booking)
+- **GST**: 5% hotels/packages, 18% flights
+- **Cache**: 60s TTL on pricing rules; call `invalidateRulesCache()` after admin changes
