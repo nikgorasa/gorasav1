@@ -343,6 +343,7 @@ export function mockSearchHotels(req: TBOHotelSearchRequest): TBOHotelSearchResp
 
   const totalPax = PaxRooms.reduce((s, r) => s + r.Adults + r.Children, 0);
   const cityKey = req.SearchedCities?.[0] || guessCityFromHotels(HotelCodes);
+  console.log("[mockSearchHotels] SearchedCities:", req.SearchedCities, "cityKey:", cityKey, "HotelCodes:", HotelCodes);
   const defs = HotelCodes ? findHotelsByCodes(HotelCodes) : findHotelsByCity(cityKey);
 
   if (defs.length === 0) {

@@ -92,3 +92,15 @@ Description: Governance protocol implementation - GoRASA pre-flight and post-tas
 
 ---
 
+
+## 2026-06-12 01:06:15 +0900
+
+### Commit: 586e945 fix: fallback hotel names now show correctly (Hotel in Ayodhya)
+
+Files changed:
+gorasa-next/src/lib/tbo-hotel-mock.ts
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
