@@ -56,23 +56,27 @@ function toDisplay(
   });
 
   const minFare = Math.min(...rooms.map(r => r.totalFare));
+  const details = _hotelDetailsCache[h.HotelCode] || {};
+  const ratingMap: Record<string, number> = {
+    "OneStar": 1, "TwoStar": 2, "ThreeStar": 3, "FourStar": 4, "FiveStar": 5,
+  };
 
   return {
     hotelCode: Number(h.HotelCode) || 0,
-    name: "",
-    hotelRating: 0,
-    location: "",
+    name: details.name || `Hotel ${h.HotelCode}`,
+    hotelRating: ratingMap[details.rating] || 3,
+    location: details.city || details.address || "",
     currency: h.Currency,
     minTotalFare: minFare,
     rooms,
     resultIndex: 1,
     picture: "",
     rating: "ThreeStar",
-    address: "",
+    address: details.address || "",
     tripAdvisorRating: 0,
     description: "",
     price: minFare,
-    starRating: 3,
+    starRating: ratingMap[details.rating] || 3,
     originalPrice: minFare * 1.2,
   };
 }
@@ -132,6 +136,7 @@ const CITY_TO_CODE: Record<string, number> = {
 };
 
 let _hotelCodesCache: Record<string, string> = {};
+let _hotelDetailsCache: Record<string, { name: string; rating: string; address: string; city: string }> = {};
 
 async function resolveHotelCodes(city?: string, hotelCodes?: string): Promise<string> {
   if (hotelCodes) return hotelCodes;
@@ -151,6 +156,15 @@ async function resolveHotelCodes(city?: string, hotelCodes?: string): Promise<st
     if (res.Status?.Code === 200 && res.Hotels?.length > 0) {
       const codeStr = res.Hotels.slice(0, 50).map(c => c.HotelCode).join(",");
       _hotelCodesCache[key] = codeStr;
+      // Cache hotel details for display
+      for (const h of res.Hotels) {
+        _hotelDetailsCache[h.HotelCode] = {
+          name: h.HotelName,
+          rating: h.HotelRating,
+          address: h.Address || "",
+          city: h.CityName || city,
+        };
+      }
       console.log(`Resolved ${res.Hotels.length} hotel codes for ${city} (showing first 50)`);
       return codeStr;
     }
