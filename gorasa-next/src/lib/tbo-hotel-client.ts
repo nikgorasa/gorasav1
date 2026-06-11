@@ -12,13 +12,15 @@ import type {
 } from "./tbo-hotel-types";
 import * as api from "./tbo-hotel-api";
 import * as mock from "./tbo-hotel-mock";
+import { calculatePrice } from "./pricing";
 
 const hasCredentials = !!(process.env.TBO_HOTEL_USERNAME && process.env.TBO_HOTEL_PASSWORD)
   && process.env.TBO_HOTEL_FORCE_MOCK !== "true";
 
-function toDisplay(
+async function toDisplay(
   h: { HotelCode: string; Currency: string; Rooms: any[] },
-): TBOHotelDisplay {
+  context?: { destination?: string; hotelName?: string },
+): Promise<TBOHotelDisplay> {
   const rooms: TBOHotelRoomDisplay[] = h.Rooms.map((r: any, ri: number) => {
     const roomName = Array.isArray(r.Name) ? r.Name[0] : (r.Name || "Room");
     const totalFare = r.TotalFare || 0;
@@ -61,13 +63,19 @@ function toDisplay(
     "OneStar": 1, "TwoStar": 2, "ThreeStar": 3, "FourStar": 4, "FiveStar": 5,
   };
 
+  const pricing = await calculatePrice(minFare, {
+    category: "HOTEL",
+    destination: context?.destination,
+    hotelName: details.name || context?.hotelName,
+  });
+
   return {
     hotelCode: Number(h.HotelCode) || 0,
     name: details.name || `Hotel ${h.HotelCode}`,
     hotelRating: ratingMap[details.rating] || 3,
     location: details.city || details.address || "",
     currency: h.Currency,
-    minTotalFare: minFare,
+    minTotalFare: pricing.displayedPrice,
     rooms,
     resultIndex: 1,
     picture: details.imageUrl || "",
@@ -75,9 +83,9 @@ function toDisplay(
     address: details.address || "",
     tripAdvisorRating: 0,
     description: "",
-    price: minFare,
+    price: pricing.displayedPrice,
     starRating: ratingMap[details.rating] || 3,
-    originalPrice: minFare * 1.2,
+    originalPrice: pricing.originalPrice,
   };
 }
 
@@ -232,7 +240,9 @@ export async function searchHotels(params: {
         };
         const res = await api.searchHotels(searchReq);
         if (res.Status?.Code === 200 && res.HotelResult?.length > 0) {
-          const hotels = res.HotelResult.map(h => ({ ...toDisplay(h), source: "tbo" as const }));
+          const hotels = await Promise.all(
+            res.HotelResult.map(h => toDisplay(h, { destination: params.city }).then(d => ({ ...d, source: "tbo" as const })))
+          );
           return { hotels, traceId: _lastTraceId };
         }
         throw new Error(`Hotel search failed: ${res.Status?.Description}`);
@@ -262,7 +272,7 @@ export async function searchHotels(params: {
     const fallbackCity = params.city || "Unknown";
     const fallbackHotels = mock.generateFallbackHotels(fallbackCity);
 
-    const hotels: TBOHotelDisplay[] = fallbackHotels.map((h, idx) => {
+    const hotels: TBOHotelDisplay[] = await Promise.all(fallbackHotels.map(async (h, idx) => {
       const rooms: TBOHotelRoomDisplay[] = h.rooms.map((r, ri) => ({
         roomId: `${h.code}-${ri}`,
         roomName: r.name,
@@ -285,13 +295,20 @@ export async function searchHotels(params: {
         amenities: r.amenities,
       }));
 
+      const minFare = Math.min(...rooms.map(r => r.totalFare));
+      const pricing = await calculatePrice(minFare, {
+        category: "HOTEL",
+        destination: fallbackCity,
+        hotelName: h.name,
+      });
+
       return {
         hotelCode: h.code,
         name: h.name,
         hotelRating: h.rating,
         location: h.location,
         currency: h.currency,
-        minTotalFare: Math.min(...rooms.map(r => r.totalFare)),
+        minTotalFare: pricing.displayedPrice,
         rooms,
         resultIndex: idx + 1,
         picture: h.imageUrl,
@@ -299,18 +316,18 @@ export async function searchHotels(params: {
         address: h.location,
         tripAdvisorRating: 0,
         description: "",
-        price: Math.min(...rooms.map(r => r.totalFare)),
+        price: pricing.displayedPrice,
         starRating: h.rating,
-        originalPrice: Math.min(...rooms.map(r => r.totalFare)) * 1.2,
+        originalPrice: pricing.originalPrice,
         source: "fallback" as const,
       };
-    });
+    }));
 
     return { hotels, traceId: "" };
   }
 
   // Mock data found - use it
-  const hotels = mockRes.HotelResult.map(h => {
+  const hotels = await Promise.all(mockRes.HotelResult.map(async (h) => {
     const info = mock.getHotelInfoByCode(h.HotelCode);
     const location = info?.CityName || params.city || "";
 
@@ -342,13 +359,20 @@ export async function searchHotels(params: {
       amenities: r.Amenities?.Amenity || [],
     }));
 
+    const minFare = Math.min(...rooms.map(r => r.totalFare));
+    const pricing = await calculatePrice(minFare, {
+      category: "HOTEL",
+      destination: location,
+      hotelName: info?.HotelName,
+    });
+
     return {
       hotelCode: Number(h.HotelCode) || 0,
       name: info?.HotelName || `Hotel ${h.HotelCode}`,
       hotelRating: info?.HotelRating || 0,
       location,
       currency: h.Currency,
-      minTotalFare: Math.min(...rooms.map(r => r.totalFare)),
+      minTotalFare: pricing.displayedPrice,
       rooms,
       resultIndex: 1,
       picture: info?.imageUrl || "",
@@ -356,12 +380,12 @@ export async function searchHotels(params: {
       address: "",
       tripAdvisorRating: 0,
       description: "",
-      price: Math.min(...rooms.map(r => r.totalFare)),
+      price: pricing.displayedPrice,
       starRating: info?.HotelRating || 3,
-      originalPrice: Math.min(...rooms.map(r => r.totalFare)) * 1.2,
+      originalPrice: pricing.originalPrice,
       source: "mock" as const,
     };
-  });
+  }));
 
   return { hotels, traceId: "" };
 }

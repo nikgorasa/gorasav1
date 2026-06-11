@@ -1,244 +1,413 @@
-# Pricing Module Implementation Plan for GoRASA
+# GoRASA Payment Gateway Module — Implementation Plan
 
-## Problem Statement
+**Scope:** Razorpay (primary) + PhonePe, async webhook pattern for Vercel compatibility
+**Location:** `src/lib/payment/` (contained directory, same pattern as pricing module)
+**Date:** 2026-06-12
 
-GoRASA currently has **zero pricing logic** despite having a `PricingRule` table with 5 seeded rules. Hotel markups are hardcoded at `* 1.2` for strikethrough only — users see raw TBO cost prices. Flight fares pass through untouched. No promo code validation at checkout. GST is hardcoded at 5% for all services. The booking API accepts any client-supplied price without server-side validation.
+---
 
-## Recommended Architecture
+## Current State
 
-**Pattern A: Simple Markup Table** — single `PricingRule` table with hierarchical resolution, applied at search time. Promo/corporate/loyalty discounts applied at checkout.
+| Area | Current Code | Problem |
+|------|-------------|---------|
+| Payment model | `prisma/schema.prisma:130-140` — has `phonepeId` field | Never populated. No actual gateway integration. |
+| Booking creation | `api/bookings/route.ts:102-109` | Creates Payment record with status="PENDING" but never updates it. |
+| Hotel booking | `HotelBookingModal.tsx:54-195` | Books directly with TBO, saves to DB, no payment step. |
+| Flight booking | `FlightBookingModal.tsx:62-96` | Same — no payment, just saves booking. |
+| PRD requirement | `PRD-ENHANCED.md:163-194` | PhonePe/Razorpay integration listed as P0 blocker. |
+| Sprint status | `Sprint-1.md:440-444` | "Waiting for PhonePe credentials" — never implemented. |
 
-### Pricing Pipeline
+**Key insight:** Both booking modals currently skip payment entirely. They call TBO → save to DB → show "Confirmed". No money changes hands.
+
+---
+
+## Architecture: Async Webhook Pattern
 
 ```
-TBO Base Rate
-  → Markup Engine (PricingRule lookup by priority)
-  → Displayed Price (what user sees)
-  → [At Checkout] Promo Code → Corporate Discount → Loyalty Points → Final Price
-  → GST (dynamic: 5% hotels, 18% flights)
+[User clicks "Pay"]
+      ↓
+[Next.js API] → Creates Booking (status=PENDING) + Payment (status=PENDING)
+      ↓
+[Razorpay API] → Returns checkout_url (< 100ms)
+      ↓
+[User] → Redirected to Razorpay/PhonePe checkout page
+      ↓ (user pays)
+[Razorpay webhook] → POST /api/webhooks/razorpay
+      ↓
+[Next.js API] → Verifies signature → Updates Booking status=CONFIRMED, Payment status=COMPLETED
+      ↓
+[User's My Trips page] → Shows "Payment Confirmed" (polled or real-time)
+```
+
+**Why this works on Vercel:**
+- API routes only do fast DB writes + API calls (< 2s total)
+- Payment processing happens on Razorpay's servers
+- Webhook callback is a separate lightweight endpoint
+- No long-running connections
+
+---
+
+## Module Structure
+
+```
+src/lib/payment/
+├── index.ts                          # Public exports
+├── types.ts                          # TypeScript interfaces
+├── razorpay-client.ts                # Razorpay SDK wrapper
+├── phonepe-client.ts                 # PhonePe API wrapper
+├── payment-service.ts                # Core: createOrder, verifyWebhook, handleCallback
+├── migration.sql                     # Schema additions for Payment table
+├── README.md                         # Quick reference
+├── INTEGRATION.md                    # Step-by-step guide
+├── api/
+│   ├── checkout/route.ts             # POST /api/checkout — create payment order
+│   ├── webhooks/
+│   │   ├── razorpay/route.ts         # POST /api/webhooks/razorpay
+│   │   └── phonepe/route.ts          # POST /api/webhooks/phonepe
+│   └── payment-status/[id]/route.ts  # GET /api/payment-status/:id — poll status
+└── admin/
+    └── payments-page.tsx             # Admin: view all payments, refunds
 ```
 
 ---
 
-## Implementation Phases
+## Phase 1: Schema Enhancement
 
-### Phase 1: Foundation — Markup Engine (P0, ~3-4 days)
+### Migration SQL (`migration.sql`)
 
-#### 1.1 Enhanced PricingRule Schema
+Enhance the existing `Payment` table:
 
-**File:** `gorasa-next/prisma/schema.prisma`
+```sql
+-- Add columns to Payment table
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "gateway" TEXT NOT NULL DEFAULT 'razorpay';
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "orderId" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "paymentId" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "signature" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "failureReason" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "refundedAt" TIMESTAMPTZ;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "refundAmount" DOUBLE PRECISION;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "metadata" JSONB;
 
-Replace current minimal PricingRule model:
+-- Enhance Booking table
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "paymentStatus" TEXT NOT NULL DEFAULT 'PENDING';
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "confirmedAt" TIMESTAMPTZ;
+```
 
+### Prisma Schema Updates
+
+Add to `Payment` model:
 ```prisma
-model PricingRule {
-  id            String   @id @default(cuid())
-  name          String                              // "Goa Hotel Markup"
-  type          String                              // "GLOBAL", "CATEGORY", "DESTINATION", "HOTEL"
-  category      String                              // "HOTEL", "FLIGHT", "PACKAGE"
-  destination   String?                             // "Goa", null = all
-  hotelName     String?                             // Specific hotel, null = all
-  airlineCode   String?                             // "6E", "AI", null = all
-  roomType      String?                             // "DELUXE", "SUITE", null = all
-  markupType    String   @default("PERCENT")        // "PERCENT" or "FLAT"
-  markupValue   Float                               // 15.00 (% or ₹)
-  minPrice      Float?                              // Floor price
-  maxPrice      Float?                              // Ceiling price
-  priority      Int      @default(0)                // Higher = wins
-  isActive      Boolean  @default(true)
-  validFrom     DateTime?                           // Promo start
-  validTo       DateTime?                           // Promo end
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model Payment {
+  id              String    @id @default(cuid())
+  bookingId       String    @unique
+  booking         Booking   @relation(fields: [bookingId], references: [id])
+  amount          Float
+  method          String
+  status          String    @default("PENDING")
+  gateway         String    @default("razorpay")     # NEW
+  orderId         String?                            # NEW: Razorpay order_id
+  paymentId       String?                            # NEW: Razorpay payment_id
+  signature       String?                            # NEW: Razorpay signature
+  phonepeId       String?
+  failureReason   String?                            # NEW
+  refundedAt      DateTime?                          # NEW
+  refundAmount    Float?                             # NEW
+  metadata        Json?                              # NEW
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 ```
 
-**Migration:** Add new columns, migrate existing 5 seeded rules, drop old `markupPercent` column.
+Add to `Booking` model:
+```prisma
+  paymentStatus   String    @default("PENDING")  # NEW: PENDING, PROCESSING, COMPLETED, FAILED, REFUNDED
+  confirmedAt     DateTime?                       # NEW
+```
 
-#### 1.2 PricingService
+---
 
-**New file:** `gorasa-next/src/lib/pricing-service.ts`
+## Phase 2: Razorpay Client
+
+### `razorpay-client.ts`
 
 ```typescript
-export interface PricingContext {
-  category: "HOTEL" | "FLIGHT" | "PACKAGE";
-  destination?: string;
-  hotelName?: string;
-  airlineCode?: string;
-  roomType?: string;
-}
-
-export interface PricingResult {
-  baseRate: number;
-  markupAmount: number;
-  displayedPrice: number;
-  originalPrice: number;       // For strikethrough
-  appliedRules: string[];      // Audit trail
+interface RazorpayOrder {
+  id: string;
+  amount: number;
   currency: string;
+  status: string;
+  receipt: string;
 }
 
-export async function calculatePrice(
-  baseRate: number,
-  context: PricingContext,
-  currency?: string
-): Promise<PricingResult>
-```
-
-Logic:
-1. Fetch all active rules from Supabase, ordered by `priority` DESC
-2. Find most-specific matching rule (iterate: category → destination → hotel/airline → room)
-3. Calculate markup (PERCENT or FLAT), apply min/max constraints
-4. `displayedPrice = baseRate + markupAmount`
-5. `originalPrice = baseRate + markupAmount * 1.3` (30% higher for strikethrough)
-6. Convert currency if needed (INR base + static rates)
-
-#### 1.3 Integrate into Hotel Client
-
-**File:** `gorasa-next/src/lib/tbo-hotel-client.ts`
-
-Modify `toDisplay()` function (lines 19-82):
-- Replace hardcoded `originalPrice: minFare * 1.2` with PricingService result
-- Apply markup to `totalFare` and `minTotalFare`
-- Pass pricing context (destination, hotelName) from `_hotelDetailsCache`
-
-#### 1.4 Integrate into Flight Client
-
-**File:** `gorasa-next/src/lib/tbo-flight-client.ts`
-
-Modify `toDisplay()` function (lines 50-81):
-- Apply PricingService to `publishedFare` and `offeredFare`
-- Use `commissionEarned` from TBO as floor for markup calculation
-- Pass pricing context (airlineCode from segments)
-
-#### 1.5 Seed Default Rules
-
-Create migration seed:
-- `GLOBAL_HOTEL`: PERCENT 15%, priority 0
-- `GLOBAL_FLIGHT`: FLAT ₹500, priority 0
-- `GOA_HOTEL`: PERCENT 22%, priority 10 (overrides global for Goa)
-- `PREMIUM_HOTEL`: PERCENT 25%, priority 20 (for 4-5 star hotels)
-
----
-
-### Phase 2: Promo Code & Checkout (P1, ~2-3 days)
-
-#### 2.1 Enhanced PromoCode Schema
-
-**File:** `gorasa-next/prisma/schema.prisma`
-
-Add fields to existing PromoCode (already in Supabase):
-- `maxDiscount Float?` — cap for percentage discounts
-- `applicableTo String @default("ALL")` — "ALL", "HOTEL", "FLIGHT", "PACKAGE"
-- `isFirstBooking Boolean @default(false)`
-- `maxUses Int?` — total usage limit
-- `usedCount Int @default(0)` — current usage
-- `validFrom DateTime?`
-- `validTo DateTime?`
-
-#### 2.2 Promo Validation Service
-
-**New file:** `gorasa-next/src/lib/promo-service.ts`
-
-```typescript
-export async function applyPromoCode(
-  code: string,
-  bookingAmount: number,
-  category: string,
-  userId: string
-): Promise<{ valid: boolean; discountAmount: number; finalPrice: number; error?: string }>
-```
-
-Checks: validity → expiry → usage limit → min booking value → category applicability → first-booking restriction → calculate discount → increment usage.
-
-#### 2.3 Corporate Rate Service
-
-**New file:** `gorasa-next/src/lib/corporate-service.ts`
-
-```typescript
-export async function getCorporateDiscount(
-  companyId: string,
-  category: string,
-  destination?: string
-): Promise<{ discountType: string; discountValue: number; maxDiscount?: number } | null>
-```
-
-#### 2.4 Enhanced Booking API
-
-**File:** `gorasa-next/src/app/api/bookings/route.ts`
-
-POST handler changes:
-- Accept `promoCode` and `loyaltyPointsRedeemed` in request body
-- **Recalculate price server-side** using PricingService (don't trust client price)
-- Apply promo code validation
-- Apply corporate discount if user has companyId
-- Apply loyalty points deduction
-- Calculate GST dynamically (5% hotels, 18% flights)
-- Store full price breakdown in Booking record
-
-#### 2.5 InvoiceModal Update
-
-**File:** `gorasa-next/src/components/InvoiceModal.tsx`
-
-- Dynamic GST: 5% for HOTEL, 18% for FLIGHT
-- Show promo code discount line
-- Show loyalty points deduction line
-- Show corporate discount line (if applicable)
-
----
-
-### Phase 3: Admin & Operations (P2, ~2-3 days)
-
-#### 3.1 Pricing Rules Admin Page
-
-**New file:** `gorasa-next/src/app/admin/pricing/page.tsx`
-
-- CRUD interface for PricingRule records
-- Table view with filters (category, destination, active status)
-- Create/Edit modal with all fields
-- Bulk enable/disable toggle
-- Usage analytics (how many bookings used each rule)
-
-#### 3.2 Pricing Audit Log
-
-**New file:** `gorasa-next/prisma/schema.prisma` addition
-
-```prisma
-model PricingAuditLog {
-  id            String   @id @default(cuid())
-  bookingId     String?
-  category      String
-  destination   String?
-  baseRate      Float
-  markupAmount  Float
-  displayedPrice Float
-  appliedRules  String   @default("[]")   // JSON array of rule names
-  promoCode     String?
-  promoDiscount Float?
-  loyaltyPoints Int?
-  corporateDiscount Float?
-  gstAmount     Float
-  finalPrice    Float
-  createdAt     DateTime @default(now())
+interface RazorpayPayment {
+  id: string;
+  order_id: string;
+  amount: number;
+  status: string;
+  method: string;
 }
+
+// Create order — called when user clicks "Pay"
+export async function createRazorpayOrder(params: {
+  amount: number;        // in INR
+  receipt: string;       // booking ID
+  notes?: Record<string, string>;
+}): Promise<RazorpayOrder>
+
+// Verify webhook signature
+export function verifyRazorpaySignature(
+  body: string,
+  signature: string,
+  secret: string
+): boolean
+
+// Fetch payment details (for verification)
+export async function fetchRazorpayPayment(paymentId: string): Promise<RazorpayPayment>
+
+// Create refund
+export async function createRazorpayRefund(
+  paymentId: string,
+  amount?: number        // partial refund if specified
+): Promise<{ id: string }>
 ```
 
-#### 3.3 Enhanced Admin Promo Page
-
-**File:** `gorasa-next/src/app/admin/promos/page.tsx`
-
-- Add usage stats display (usedCount / maxUses)
-- Add validity period fields
-- Add category filter display
+**API key handling:**
+- `RAZORPAY_KEY_ID` — public key (used in frontend checkout)
+- `RAZORPAY_KEY_SECRET` — secret key (server-side only)
+- `RAZORPAY_WEBHOOK_SECRET` — for verifying webhook signatures
 
 ---
 
-### Phase 4: Advanced (P3, ~3-5 days, future)
+## Phase 3: PhonePe Client
 
-- Dynamic pricing (time/demand-based adjustments)
-- Multi-currency support (INR base + live conversion)
-- A/B testing framework for markup percentages
-- Price lock feature (hold price for 15 min)
-- Competitor price monitoring
+### `phonepe-client.ts`
+
+```typescript
+interface PhonePePaymentRequest {
+  merchantId: string;
+  merchantTransactionId: string;
+  amount: number;           // in paise
+  redirectUrl: string;
+  callbackUrl: string;
+}
+
+interface PhonePePaymentResponse {
+  success: boolean;
+  code: string;
+  data: {
+    merchantId: string;
+    transactionId: string;
+    paymentLink: string;    // redirect URL
+  };
+}
+
+// Create payment request — returns redirect URL
+export async function createPhonePePayment(params: {
+  amount: number;           // in INR
+  transactionId: string;    // booking ID
+  redirectUrl: string;
+  callbackUrl: string;
+}): Promise<PhonePePaymentResponse>
+
+// Verify webhook callback
+export function verifyPhonePeCallback(
+  body: string,
+  header: string,
+  salt: string
+): boolean
+
+// Check payment status
+export async function checkPhonePeStatus(
+  transactionId: string
+): Promise<{ state: string; amount: number }>
+```
+
+**API key handling:**
+- `PHONEPE_MERCHANT_ID`
+- `PHONEPE_SALT_KEY`
+- `PHONEPE_SALT_INDEX`
+- `PHONEPE_API_BASE` — `https://api.phonepe.com` (prod) or `https://api-preprod.phonepe.com` (sandbox)
+
+---
+
+## Phase 4: Payment Service
+
+### `payment-service.ts`
+
+Core orchestration functions:
+
+```typescript
+// 1. Create checkout — returns gateway checkout URL
+export async function createCheckout(params: {
+  bookingId: string;
+  amount: number;
+  gateway: "razorpay" | "phonepe";
+  userId: string;
+  userEmail: string;
+}): Promise<{ checkoutUrl: string; orderId: string }>
+
+// 2. Handle Razorpay webhook
+export async function handleRazorpayWebhook(params: {
+  orderId: string;
+  paymentId: string;
+  signature: string;
+  rawBody: string;
+}): Promise<{ success: boolean; bookingId: string }>
+
+// 3. Handle PhonePe webhook
+export async function handlePhonePeWebhook(params: {
+  transactionId: string;
+  state: string;
+  response: any;
+}): Promise<{ success: boolean; bookingId: string }>
+
+// 4. Check payment status (for polling)
+export async function getPaymentStatus(
+  bookingId: string
+): Promise<{ status: string; amount: number; gateway: string }>
+
+// 5. Process refund
+export async function processRefund(
+  paymentId: string,
+  amount?: number
+): Promise<{ success: boolean; refundId: string }>
+```
+
+**Flow detail:**
+
+1. `createCheckout()`:
+   - Look up Booking by ID
+   - Create Payment record (status=PENDING, gateway=selected)
+   - Call Razorpay/PhonePe to create order
+   - Update Payment with orderId
+   - Return checkoutUrl
+
+2. `handleRazorpayWebhook()`:
+   - Verify signature with `RAZORPAY_WEBHOOK_SECRET`
+   - Fetch payment details from Razorpay
+   - Update Payment: status=COMPLETED, paymentId, signature
+   - Update Booking: paymentStatus=COMPLETED, status=CONFIRMED, confirmedAt=now
+   - Return success
+
+3. `handlePhonePeWebhook()`:
+   - Verify checksum with PhonePe salt
+   - If state=COMPLETED: same as above
+   - If state=FAILED: update Payment status=FAILED, Booking paymentStatus=FAILED
+
+---
+
+## Phase 5: API Routes
+
+### `POST /api/checkout`
+
+```typescript
+// Request: { bookingId: string, gateway: "razorpay" | "phonepe" }
+// Response: { checkoutUrl: string, orderId: string }
+```
+
+### `POST /api/webhooks/razorpay`
+
+```typescript
+// Raw body + X-Razorpay-Signature header
+// Returns 200 immediately
+```
+
+### `POST /api/webhooks/phonepe`
+
+```typescript
+// PhonePe callback payload
+// Returns 200 immediately
+```
+
+### `GET /api/payment-status/:id`
+
+```typescript
+// Response: { status: "PENDING" | "COMPLETED" | "FAILED", amount: number }
+// Used by frontend to poll after redirect
+```
+
+---
+
+## Phase 6: Frontend Integration
+
+### 6a. Checkout Button Component
+
+**New file:** `src/lib/payment/components/CheckoutButton.tsx`
+
+```tsx
+// Reusable component used in both booking modals
+// Props: { bookingId, amount, gateway, onSuccess, onError }
+// On click: POST /api/checkout → redirect to checkoutUrl
+// On return: poll /api/payment-status until COMPLETED
+```
+
+### 6b. Payment Status Page
+
+**New file:** `src/lib/payment/components/PaymentStatusPage.tsx`
+
+```tsx
+// Shown after redirect from gateway
+// Polls /api/payment-status every 2s for 60s
+// Shows: Processing → Confirmed → Done
+// Shows: Failed → Retry button
+```
+
+### 6c. Modify Booking Modals
+
+**`HotelBookingModal.tsx`** — add payment step between "saving" and "done":
+
+```
+Current flow:  form → blocking → book-confirming → saving → done
+New flow:      form → blocking → book-confirming → saving → payment → done
+                                                              ↑
+                                                    (redirect to checkout)
+```
+
+**`FlightBookingModal.tsx`** — add payment step:
+
+```
+Current flow:  form → saving → done
+New flow:      form → saving → payment → done
+```
+
+### 6d. Success/Return Page
+
+**New file:** `src/app/payment/success/page.tsx`
+
+```tsx
+// Redirect target after gateway checkout
+// Reads query params (order_id, payment_id)
+// Polls /api/payment-status
+// Shows confirmation with booking details
+```
+
+---
+
+## Phase 7: Admin Payments Page
+
+**`admin/payments-page.tsx`** — view all payments:
+
+- Table: Booking ID, Amount, Gateway, Status, Date, Actions
+- Filter by status (PENDING, COMPLETED, FAILED, REFUNDED)
+- Refund button (calls processRefund)
+- Export to CSV
+
+---
+
+## Environment Variables Needed
+
+```env
+# Razorpay
+RAZORPAY_KEY_ID=rzp_test_xxxxx
+RAZORPAY_KEY_SECRET=xxxxx
+RAZORPAY_WEBHOOK_SECRET=xxxxx
+
+# PhonePe
+PHONEPE_MERCHANT_ID=M1xxxxx
+PHONEPE_SALT_KEY=xxxxx
+PHONEPE_SALT_INDEX=1
+PHONEPE_API_BASE=https://api-preprod.phonepe.com  # sandbox
+```
 
 ---
 
@@ -246,38 +415,58 @@ model PricingAuditLog {
 
 | File | Purpose |
 |------|---------|
-| `gorasa-next/src/lib/pricing-service.ts` | Core pricing engine — `calculatePrice()` |
-| `gorasa-next/src/lib/promo-service.ts` | Promo code validation and application |
-| `gorasa-next/src/lib/corporate-service.ts` | Corporate rate lookup |
-| `gorasa-next/src/app/admin/pricing/page.tsx` | Admin UI for pricing rules |
-| `gorasa-next/prisma/migrations/XXXX-enhance-pricing-rule/migration.sql` | Schema migration |
+| `types.ts` | CheckoutRequest, WebhookPayload, PaymentResult |
+| `razorpay-client.ts` | Razorpay SDK wrapper |
+| `phonepe-client.ts` | PhonePe API wrapper |
+| `payment-service.ts` | Core orchestration |
+| `migration.sql` | Schema additions |
+| `api/checkout/route.ts` | Create payment order |
+| `api/webhooks/razorpay/route.ts` | Razorpay webhook handler |
+| `api/webhooks/phonepe/route.ts` | PhonePe webhook handler |
+| `api/payment-status/[id]/route.ts` | Poll payment status |
+| `components/CheckoutButton.tsx` | Reusable pay button |
+| `components/PaymentStatusPage.tsx` | Post-payment status display |
+| `admin/payments-page.tsx` | Admin payments table |
+| `README.md` | Quick reference |
+| `INTEGRATION.md` | Step-by-step guide |
 
-## Files to Modify
+## Files to Modify (by main agent)
 
 | File | Change |
 |------|--------|
-| `gorasa-next/prisma/schema.prisma` | Enhance PricingRule, add PricingAuditLog |
-| `gorasa-next/src/lib/tbo-hotel-client.ts` | Wire PricingService into `toDisplay()` |
-| `gorasa-next/src/lib/tbo-flight-client.ts` | Wire PricingService into `toDisplay()` |
-| `gorasa-next/src/app/api/bookings/route.ts` | Server-side pricing, promo, GST |
-| `gorasa-next/src/app/api/tbo-hotels/route.ts` | Pass pricing context |
-| `gorasa-next/src/app/api/tbo/route.ts` | Pass pricing context |
-| `gorasa-next/src/components/InvoiceModal.tsx` | Dynamic GST, full price breakdown |
-| `gorasa-next/src/app/api/promos/route.ts` | Enhanced validation |
-| `gorasa-next/src/app/admin/layout.tsx` | Add pricing nav item |
+| `prisma/schema.prisma` | Enhance Payment + Booking models |
+| `components/HotelBookingModal.tsx` | Add payment step after booking |
+| `components/FlightBookingModal.tsx` | Add payment step after booking |
+| `app/admin/layout.tsx` | Add Payments nav icon |
+| `app/api/navigation/route.ts` | Add Payments link (or Supabase) |
 
-## Verification
+---
 
-1. **TypeScript**: `npx tsc --noEmit` in `gorasa-next/` — must pass
-2. **Search test**: Search hotels for Goa → verify markup applied (price > TBO base rate)
-3. **Search test**: Search flights → verify markup applied
-4. **Promo test**: Create promo via admin, apply at booking → verify discount
-5. **Invoice test**: Generate invoice for hotel → verify 5% GST; flight → verify 18% GST
-6. **Admin test**: Create/edit/delete pricing rules via admin UI
-7. **Fallback test**: If PricingService fails, show base rate (don't block booking)
+## Implementation Order
 
-## Risk Mitigation
+| Step | Task | Est. |
+|------|------|------|
+| 1 | Schema migration (SQL + Prisma) | 0.5 day |
+| 2 | Razorpay client + PhonePe client | 1 day |
+| 3 | Payment service (createCheckout, webhooks, status) | 1 day |
+| 4 | API routes (checkout, webhooks, status) | 0.5 day |
+| 5 | CheckoutButton + PaymentStatus components | 1 day |
+| 6 | Integrate into HotelBookingModal | 0.5 day |
+| 7 | Integrate into FlightBookingModal | 0.5 day |
+| 8 | Admin payments page | 0.5 day |
+| 9 | TypeScript check + testing | 0.5 day |
 
-- **Fallback on pricing failure**: If Supabase is down or pricing service errors, pass through TBO base rate unchanged. Log warning.
-- **Backward compatibility**: Existing bookings with `originalPrice` null will still display correctly (InvoiceModal handles this).
-- **Migration safety**: New columns are nullable or have defaults. Existing data preserved.
+**Total: ~5-6 days**
+
+---
+
+## Verification Plan
+
+1. **TypeScript:** `npx tsc --noEmit`
+2. **Checkout flow:** Create booking → POST /api/checkout → verify Razorpay order created
+3. **Webhook simulation:** POST /api/webhooks/razorpay with test payload → verify Booking status updates
+4. **Payment status:** GET /api/payment-status/:id → verify returns correct status
+5. **Full E2E:** Razorpay test mode → complete payment → verify booking confirmed
+6. **PhonePe flow:** Same as above with PhonePe sandbox
+7. **Refund:** Trigger refund → verify Payment.refundedAt populated
+8. **Admin:** Navigate to /admin/payments → verify payments listed

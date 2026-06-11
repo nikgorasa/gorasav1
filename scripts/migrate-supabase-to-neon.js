@@ -14,6 +14,20 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { PrismaClient } = require('@prisma/client');
+const fs = require('fs');
+const path = require('path');
+
+// Load .env.local if exists
+const envPath = path.join(__dirname, '..', 'gorasa-next', '.env.local');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const match = line.match(/^([^#=]+)=(.*)$/);
+    if (match) {
+      process.env[match[1].trim()] = match[2].trim();
+    }
+  });
+}
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
