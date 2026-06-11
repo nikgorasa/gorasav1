@@ -28,3 +28,75 @@
 | 2026-06-11 | a5cf522 | fix: demo login without password — skip Supabase Auth, match DB emails |
 | 2026-06-11 | cb1628b | Hotel images fix + Hotel REST API |
 | 2026-06-11 | 53f7720 | Hotel REST API rewrite |
+
+## 2026-06-12 01:34:56 +0900
+
+### Commit: 702db0c debug: log params.city in fallback path
+
+Files changed:
+gorasa-next/src/lib/tbo-hotel-client.ts
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+
+## 2026-06-12 01:58:57 +0900
+
+### Commit: 702db0c debug: log params.city in fallback path
+
+Files changed:
+gorasa-next/src/lib/tbo-hotel-client.ts
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+
+## 2026-06-12 02:02:40 +0900
+
+### Commit: 702db0c debug: log params.city in fallback path
+
+Files changed:
+gorasa-next/src/lib/tbo-hotel-client.ts
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+
+## 2026-06-12 02:07:03 +0900
+
+### Commit: 702db0c debug: log params.city in fallback path
+
+Files changed:
+gorasa-next/src/lib/tbo-hotel-client.ts
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+
+## 2026-06-12 02:19:49 +0900
+
+### Commit: 702db0c debug: log params.city in fallback path
+
+Files changed:
+gorasa-next/src/lib/tbo-hotel-client.ts
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+
+## 2026-06-12 02:22:45 +0900
+
+### Commit: 702db0c debug: log params.city in fallback path
+
+Files changed:
+gorasa-next/src/lib/tbo-hotel-client.ts
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+

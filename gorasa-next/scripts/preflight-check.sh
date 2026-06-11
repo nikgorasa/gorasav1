@@ -61,11 +61,9 @@ print_status "✓ All required documentation files exist"
 # Check 2: Generate context brief
 print_status "2. Checking for context brief..."
 
-CONTEXT_BRIEF_FILES=("../CONTEXT-BRIEF-*.md")
-
-if ls "../CONTEXT-BRIEF-*.md" 1> /dev/null 2>&1; then
-    print_warning "Found existing context brief files:"
-    ls "../CONTEXT-BRIEF-*.md"
+if compgen -G "../CONTEXT-BRIEF-*.md" > /dev/null; then
+    print_status "✓ Context brief found:"
+    ls ../CONTEXT-BRIEF-*.md
 else
     print_warning "No context brief found. Create one with:
     touch ../CONTEXT-BRIEF-[ISSUE-NAME].md
