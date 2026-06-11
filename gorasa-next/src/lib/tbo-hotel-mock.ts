@@ -611,6 +611,28 @@ export function getMockHotelCodes(cityCode: number): { HotelCode: number; HotelN
   }));
 }
 
+export function getHotelInfoByCode(hotelCode: number): {
+  HotelCode: number;
+  HotelName: string;
+  CityName: string;
+  HotelRating: number;
+  imageUrl: string;
+} | null {
+  for (const entries of Object.values(HOTELS)) {
+    const h = entries.find(e => e.code === hotelCode);
+    if (h) {
+      return {
+        HotelCode: h.code,
+        HotelName: h.name,
+        CityName: h.location,
+        HotelRating: h.rating,
+        imageUrl: h.imageUrl,
+      };
+    }
+  }
+  return null;
+}
+
 export function resetMock(): void {
   mockPreBookCache.clear();
   mockBookings.clear();

@@ -156,18 +156,9 @@ export async function searchHotels(params: {
     return { hotels: [], traceId: "" };
   }
 
-  const cityCodeMap: Record<string, number> = {
-    Goa: 49592, Mumbai: 41924, Delhi: 42374, Jaipur: 42810,
-    Bangalore: 41324, Dubai: 52163, Bangkok: 52173,
-    Singapore: 52188, "Kuala Lumpur": 52203,
-  };
-
   const hotels = mockRes.HotelResult.map(h => {
-    const cityName = params.city || "";
-    const cityCode = cityCodeMap[cityName] || 0;
-    const allHotels = mock.getMockHotelCodes(cityCode);
-    const info = allHotels.find((x: any) => x.HotelCode === h.HotelCode);
-    const location = info?.CityName || cityName;
+    const info = mock.getHotelInfoByCode(h.HotelCode);
+    const location = info?.CityName || params.city || "";
 
     const rooms: TBOHotelRoomDisplay[] = h.Rooms.map((r: any, ri: number) => ({
       roomId: r.RoomID?.[0] || "",

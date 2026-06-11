@@ -16,20 +16,20 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "search": {
-        const { checkIn, checkOut, rooms, cityName, preferredCurrency } = body;
-        const roomsArray = (rooms || [{ AdultCount: 1, ChildCount: 0, ChildAges: [] }]).map(
-          (r: { AdultCount: number; ChildCount: number; ChildAges?: number[] }) => ({
+        const p = body.params || {};
+        const roomsArray = (p.RoomGuests || [{ AdultCount: 1, ChildCount: 0 }]).map(
+          (r: { AdultCount: number; ChildCount: number }) => ({
             adults: r.AdultCount || 1,
             children: r.ChildCount || 0,
-            childrenAges: r.ChildAges || [],
+            childrenAges: [],
           }),
         );
         const result = await searchHotelsNew({
-          checkIn,
-          checkOut,
-          city: cityName,
+          checkIn: p.CheckInDate,
+          checkOut: p.CheckOutDate,
+          city: p.CityName,
           rooms: roomsArray,
-          preferredCurrency: preferredCurrency || "INR",
+          preferredCurrency: p.PreferredCurrencyCode || "INR",
           EndUserIp: endUserIp,
         });
         return NextResponse.json(result);
