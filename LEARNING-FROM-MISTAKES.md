@@ -300,7 +300,8 @@
 | Hotel images not loading | ~2 hours | Frontend not consuming API `picture` field |
 | Demo login broken | ~2 hours | Phase 1: Supabase Auth used instead of direct DB lookup; Phase 2: Anon key used as service key (RLS blocked); Phase 3: Service key JWT signature stale |
 | TBO Hotel API auth mismatch | ~3 hours | Wrong auth method (TokenId vs Basic), wrong creds (shared flight vs dedicated hotel), wrong username |
-| **Total** | **~24 hours** | |
+| Hotel search param extraction | ~30 min | Route extracted from `body` root, not `body.params`; field names differed (CityName vs city) |
+| **Total** | **~24.5 hours** | |
 
 ---
 
@@ -325,3 +326,7 @@
 17. **Use separate env vars for separate APIs** — Don't overload one set of vars for two providers (`TBO_HOTEL_*` vs `TBO_*`)
 18. **Test each endpoint with curl first** — Isolates auth issues from integration issues
 19. **Test credentials mean no balance** — "Insufficient Balance" on PreBook is expected for test creds; not a bug
+20. **TBO hotel API requires HotelCodes** — City-based search doesn't work; must fetch hotel codes via TBOHotelCodeList first
+21. **Frontend sends nested params** — `{ action: "search", params: { CityName, ... } }` — route must extract from `body.params`, not `body`
+22. **Static data endpoints need POST** — CountryList uses GET, but CityList and TBOHotelCodeList need POST with JSON body
+23. **HotelCode is string not number** — TBO API returns "1279415" as string, not 1279415 as number; update all types accordingly

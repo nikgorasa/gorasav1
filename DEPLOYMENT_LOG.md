@@ -23,6 +23,11 @@
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
+| 2026-06-11 | Flight route fix (use flight client) | e54df33 | gorasa-next | ✅ Ready | gorasa-next-69hlbolmw... | /api/tbo now uses flight client |
+| 2026-06-11 | Hotel param extraction fix | a6918ff | gorasa-next | ✅ Ready | gorasa-next-69hlbolmw... | Extract from body.params |
+| 2026-06-11 | Hotel search with real API | 7e7a93d | gorasa-next | ✅ Ready | gorasa-next-nsfkj97e4... | Resolve hotel codes from city |
+| 2026-06-11 | TBO hotel env vars | fe561cc | gorasa-next | ✅ Ready | gorasa-next-giz13gkxa... | Added TBO_HOTEL_USERNAME/PASSWORD |
+| 2026-06-11 | TBO hotel API integration | 6d0bfe6 | gorasa-next | ✅ Ready | gorasa-next-b764x16qm... | Basic Auth, separate creds |
 | 2026-06-11 | Hotel images fix + Hotel REST API | cb1628b | gorasa-next | ✅ Ready | gorasa-next-qj2gil2l5... | Auto-deploy working, includes hotel images |
 | 2026-06-11 | Hotel REST API rewrite | 53f7720 | gorasa-next | ✅ Ready | gorasa-next-qj2gil2l5... | Included in cb1628b deployment |
 | 2026-06-11 | RLS Security Fix | (supabase migration) | Supabase | ✅ Applied | — | 27 tables, 5 policy groups |
