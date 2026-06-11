@@ -256,6 +256,7 @@ export async function searchHotels(params: {
 
   // Check if mock returned fallback hotels (no real inventory for this city)
   const isFallback = mockRes.Status.Description === "Fallback";
+  console.log("[searchHotels] isFallback:", isFallback, "params.city:", params.city, "SearchedCities:", mockReq.SearchedCities);
 
   if (isFallback) {
     // Use fallback hotels with correct city name
