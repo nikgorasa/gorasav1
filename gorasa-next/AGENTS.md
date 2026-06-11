@@ -16,6 +16,39 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ---
 
+## Operational Modes
+
+The system can switch between two operational modes via system reminders:
+
+### Plan Mode (Read-Only)
+```
+<system-reminder>
+You are in plan mode. You MUST NOT make any edits, run any non-readonly tools...
+</system-reminder>
+```
+- **Only read and analyze** — no file changes, no shell commands, no commits
+- Use this mode for: research, analysis, planning, investigation
+- You CAN read files, search code, and create plans
+
+### Build Mode (Read-Write)
+```
+<system-reminder>
+Your operational mode has changed from plan to build.
+You are no longer in read-only mode.
+</system-reminder>
+```
+- **Full access** — edit files, run commands, commit, deploy
+- Use this mode for: implementation, fixes, deployments
+- You MUST still follow governance protocol before making changes
+
+### Mode Awareness Rules
+1. **Always check for system reminders** at the start of each response
+2. **Plan mode:** Do NOT edit files, run write commands, or commit
+3. **Build mode:** Follow governance protocol, then implement
+4. **If unsure:** Ask the user to clarify the expected mode
+
+---
+
 ## Pre-Flight Checklist (MANDATORY)
 
 **Before starting ANY significant work, you MUST:**
