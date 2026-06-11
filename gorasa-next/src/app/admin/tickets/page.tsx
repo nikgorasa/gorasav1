@@ -1,0 +1,337 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { motion } from "motion/react";
+import {
+  Ticket,
+  Clock,
+  ChevronRight,
+  Filter,
+  AlertCircle,
+  CheckCircle,
+  User,
+  MessageSquare,
+} from "lucide-react";
+import {
+  Ticket as TicketType,
+  TicketStatus,
+  TicketPriority,
+  TICKET_STATUSES,
+  TICKET_PRIORITIES,
+} from "@/lib/ticket/types";
+
+export default function AdminTicketsPage() {
+  const [tickets, setTickets] = useState<TicketType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
+  const [filterStatus, setFilterStatus] = useState<TicketStatus | "all">("all");
+  const [filterPriority, setFilterPriority] = useState<TicketPriority | "all">("all");
+  const [stats, setStats] = useState<{
+    total: number;
+    open: number;
+    inProgress: number;
+    escalated: number;
+    resolved: number;
+  } | null>(null);
+
+  useEffect(() => {
+    fetchTickets();
+    fetchStats();
+  }, []);
+
+  const fetchTickets = async () => {
+    try {
+      const res = await fetch("/api/tickets");
+      if (res.ok) {
+        const data = await res.json();
+        setTickets(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch tickets:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/tickets?stats=true");
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+    }
+  };
+
+  const handleStatusChange = async (ticketId: string, newStatus: TicketStatus) => {
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (res.ok) {
+        fetchTickets();
+        fetchStats();
+        if (selectedTicket?.id === ticketId) {
+          setSelectedTicket({ ...selectedTicket, status: newStatus });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update ticket:", err);
+    }
+  };
+
+  const filteredTickets = tickets.filter((ticket) => {
+    if (filterStatus !== "all" && ticket.status !== filterStatus) return false;
+    if (filterPriority !== "all" && ticket.priority !== filterPriority) return false;
+    return true;
+  });
+
+  const getStatusColor = (status: TicketStatus) => {
+    const statusObj = TICKET_STATUSES.find((s) => s.value === status);
+    return statusObj?.color || "bg-slate-100 text-slate-600";
+  };
+
+  const getPriorityColor = (priority: TicketPriority) => {
+    const priorityObj = TICKET_PRIORITIES.find((p) => p.value === priority);
+    return priorityObj?.color || "bg-slate-100 text-slate-600";
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-slate-200 rounded w-1/3" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 bg-slate-100 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-serif font-bold text-slate-900 flex items-center gap-2">
+          <Ticket className="w-6 h-6 text-orange-500" />
+          Ticket Management
+        </h1>
+        <p className="text-slate-500 text-sm mt-1">
+          Manage support tickets and customer inquiries
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="p-4 bg-white border border-slate-100 rounded-xl">
+            <p className="text-xs text-slate-500 mb-1">Total</p>
+            <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+          </div>
+          <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
+            <p className="text-xs text-blue-600 mb-1">Open</p>
+            <p className="text-2xl font-bold text-blue-600">{stats.open}</p>
+          </div>
+          <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-xl">
+            <p className="text-xs text-yellow-600 mb-1">In Progress</p>
+            <p className="text-2xl font-bold text-yellow-600">{stats.inProgress}</p>
+          </div>
+          <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
+            <p className="text-xs text-orange-600 mb-1">Escalated</p>
+            <p className="text-2xl font-bold text-orange-600">{stats.escalated}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-slate-400" />
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as TicketStatus | "all")}
+            className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+          >
+            <option value="all">All Status</option>
+            {TICKET_STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value as TicketPriority | "all")}
+            className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+          >
+            <option value="all">All Priority</option>
+            {TICKET_PRIORITIES.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <span className="text-sm text-slate-500">
+          {filteredTickets.length} ticket{filteredTickets.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Ticket List + Detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+          {filteredTickets.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">
+              <Ticket className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+              <p>No tickets found</p>
+            </div>
+          ) : (
+            filteredTickets.map((ticket) => (
+              <motion.button
+                key={ticket.id}
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedTicket(ticket)}
+                className={`w-full p-4 bg-white border rounded-xl text-left transition-all cursor-pointer ${
+                  selectedTicket?.id === ticket.id
+                    ? "border-orange-500 shadow-md"
+                    : "border-slate-100 hover:border-slate-200"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono text-slate-400">{ticket.id}</span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(
+                          ticket.status
+                        )}`}
+                      >
+                        {ticket.status.replace("_", " ").toUpperCase()}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-slate-900 text-sm line-clamp-1">
+                      {ticket.subject}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">{ticket.userName}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getPriorityColor(
+                        ticket.priority
+                      )}`}
+                    >
+                      {ticket.priority.toUpperCase()}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
+              </motion.button>
+            ))
+          )}
+        </div>
+
+        <div className="lg:col-span-2">
+          {selectedTicket ? (
+            <div className="bg-white border border-slate-100 rounded-xl p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-mono text-slate-400">{selectedTicket.id}</span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(
+                        selectedTicket.status
+                      )}`}
+                    >
+                      {selectedTicket.status.replace("_", " ").toUpperCase()}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getPriorityColor(
+                        selectedTicket.priority
+                      )}`}
+                    >
+                      {selectedTicket.priority.toUpperCase()}
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-serif font-bold text-slate-900">
+                    {selectedTicket.subject}
+                  </h2>
+                </div>
+
+                <select
+                  value={selectedTicket.status}
+                  onChange={(e) => handleStatusChange(selectedTicket.id, e.target.value as TicketStatus)}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                >
+                  {TICKET_STATUSES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs text-slate-500 mb-1">Customer</p>
+                  <p className="font-semibold text-slate-900">{selectedTicket.userName}</p>
+                  <p className="text-xs text-slate-500">{selectedTicket.userEmail}</p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs text-slate-500 mb-1">Created</p>
+                  <p className="font-semibold text-slate-900">
+                    {formatDate(selectedTicket.createdAt)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-sm font-bold text-slate-700 mb-2">Description</h3>
+                <div className="p-4 bg-slate-50 rounded-xl text-sm text-slate-700 whitespace-pre-line">
+                  {selectedTicket.description}
+                </div>
+              </div>
+
+              {selectedTicket.bookingRef && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-bold text-slate-700 mb-2">Booking Reference</h3>
+                  <span className="font-mono bg-slate-100 px-3 py-1 rounded text-sm">
+                    {selectedTicket.bookingRef}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-100 rounded-xl p-12 text-center">
+              <Ticket className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+              <h3 className="text-lg font-semibold text-slate-700 mb-2">
+                Select a Ticket
+              </h3>
+              <p className="text-slate-500 text-sm">
+                Click on a ticket from the list to view details
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

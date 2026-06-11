@@ -17,7 +17,7 @@
 | **Root Directory** | gorasa-next/ (all projects) |
 | **GitHub Repo** | nikgorasa/gorasav1 |
 | **Deploy Remote** | neworigin → main (prod), dev, qa |
-| **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 28 tables) |
+| **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 30+ tables) |
 | **NEON Dev** | gorasa-dev (29 tables, 210 rows) |
 | **NEON QA** | gorasa-qa (28 tables, 210 rows) |
 | **Latest Commit** | 80f9033 (GitHub Actions workflow fix) |
