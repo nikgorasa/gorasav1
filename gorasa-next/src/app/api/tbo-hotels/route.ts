@@ -17,19 +17,25 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "search": {
-        const {
-          city, hotelCodes, checkIn, checkOut,
-          rooms, guestNationality, preferredCurrency,
-        } = body;
-        const roomsArray = rooms || [{ adults: 1, children: 0, childrenAges: [] }];
+        const p = body.params || body;
+        const cityName = p.CityName || p.cityName || p.city;
+        const hotelCodes = p.HotelCodes || p.hotelCodes;
+        const checkIn = p.CheckInDate || p.CheckIn || p.checkIn;
+        const checkOut = p.CheckOutDate || p.CheckOut || p.checkOut;
+        const roomsRaw = p.RoomGuests || p.rooms || [{ Adults: 1, Children: 0, ChildAge: [] }];
+        const roomsArray = roomsRaw.map((r: any) => ({
+          adults: r.Adults || r.adults || 1,
+          children: r.Children || r.children || 0,
+          childrenAges: r.ChildAge || r.childrenAges || [],
+        }));
         const result = await searchHotels({
           checkIn,
           checkOut,
           hotelCodes,
-          city,
+          city: cityName,
           rooms: roomsArray,
-          guestNationality: guestNationality || "IN",
-          preferredCurrency: preferredCurrency || "INR",
+          guestNationality: p.GuestNationality || p.guestNationality || "IN",
+          preferredCurrency: p.PreferredCurrency || p.preferredCurrency || "INR",
         });
         return NextResponse.json(result);
       }
