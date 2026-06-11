@@ -120,12 +120,16 @@ If making significant architectural decisions, create an ADR in `../docs/adr/`:
 2. `../LEARNING-FROM-MISTAKES.md` - Known issues
 3. `../CONFIG-REFERENCE.md` - Configuration
 4. `../DEPLOYMENT_LOG.md` - Deployment history
+5. `../MEMORY.md` - Project memory (cross-session context)
+6. `CHANGE-LOG.md` - Change log
 
 ### Files to Update After Work
-1. `../LEARNING-FROM-MISTAKES.md` - If debugging >30 min
-2. `../DEPLOYMENT_LOG.md` - If deployment changed
-3. `../docs/adr/` - If architectural decision
-4. `../CONTEXT-BRIEF-*.md` - For new issues
+1. `CHANGE-LOG.md` - Always update with changes made
+2. `../MEMORY.md` - Update session context summary
+3. `../LEARNING-FROM-MISTAKES.md` - If debugging >30 min
+4. `../DEPLOYMENT_LOG.md` - If deployment changed
+5. `../docs/adr/` - If architectural decision
+6. `../CONTEXT-BRIEF-*.md` - For new issues
 
 ### Commands to Run
 ```bash
@@ -152,13 +156,30 @@ If governance protocol is not followed:
 
 ---
 
+## Governance Enforcement — Hooks
+
+The `.opencode/hook/hooks.yaml` file automates governance checks:
+
+| Event | Action | When |
+|-------|--------|------|
+| `file.changed` (code) | `npx tsc --noEmit` | On every code change |
+| `file.changed` (any) | Verify governance docs exist | On every file change |
+| `session.idle` | Run `post-task-check.sh` | When session goes idle |
+| `session.end` | Reminder to update docs | On session close |
+
+Run scripts manually:
+```bash
+bash scripts/preflight-check.sh    # Before starting work
+bash scripts/post-task-check.sh    # After completing work
+```
+
 ## Model-Agnostic Design
 
 This governance framework works across all AI models because:
 - **Global config** - Referenced in `~/.config/opencode/opencode.jsonc`
 - **Project files** - Version-controlled with code
 - **Documentation** - Human-readable and auditable
-- **Enforcement** - Pre-flight and post-task checklists
+- **Enforcement** - Pre-flight and post-task checklists, hooks
 
 ---
 

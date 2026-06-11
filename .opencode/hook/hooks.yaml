@@ -8,9 +8,25 @@ hooks:
           command: "cd gorasa-next && npx tsc --noEmit"
           timeout: 30000
 
+  - event: file.changed
+    scope: main
+    conditions:
+      - matchesCodeFiles
+    actions:
+      - bash:
+          command: "echo '=== GoRASA Documentation Check ===' && cd gorasa-next && if [ -f CHANGE-LOG.md ] && [ -f ../MEMORY.md ] && [ -f ../LEARNING-FROM-MISTAKES.md ] && [ -f ../DEPLOYMENT_LOG.md ]; then echo '✓ All governance docs exist'; else echo '⚠ Missing governance docs — run post-task checklist'; fi"
+          timeout: 10000
+
   - event: session.idle
     scope: main
     actions:
       - bash:
-          command: "echo '=== GoRASA Governance Post-Task ===' && bash gorasa-next/scripts/post-task-check.sh && echo '=== Done ==='"
+          command: "echo '=== GoRASA Governance Post-Task ===' && cd gorasa-next && bash scripts/post-task-check.sh && echo '=== Done ==='"
           timeout: 15000
+
+  - event: session.end
+    scope: main
+    actions:
+      - bash:
+          command: "echo '=== GoRASA Session End ===' && echo 'Did you update: MEMORY.md, CHANGE-LOG.md, LEARNING-FROM-MISTAKES.md, DEPLOYMENT_LOG.md?' && echo '=== Done ==='"
+          timeout: 5000

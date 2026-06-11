@@ -35,47 +35,32 @@ else
 fi
 
 echo ""
-echo -e "${YELLOW}Step 2: Checking if learning log needs update...${NC}"
+echo -e "${YELLOW}Step 2: Checking governance docs are up to date...${NC}"
 
-# Check if LEARNING-FROM-MISTAKES.md was recently modified
-LEARNING_LOG="../LEARNING-FROM-MISTAKES.md"
-if [ -f "$LEARNING_LOG" ]; then
-    LAST_MODIFIED=$(stat -c %Y "$LEARNING_LOG" 2>/dev/null || stat -f %m "$LEARNING_LOG" 2>/dev/null)
-    CURRENT_TIME=$(date +%s)
-    HOURS_SINCE_MODIFICATION=$(( (CURRENT_TIME - LAST_MODIFIED) / 3600 ))
-    
-    if [ "$HOURS_SINCE_MODIFICATION" -lt 24 ]; then
-        echo -e "${GREEN}✓ Learning log updated recently ($HOURS_SINCE_MODIFICATION hours ago)${NC}"
+check_doc() {
+    local FILE="$1"
+    local NAME="$2"
+    if [ -f "$FILE" ]; then
+        local LAST_MODIFIED=$(stat -c %Y "$FILE" 2>/dev/null || stat -f %m "$FILE" 2>/dev/null)
+        local CURRENT_TIME=$(date +%s)
+        local HOURS_SINCE=$(( (CURRENT_TIME - LAST_MODIFIED) / 3600 ))
+        if [ "$HOURS_SINCE" -lt 24 ]; then
+            echo -e "${GREEN}✓ $NAME updated ($HOURS_SINCE hours ago)${NC}"
+        else
+            echo -e "${YELLOW}⚠ $NAME not updated in $HOURS_SINCE hours${NC}"
+        fi
     else
-        echo -e "${YELLOW}⚠ Learning log not updated in $HOURS_SINCE_MODIFICATION hours${NC}"
-        echo "Did you debug something for >30 minutes? If yes, update LEARNING-FROM-MISTAKES.md"
+        echo -e "${RED}✗ $NAME not found${NC}"
     fi
-else
-    echo -e "${RED}✗ Learning log not found${NC}"
-fi
+}
+
+check_doc "../LEARNING-FROM-MISTAKES.md" "Learning log"
+check_doc "../DEPLOYMENT_LOG.md" "Deployment log"
+check_doc "../MEMORY.md" "Project memory"
+check_doc "CHANGE-LOG.md" "Change log"
 
 echo ""
-echo -e "${YELLOW}Step 3: Checking if deployment log needs update...${NC}"
-
-# Check if deployment changed
-DEPLOYMENT_LOG="../DEPLOYMENT_LOG.md"
-if [ -f "$DEPLOYMENT_LOG" ]; then
-    LAST_MODIFIED=$(stat -c %Y "$DEPLOYMENT_LOG" 2>/dev/null || stat -f %m "$DEPLOYMENT_LOG" 2>/dev/null)
-    CURRENT_TIME=$(date +%s)
-    HOURS_SINCE_MODIFICATION=$(( (CURRENT_TIME - LAST_MODIFIED) / 3600 ))
-    
-    if [ "$HOURS_SINCE_MODIFICATION" -lt 24 ]; then
-        echo -e "${GREEN}✓ Deployment log updated recently ($HOURS_SINCE_MODIFICATION hours ago)${NC}"
-    else
-        echo -e "${YELLOW}⚠ Deployment log not updated in $HOURS_SINCE_MODIFICATION hours${NC}"
-        echo "Did you deploy changes? If yes, update DEPLOYMENT_LOG.md"
-    fi
-else
-    echo -e "${RED}✗ Deployment log not found${NC}"
-fi
-
-echo ""
-echo -e "${YELLOW}Step 4: Checking if ADR is needed...${NC}"
+echo -e "${YELLOW}Step 3: Checking if ADR is needed...${NC}"
 
 # Check for recent ADRs
 ADR_COUNT=$(ls -1 ../docs/adr/ADR-*.md 2>/dev/null | wc -l)
@@ -89,7 +74,7 @@ else
 fi
 
 echo ""
-echo -e "${YELLOW}Step 5: Running final checks...${NC}"
+echo -e "${YELLOW}Step 4: Running final checks...${NC}"
 
 # TypeScript compilation
 echo "Running TypeScript check..."
@@ -102,7 +87,7 @@ else
 fi
 
 echo ""
-echo -e "${YELLOW}Step 6: Checking commit readiness...${NC}"
+echo -e "${YELLOW}Step 5: Checking commit readiness...${NC}"
 
 # Check if ready to commit
 if [ "$CHANGED_FILES" -gt 0 ]; then
@@ -122,7 +107,8 @@ echo -e "${GREEN}Post-task check complete!${NC}"
 echo "========================================="
 echo ""
 echo "Checklist:"
-echo "□ Context Brief generated (if new issue)"
+echo "□ MEMORY.md updated"
+echo "□ CHANGE-LOG.md updated"
 echo "□ LEARNING-FROM-MISTAKES.md updated (if debugging >30 min)"
 echo "□ DEPLOYMENT_LOG.md updated (if deployment changed)"
 echo "□ ADR created (if architectural decision)"

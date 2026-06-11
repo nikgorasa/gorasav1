@@ -186,36 +186,49 @@
 
 ---
 
-## Issue #6: Demo Login Fails — Supabase Auth + Wrong Fallback Emails
+## Issue #6: Demo Login Fails — Supabase Auth + Wrong Fallback Emails + Stale Service Key
 
 **Date:** June 11, 2026
-**Duration:** ~1 hour
-**Severity:** Medium — blocks quick access to the app
+**Duration:** ~2 hours (1h auth fix + 1h stale JWT debug)
+**Severity:** High — blocks quick access to the app, entire flow broken
 
 ### Symptoms
-- Clicking demo user buttons in login modal showed "Invalid login credentials"
-- After fixing Supabase Auth fallback, showed "Failed to create user"
+- Clicking demo user buttons showed "Invalid login credentials"
+- After fixing Supabase Auth fallback, showed "Failed to create user" (42501 RLS)
+- After switching to service role key, showed "Failed to create user" / "Failed to fetch demo users" with "Invalid API key"
 - Demo login buttons showed wrong email addresses
 
-### Root Cause Analysis
-1. **Supabase Auth has no demo users** — `signInWithEmail` tried `supabase.auth.signInWithPassword` first with all demo users, but no Supabase Auth user exists for demo accounts (they're only in the `User` DB table)
-2. **Wrong fallback emails** — Hardcoded `DEMO_FALLBACK` had `@gorasa.com` emails, but actual DB users use `@gorasa.in` and `@example.com`
-3. **Anon key used as service key** — Three API routes (`/api/auth/login`, `/api/auth/me`, `/api/users/demo`) used `NEXT_PUBLIC_SUPABASE_ANON_KEY` for server-side queries, preventing row-level access to the `User` table
+### Root Cause Analysis — 3 Phases
+
+**Phase 1: Wrong auth approach**
+- `signInWithEmail` called `supabase.auth.signInWithPassword` — no Supabase Auth user exists for demo accounts (they're only in the `User` DB table)
+
+**Phase 2: Anon key + RLS**
+- Three API routes used `NEXT_PUBLIC_SUPABASE_ANON_KEY` → anonymous role → RLS blocked User table → `42501: new row violates row-level security`
+
+**Phase 3: Stale JWT signature**
+- After switching to `SUPABASE_SERVICE_ROLE_KEY`, Vercel logs showed `Invalid API key`
+- The env var value had a JWT with a signature that did not match the project's current JWT secret
+- `.env.local` had also been updated at some point with an invalid signature
+- Root cause: The Supabase project's JWT secret was rotated (or the key was manually entered wrong), but `.env.local` and Vercel were never updated with the correct signature
 
 ### Resolution
-1. **Added `signInDemo()` to `useAuth.tsx`** — Direct API call with just `{email}`, no Supabase Auth attempt, no password needed
-2. **Fixed `DEMO_FALLBACK` emails** — Changed to match actual DB users (`hmittal@gorasa.in`, `admin@gorasa.in`, `sales@gorasa.in`, `neha@corp.in`, `amit@example.com`, `priya@example.com`)
-3. **Switched to `SUPABASE_SERVICE_ROLE_KEY`** — All three API routes now use the service role key for DB queries
+1. **Added `signInDemo()` to `useAuth.tsx`** — Direct API call with just `{email}`, no Supabase Auth, no password
+2. **Fixed `DEMO_FALLBACK` emails** — Changed to match DB users (`hmittal@gorasa.in`, `admin@gorasa.in`, `sales@gorasa.in`, `neha@corp.in`, `amit@example.com`, `priya@example.com`)
+3. **Switched to `SUPABASE_SERVICE_ROLE_KEY`** — All 3 API routes use service role key
+4. **Got correct service key from Supabase dashboard** — Replaced stale JWT in Vercel env + `.env.local`
 
 ### Lessons Learned
 1. **Don't mix Auth flow with simple DB lookup** — Demo users should skip Supabase Auth entirely
 2. **Fallback data must match production** — Hardcoded demo emails that don't match the database cause confusing failures
-3. **Environment variables need verification** — Both dev and production (`VERCEL_ENV`) env vars must be checked
+3. **Environment variable values can go stale** — A key that was once valid can become invalid if the JWT secret is rotated
+4. **Always verify with local test first** — Testing the key locally (`createClient(url, key).from('User').select()`) definitively shows if the key is valid vs. an RLS/network issue
 
 ### Prevention Measures
 1. Demo login should always use a dedicated path (no Supabase Auth, no password)
 2. Fallback/seed data should match actual DB records or be auto-generated from the same source
-3. Verify `SUPABASE_SERVICE_ROLE_KEY` is set in both `.env.local` and Vercel project settings
+3. Verify `SUPABASE_SERVICE_ROLE_KEY` in both `.env.local` AND Vercel by running a test query
+4. Add a health-check script that validates Supabase keys return expected data
 
 ---
 
@@ -226,8 +239,8 @@
 | Hardcoded data migration | ~6 hours | No database integration |
 | Supabase free tier limits | ~1 hour | Direct browser queries |
 | Hotel images not loading | ~2 hours | Frontend not consuming API `picture` field |
-| Demo login broken | ~1 hour | `signInWithEmail` tried Supabase Auth (no Auth user exists); hardcoded fallback emails didn't match DB; `NEXT_PUBLIC_SUPABASE_ANON_KEY` used as service key |
-| **Total** | **~20 hours** | |
+| Demo login broken | ~2 hours | Phase 1: Supabase Auth used instead of direct DB lookup; Phase 2: Anon key used as service key (RLS blocked); Phase 3: Service key JWT signature stale |
+| **Total** | **~21 hours** | |
 
 ---
 
@@ -243,3 +256,5 @@
 8. **Monorepo needs explicit root directory** — Vercel can't auto-detect
 9. **Generate Context Brief before debugging** — Saves time by clarifying the problem
 10. **Follow governance protocol** — Read Sprint-1.md, LEARNING-FROM-MISTAKES.md, CONFIG-REFERENCE.md first
+11. **JWT signatures can go stale independently of the payload** — If "Invalid API key" appears, the JWT secret may have been rotated; get a fresh key from the Supabase dashboard
+12. **Test Supabase keys locally before deploying** — `createClient(url, key).from('User').select()` instantly reveals invalid keys vs. RLS issues
