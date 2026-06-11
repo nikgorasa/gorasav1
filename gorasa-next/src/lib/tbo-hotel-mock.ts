@@ -314,7 +314,7 @@ export function mockSearchHotels(req: TBOHotelSearchRequest): TBOHotelSearchResp
   }
 
   const results: TBOHotelResult[] = defs.map(h => ({
-    HotelCode: h.code,
+    HotelCode: String(h.code),
     Currency: h.currency,
     Rooms: h.rooms.map((r, ri) => buildRoom(r, h.code, ri, CheckIn, CheckOut, nights)),
   }));
@@ -364,7 +364,7 @@ export function mockPreBook(bookingCode: string): TBOHotelPreBookResponse {
       PassportMandatory: hotelCode >= 10000000,
     },
     HotelName: hotel.name,
-    HotelCode: hotel.code,
+    HotelCode: String(hotel.code),
     RoomRate: room.basePrice,
     RoomTax: room.tax,
     RoomExtraGuestCharges: 0,
@@ -402,7 +402,7 @@ const mockBookings = new Map<number, {
   invoiceNumber: string;
   hotelBookingStatus: string;
   hotelName: string;
-  hotelCode: number;
+  hotelCode: string;
   currency: string;
   checkIn: string;
   checkOut: string;
@@ -430,7 +430,7 @@ export function mockBook(req: TBOHotelBookRequest): TBOHotelBookResponse {
 
   const preBook = mockPreBookCache.get(req.BookingCode);
   const hotelName = preBook?.HotelName || "Hotel";
-  const hotelCode = preBook?.HotelCode || 1279415;
+  const hotelCode = preBook?.HotelCode || "1279415";
 
   const rooms = req.HotelRoomsDetails.map((rd, ri) => ({
     roomId: `${hotelCode}${ri}${uuid().slice(0, 4)}`,
@@ -591,7 +591,7 @@ export function getMockCities(countryCode: string): { CityCode: number; CityName
   return cities[countryCode] || [];
 }
 
-export function getMockHotelCodes(cityCode: number): { HotelCode: number; HotelName: string; CityName: string; HotelRating: number; imageUrl: string }[] {
+export function getMockHotelCodes(cityCode: number): { HotelCode: string; HotelName: string; CityName: string; HotelRating: string; imageUrl: string }[] {
   const cityMap: Record<number, string> = {};
   for (const [name, code] of Object.entries(CITY_CODES)) {
     cityMap[code] = name;
@@ -603,26 +603,27 @@ export function getMockHotelCodes(cityCode: number): { HotelCode: number; HotelN
   if (!hotels) return [];
 
   return hotels.map(h => ({
-    HotelCode: h.code,
+    HotelCode: String(h.code),
     HotelName: h.name,
     CityName: cityName,
-    HotelRating: h.rating,
+    HotelRating: h.rating === 5 ? "FiveStar" : h.rating === 4 ? "FourStar" : h.rating === 3 ? "ThreeStar" : "TwoStar",
     imageUrl: h.imageUrl,
   }));
 }
 
-export function getHotelInfoByCode(hotelCode: number): {
-  HotelCode: number;
+export function getHotelInfoByCode(hotelCode: string | number): {
+  HotelCode: string;
   HotelName: string;
   CityName: string;
   HotelRating: number;
   imageUrl: string;
 } | null {
+  const code = typeof hotelCode === 'string' ? parseInt(hotelCode) : hotelCode;
   for (const entries of Object.values(HOTELS)) {
-    const h = entries.find(e => e.code === hotelCode);
+    const h = entries.find(e => e.code === code);
     if (h) {
       return {
-        HotelCode: h.code,
+        HotelCode: String(h.code),
         HotelName: h.name,
         CityName: h.location,
         HotelRating: h.rating,

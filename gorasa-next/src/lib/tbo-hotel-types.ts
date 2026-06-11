@@ -69,21 +69,21 @@ export interface TBOHotelRoom {
   Name: string[];
   BookingCode: string;
   Inclusion: string;
-  DayRates: TBOHotelDayRate[][];
-  SelectedDateRange: string;
+  DayRates?: TBOHotelDayRate[][];
+  SelectedDateRange?: string;
   TotalFare: number;
   TotalTax: number;
-  RoomID: string[];
-  RoomPromotion: string[];
-  CancelPolicies: TBOHotelCancelPolicy[];
+  RoomID?: string[];
+  RoomPromotion?: string[];
+  CancelPolicies?: TBOHotelCancelPolicy[];
   MealType: string;
   IsRefundable: boolean;
-  Supplements: TBOHotelSupplement[][];
+  Supplements?: TBOHotelSupplement[][];
   WithTransfers: boolean;
 }
 
 export interface TBOHotelResult {
-  HotelCode: number;
+  HotelCode: string;
   Currency: string;
   Rooms: TBOHotelRoom[];
 }
@@ -129,7 +129,7 @@ export interface TBOHotelPreBookResponse {
   RateConditions: string[];
   ValidationInfo: TBOHotelValidationInfo;
   HotelName: string;
-  HotelCode: number;
+  HotelCode: string;
   RoomRate: number;
   RoomTax: number;
   RoomExtraGuestCharges: number;
@@ -256,7 +256,7 @@ export interface TBOHotelBookingDetailData {
   InvoiceNumber: string;
   HotelBookingStatus: string;
   HotelName: string;
-  HotelCode: number;
+  HotelCode: string;
   Currency: string;
   CheckIn: string;
   CheckOut: string;
@@ -285,22 +285,25 @@ export interface TBOHotelCity {
 }
 
 export interface TBOHotelCodeItem {
-  HotelCode: number;
+  HotelCode: string;
   HotelName: string;
-  CityCode: number;
-  CityName: string;
-  CountryCode: string;
-  CountryName: string;
-  HotelRating: number;
-  HotelAddress: string;
-  HotelEmail: string;
-  HotelContact: string;
+  Latitude?: string;
+  Longitude?: string;
+  HotelRating: string;
+  Address?: string;
+  CountryName?: string;
+  CountryCode?: string;
+  CityName?: string;
+  CityCode?: number;
+  HotelAddress?: string;
+  HotelEmail?: string;
+  HotelContact?: string;
 }
 
 export interface TBOHotelDetail {
-  HotelCode: number;
+  HotelCode: string;
   HotelName: string;
-  HotelRating: number;
+  HotelRating: string;
   HotelAddress: string;
   HotelDescription: string;
   HotelEmail: string;
@@ -366,7 +369,7 @@ export interface TBOHotelSearchOutput {
 
 export interface TBOHotelPreBookOutput {
   hotelName: string;
-  hotelCode: number;
+  hotelCode: string;
   netAmount: number;
   roomRate: number;
   roomTax: number;
@@ -394,7 +397,7 @@ export interface TBOHotelBookingDetailOutput {
   confirmationNo: string;
   invoiceNumber: string;
   hotelName: string;
-  hotelCode: number;
+  hotelCode: string;
   checkIn: string;
   checkOut: string;
   status: string;

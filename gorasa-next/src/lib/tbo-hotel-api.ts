@@ -13,6 +13,7 @@ import type {
   TBOHotelCity,
   TBOHotelCodeItem,
   TBOHotelDetail,
+  TBOStatus,
 } from "./tbo-hotel-types";
 
 const BASE_URL = "https://api.tbotechnology.in/TBOHolidays_HotelAPI";
@@ -70,11 +71,11 @@ export function getCountries(): Promise<TBOHotelCountry[]> {
 }
 
 export function getCities(countryCode: string): Promise<TBOHotelCity[]> {
-  return get<TBOHotelCity[]>(`${BASE_URL}/CityList?CountryCode=${countryCode}`);
+  return post<TBOHotelCity[]>(`${BASE_URL}/CityList`, { CountryCode: countryCode });
 }
 
-export function getHotelCodeList(cityCode: string): Promise<TBOHotelCodeItem[]> {
-  return get<TBOHotelCodeItem[]>(`${BASE_URL}/TBOHotelCodeList?CityCode=${cityCode}`);
+export function getHotelCodeList(cityCode: string): Promise<{ Status: TBOStatus; Hotels: TBOHotelCodeItem[] }> {
+  return post(`${BASE_URL}/TBOHotelCodeList`, { CityCode: cityCode });
 }
 
 export function getHotelDetails(hotelCode: string): Promise<TBOHotelDetail> {
