@@ -167,3 +167,27 @@ Description:
 
 ---
 
+
+## 2026-06-12 — Admin Navigation Full CRUD
+
+### Changes Made:
+
+**New API Routes (4):**
+- `api/corporate-rates/[id]/route.ts` — PATCH + DELETE for corporate rates
+- `api/rewards/[id]/route.ts` — PATCH + DELETE for loyalty rewards
+- `api/tickets/[id]/notes/route.ts` — GET + POST for admin ticket notes (uses serverManager)
+- `api/leads/assignable-users/route.ts` — GET list of SALES/ADMIN users for lead assignment
+
+**Modified API Routes (3):**
+- `api/companies/route.ts` — Added POST for company creation + removed `isActive: true` filter for admin view
+- `api/companies/[id]/route.ts` — Extended PATCH to support all fields (name, domain, discountRate, isActive) + added DELETE
+- `api/rewards/route.ts` — Added POST for reward creation + `?all=true` param for admin view of all rewards
+
+**Updated Frontend Pages (5):**
+- `admin/corporate/page.tsx` — Company dropdown selector (replaces raw companyId input), inline edit, delete button
+- `admin/b2b/page.tsx` — Create company form, inline edit on company cards, delete with confirmation
+- `admin/loyalty/page.tsx` — Admin mode toggle, full CRUD for rewards (create/edit/delete/toggle active)
+- `admin/tickets/page.tsx` — Priority dropdown, admin notes thread with add form, archive button (no delete per requirement)
+- `admin/ai-leads/page.tsx` — Stage update buttons, assignment dropdown from assignable users API
+
+**Verification:** TypeScript compiles cleanly (`npx tsc --noEmit`), Next.js build succeeds, all 15 post-task checks pass.
