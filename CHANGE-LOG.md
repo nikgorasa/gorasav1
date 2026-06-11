@@ -101,3 +101,16 @@ Description: Governance protocol implementation - GoRASA pre-flight and post-tas
 
 ---
 
+
+## 2026-06-12 02:32:43 +0900
+
+### Commit: df00f6a docs: add operational modes (plan/build) to governance protocol
+
+Files changed:
+CHANGE-LOG.md
+gorasa-next/AGENTS.md
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+

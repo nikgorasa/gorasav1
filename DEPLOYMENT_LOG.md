@@ -23,6 +23,10 @@
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
+| 2026-06-12 | Governance protocol update (operational modes) | df00f6a | gorasa-next | ✅ Ready | gorasa-next-... | Added plan/build modes to AGENTS.md |
+| 2026-06-12 | Fallback hotel names fix | b45ab07 | gorasa-next | ✅ Ready | gorasa-next-... | Fixed "Hotel in Unknown" → "Hotel in Ayodhya" |
+| 2026-06-12 | Fallback status check | c49dce2 | gorasa-next | ✅ Ready | gorasa-next-... | Check Status.Description for fallback |
+| 2026-06-12 | Fallback hotels feature | d073d38 | gorasa-next | ✅ Ready | gorasa-next-... | Generic hotels for cities without TBO inventory |
 | 2026-06-11 | Searchable city dropdown (cmdk + TBO) | 70146ef | gorasa-next | ✅ Ready | gorasa-next-... | 1083 cities from TBO API |
 | 2026-06-11 | Hotel frontend fix (tbo-hotels endpoint) | 485a340 | gorasa-next | ✅ Ready | gorasa-next-... | Frontend now calls /api/tbo-hotels |
 | 2026-06-11 | Flight route fix (use flight client) | e54df33 | gorasa-next | ✅ Ready | gorasa-next-69hlbolmw... | /api/tbo now uses flight client |
@@ -110,6 +114,17 @@ ADR reference: N/A
 ## 2026-06-12
 
 ### Commit: 702db0cf683dc067b1810768606b4c0453bce8fd
+
+Project: GoRASA
+Status: Ready
+ADR reference: N/A
+
+---
+
+
+## 2026-06-12
+
+### Commit: df00f6aad4baf25a8d1d33df848e7fa9173e2f05
 
 Project: GoRASA
 Status: Ready

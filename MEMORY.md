@@ -1,14 +1,14 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-11 15:30 IST
+> **Last updated:** 2026-06-12 02:00 IST
 
 ---
 
 ## Current Sprint Context
 
 **Sprint:** Sprint -1 — Full Stack Migration & Foundation (June 8–12)
-**Status:** Phase 6 — TBO Hotel and Flight APIs LIVE. Real prices returning.
+**Status:** Phase 6 — TBO Hotel and Flight APIs LIVE. Fallback hotels working. Searchable city dropdown deployed.
 **Live URL:** https://gorasa-next.vercel.app
 
 ---
@@ -16,8 +16,12 @@
 ## Active Goals
 
 1. Fix demo login to look up existing DB users directly (no password, no Supabase Auth) — **DONE**
-2. Integrate real TBO flight API (Auth returns endpoints, TokenId works) — **NEAR DONE**
-3. Integrate real TBO hotel REST API (Basic Auth on `api.tbotechnology.in`) — **SEARCH WORKS, PREBOOK REACHABLE**
+2. Integrate real TBO flight API (Auth returns endpoints, TokenId works) — **DONE**
+3. Integrate real TBO hotel REST API (Basic Auth on `api.tbotechnology.in`) — **DONE**
+4. Searchable city dropdown with TBO live data (cmdk) — **DONE**
+5. Fallback hotels for cities without TBO inventory — **DONE**
+6. Hotel search with real TBO images — **DONE**
+7. Dynamic city code resolution (no hardcoded mapping) — **DONE**
 4. Internal beta readiness — **IN PROGRESS**
 
 ---
@@ -112,6 +116,25 @@
 
 **Status:** Hotel search ✅, PreBook reachable (test balance), Book not tested. Flight auth now working.
 
+### Session 2026-06-12 — Fallback Hotels + City Dropdown + Governance
+
+**Duration:** ~4 hours
+**Problem:** Cities without TBO inventory showed "No hotels found". Fallback hotels showed "Hotel in Unknown" instead of correct city name.
+
+**Changes:**
+1. Created `CitySearchDropdown` component with cmdk — searchable dropdown with [TBO]/[Fallback] tags
+2. Added `/api/cities/tbo` route — fetches 1,083+ Indian cities from TBO CityList API
+3. Added `iata_code` column to Supabase City table — populated for 50+ airports
+4. Updated flights page to use TBO flight API with IATA codes
+5. Created `generateFallbackHotels()` — generic hotels for cities without TBO inventory
+6. Fixed fallback hotel names — `getHotelInfoByCode()` was hardcoded to "Unknown"
+7. Added `source` field to `TBOHotelDisplay` — tracks "tbo", "mock", "fallback"
+8. Added TBO HotelDetails API integration — fetches real images for top 10 hotels
+9. Added operational modes (plan/build) to governance protocol
+10. Updated all governance docs (MEMORY, CHANGE-LOG, LEARNING-FROM-MISTAKES, DEPLOYMENT_LOG)
+
+**Status:** Hotel search ✅ (all cities), Flight search ✅ (IATA codes), City dropdown ✅ (1,083+ cities)
+
 ---
 
 ## TBO API Status
@@ -123,6 +146,8 @@
 | Hotel static data | ✅ Working | CountryList, CityList, HotelCodeList via Basic Auth |
 | Real TBO flight API | ✅ Working | TokenId from authenticate, search returns live flights |
 | Real TBO hotel API | ✅ Working | Basic Auth, search returns live rooms with real prices |
+| Fallback hotels | ✅ Working | Cities without TBO inventory show generic hotels with correct names |
+| Searchable city dropdown | ✅ Working | 1,083+ Indian cities from TBO CityList API via cmdk |
 
 ## Session completed: 2026-06-12 01:34:56 +0900
 
