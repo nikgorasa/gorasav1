@@ -669,6 +669,22 @@ export function getHotelInfoByCode(hotelCode: string | number): {
   imageUrl: string;
 } | null {
   const code = typeof hotelCode === 'string' ? parseInt(hotelCode) : hotelCode;
+
+  // Check for fallback hotel codes (9999001, 9999002, 9999003)
+  if (code >= 9999001 && code <= 9999999) {
+    const fallbackHotels = generateFallbackHotels("Unknown");
+    const hotel = fallbackHotels.find(h => h.code === code);
+    if (hotel) {
+      return {
+        HotelCode: String(hotel.code),
+        HotelName: hotel.name,
+        CityName: hotel.location,
+        HotelRating: hotel.rating,
+        imageUrl: hotel.imageUrl,
+      };
+    }
+  }
+
   for (const entries of Object.values(HOTELS)) {
     const h = entries.find(e => e.code === code);
     if (h) {
