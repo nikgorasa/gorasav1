@@ -127,7 +127,7 @@ else
 fi
 
 # Check opencode hooks
-HOOKS_FILE="../../../.opencode/hook/hooks.yaml"
+HOOKS_FILE="../.opencode/hook/hooks.yaml"
 if [[ -f "$HOOKS_FILE" ]]; then
     print_status "✓ Opencode hooks configuration exists"
 else

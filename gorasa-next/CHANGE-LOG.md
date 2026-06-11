@@ -28,3 +28,45 @@ Description: Governance protocol implementation - GoRASA pre-flight and post-tas
 
 ---
 
+
+## 2026-06-11 22:12:36 +0900
+
+### Commit: bf83e0c docs: update CHANGE-LOG with flight IATA codes feature
+
+Files changed:
+CHANGE-LOG.md
+gorasa-next/scripts/post-task-check.sh
+gorasa-next/scripts/preflight-check.sh
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+
+## 2026-06-11 22:16:09 +0900
+
+### Commit: bf83e0c docs: update CHANGE-LOG with flight IATA codes feature
+
+Files changed:
+CHANGE-LOG.md
+gorasa-next/scripts/post-task-check.sh
+gorasa-next/scripts/preflight-check.sh
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+
+
+## 2026-06-11 22:17:10 +0900
+
+### Commit: bf83e0c docs: update CHANGE-LOG with flight IATA codes feature
+
+Files changed:
+CHANGE-LOG.md
+gorasa-next/scripts/post-task-check.sh
+gorasa-next/scripts/preflight-check.sh
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+

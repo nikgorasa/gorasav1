@@ -151,14 +151,15 @@ print_warning "For debugging sessions (>30 min), update LEARNING-FROM-MISTAKES.m
 # Check 4: Update DEPLOYMENT_LOG.md
 print_status "4. Checking if DEPLOYMENT_LOG.md needs update..."
 
-if [[ -f "DEPLOYMENT_LOG.md" ]]; then
+DEPLOY_LOG="../DEPLOYMENT_LOG.md"
+if [[ -f "$DEPLOY_LOG" ]]; then
     print_status "✓ DEPLOYMENT_LOG.md exists"
 
     # Check if this entry is already there
     GIT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
-    if ! grep -q "$GIT_HASH" "DEPLOYMENT_LOG.md" 2>/dev/null; then
+    if ! grep -q "$GIT_HASH" "$DEPLOY_LOG" 2>/dev/null; then
         print_status "Adding deployment entry for: $GIT_HASH"
-        cat >> DEPLOYMENT_LOG.md << EOF
+        cat >> "$DEPLOY_LOG" << EOF
 
 ## $(date "+%Y-%m-%d")
 
@@ -173,8 +174,8 @@ ADR reference: N/A
 EOF
     fi
 else
-    print_warning "DEPLOYMENT_LOG.md not found. Create with:
-    cat > DEPLOYMENT_LOG.md << 'EOF'
+    print_warning "DEPLOYMENT_LOG.md not found at $DEPLOY_LOG. Create with:
+    cat > $DEPLOY_LOG << 'EOF'
     # GoRASA Deployment Log
 
     ## Initial Setup
@@ -245,7 +246,7 @@ fi
 # Check 7: Verify governance hooks
 print_status "7. Checking governance hooks..."
 
-HOOKS_FILE="../../../.opencode/hook/hooks.yaml"
+HOOKS_FILE="../.opencode/hook/hooks.yaml"
 if [[ -f "$HOOKS_FILE" ]]; then
     print_status "✓ Opencode hooks configuration exists"
 
