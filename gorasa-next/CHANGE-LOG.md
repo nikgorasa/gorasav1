@@ -16,3 +16,15 @@ Description: Governance protocol implementation - GoRASA pre-flight and post-tas
 
 ---
 
+
+## 2026-06-11 22:08:17 +0900
+
+### Commit: e54f3fb docs: update CHANGE-LOG with dynamic city code feature
+
+Files changed:
+CHANGE-LOG.md
+
+Description: Governance protocol implementation - GoRASA pre-flight and post-task scripts
+
+---
+

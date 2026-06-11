@@ -29,8 +29,8 @@ interface Flight {
 export default function FlightsPage() {
   const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
-  const [originCity, setOriginCity] = useState<City>({ code: "13484", name: "Mumbai", state: "Maharashtra", source: "fallback" });
-  const [destinationCity, setDestinationCity] = useState<City>({ code: "13482", name: "Delhi", state: "Delhi", source: "fallback" });
+  const [originCity, setOriginCity] = useState<City>({ code: "13484", name: "Mumbai", state: "Maharashtra", source: "fallback", iata_code: "BOM" });
+  const [destinationCity, setDestinationCity] = useState<City>({ code: "13482", name: "Delhi", state: "Delhi", source: "fallback", iata_code: "DEL" });
   const [date, setDate] = useState("");
   const [passengers, setPassengers] = useState("1");
   const [tripType, setTripType] = useState<"one-way" | "return">("one-way");
@@ -43,9 +43,42 @@ export default function FlightsPage() {
   const handleSearch = async () => {
     setSearching(true);
     try {
-      const res = await fetch(`/api/flights?origin=${encodeURIComponent(originCity.name)}&destination=${encodeURIComponent(destinationCity.name)}`);
+      // Use IATA codes if available, otherwise fall back to city names
+      const originCode = originCity.iata_code || originCity.name;
+      const destCode = destinationCity.iata_code || destinationCity.name;
+      const res = await fetch(`/api/tbo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "search",
+          params: {
+            origin: originCode,
+            destination: destCode,
+            departureDate: date,
+            adults: parseInt(passengers),
+            children: 0,
+            infants: 0,
+            cabinClass: "Economy",
+            tripType: tripType === "return" ? "Return" : "OneWay",
+          },
+        }),
+      });
       const data = await res.json();
-      setResults(Array.isArray(data) ? data : []);
+      // Transform TBO response to match Flight interface
+      const flights = (data.flights || []).map((f: any) => ({
+        id: f.resultIndex || `${f.airline}-${f.flightNumber}`,
+        airline: f.airline,
+        flightNumber: f.flightNumber,
+        origin: f.origin,
+        destination: f.destination,
+        departureTime: f.departureTime,
+        arrivalTime: f.arrivalTime,
+        duration: f.duration,
+        stops: f.stops || 0,
+        price: f.publishedFare || f.baseFare || 0,
+        tier: f.cabinClass || "Economy",
+      }));
+      setResults(flights);
       setSearched(true);
     } catch {
       setResults([]);

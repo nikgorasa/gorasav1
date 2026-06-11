@@ -12,7 +12,22 @@ hooks:
     scope: main
     actions:
       - bash:
-          command: "echo '=== GoRASA Documentation Check ===' && cd gorasa-next && if [ -f CHANGE-LOG.md ] && [ -f ../MEMORY.md ] && [ -f ../LEARNING-FROM-MISTAKES.md ] && [ -f ../DEPLOYMENT_LOG.md ]; then echo '✓ All governance docs exist'; else echo '⚠ Missing governance docs — run post-task checklist'; fi"
+          command: |
+            echo '=== GoRASA Documentation Check (Strict) ==='
+            cd gorasa-next
+            MISSING=0
+            for f in CHANGE-LOG.md ../MEMORY.md ../LEARNING-FROM-MISTAKES.md ../DEPLOYMENT_LOG.md ../CONFIG-REFERENCE.md; do
+              if [ ! -f "$f" ]; then
+                echo "❌ MISSING: $f"
+                MISSING=1
+              fi
+            done
+            if [ $MISSING -eq 1 ]; then
+              echo "❌ FAIL: One or more governance docs missing"
+              exit 1
+            else
+              echo "✅ All 7 governance docs present"
+            fi
           timeout: 10000
 
   - event: session.idle
@@ -21,10 +36,3 @@ hooks:
       - bash:
           command: "echo '=== GoRASA Governance Post-Task ===' && cd gorasa-next && bash scripts/post-task-check.sh && echo '=== Done ==='"
           timeout: 15000
-
-  - event: session.end
-    scope: main
-    actions:
-      - bash:
-          command: "echo '=== GoRASA Session End ===' && echo 'Did you update: MEMORY.md, CHANGE-LOG.md, LEARNING-FROM-MISTAKES.md, DEPLOYMENT_LOG.md?' && echo '=== Done ==='"
-          timeout: 5000

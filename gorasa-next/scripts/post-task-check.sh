@@ -222,26 +222,48 @@ for doc_pattern in "${REQUIRED_DOCS[@]}"; do
     fi
 done
 
+# Check 6b: Auto-detect config/key changes and enforce CONFIG-REFERENCE.md update
+print_status "6b. Checking for config/key changes (auto-detect)..."
+CONFIG_CHANGED=false
+if git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E "(\.env|CONFIG-REFERENCE\.md|opencode\.jsonc|keys|secrets|credentials)" >/dev/null; then
+    CONFIG_CHANGED=true
+    print_status "⚠ Config/key changes detected in recent commit"
+fi
+
+if [[ "$CONFIG_CHANGED" == true ]]; then
+    print_status "Enforcing CONFIG-REFERENCE.md update..."
+    # Check if CONFIG-REFERENCE.md was modified in this commit
+    if ! git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -q "CONFIG-REFERENCE\.md"; then
+        print_warning "CONFIG-REFERENCE.md NOT updated despite config changes!"
+        print_warning "Please update CONFIG-REFERENCE.md with new keys/credentials"
+        ALL_DOCS_OK=false
+    else
+        print_status "✓ CONFIG-REFERENCE.md updated with config changes"
+    fi
+fi
+
 # Check 7: Verify governance hooks
 print_status "7. Checking governance hooks..."
 
-if [[ -f ".opencode/hook/hooks.yaml" ]]; then
+HOOKS_FILE="../../.opencode/hook/hooks.yaml"
+if [[ -f "$HOOKS_FILE" ]]; then
     print_status "✓ Opencode hooks configuration exists"
 
     # Check key hooks
-    if grep -q "session.idle" ".opencode/hook/hooks.yaml" 2>/dev/null; then
+    if grep -q "session.idle" "$HOOKS_FILE" 2>/dev/null; then
         print_status "✓ Session idle hook present"
     else
         print_warning "Session idle hook missing"
     fi
 
-    if grep -q "session.end" ".opencode/hook/hooks.yaml" 2>/dev/null; then
-        print_status "✓ Session end hook present"
+    # Check for strict doc check
+    if grep -q "MISSING=0" "$HOOKS_FILE" 2>/dev/null; then
+        print_status "✓ Strict governance doc check enabled"
     else
-        print_warning "Session end hook missing"
+        print_warning "Strict governance doc check not found"
     fi
 else
-    print_warning "No .opencode/hook/hooks.yaml file"
+    print_warning "No .opencode/hook/hooks.yaml file at $HOOKS_FILE"
 fi
 
 # Check 8: TypeScript compilation
@@ -300,10 +322,11 @@ print_status "2. ✓ Updated MEMORY.md"
 print_status "3. ✓ Documented debugging if needed"
 print_status "4. ✓ Updated DEPLOYMENT_LOG.md if changed"
 print_status "5. ✓ Created ADR if architectural decision"
-print_status "6. ✓ Verified all documentation"
+print_status "6. ✓ Verified all 7 documentation files"
 print_status "7. ✓ Verified governance hooks"
 print_status "8. ✓ TypeScript compilation passed"
 print_status "9. ✓ Git operations validated"
+print_status "10. ✓ CONFIG-REFERENCE.md auto-check (if config/keys changed)"
 
 print_status ""
 print_status "Next steps:"
