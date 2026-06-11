@@ -31,14 +31,29 @@ model User {
 }
 
 model Company {
+  id              String           @id @default(cuid())
+  name            String
+  domain          String?
+  walletBalance   Float            @default(0)
+  discountRate    Float            @default(0)
+  isActive        Boolean          @default(true)
+  approvedBy      String?
+  employees       User[]
+  corporateRates  CorporateRate[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model CorporateRate {
   id            String   @id @default(cuid())
-  name          String
-  domain        String?
-  walletBalance Float    @default(0)
-  discountRate  Float    @default(0)
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id])
+  category      String   @default("ALL")
+  destination   String?
+  discountType  String
+  discountValue Float
+  maxDiscount   Float?
   isActive      Boolean  @default(true)
-  approvedBy    String?
-  employees     User[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -94,14 +109,24 @@ model Package {
 }
 
 model PricingRule {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
+  name          String
   type          String
+  category      String    @default("ALL")
   destination   String?
   hotelName     String?
-  markupPercent Float
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  airlineCode   String?
+  roomType      String?
+  markupType    String    @default("PERCENT")
+  markupValue   Float
+  minPrice      Float?
+  maxPrice      Float?
+  priority      Int       @default(0)
+  isActive      Boolean   @default(true)
+  validFrom     DateTime?
+  validTo       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Booking {

@@ -15,8 +15,14 @@
 const { createClient } = require('@supabase/supabase-js');
 const { PrismaClient } = require('@prisma/client');
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://isubgeemvhvhnhikxbjb.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzdWJnZWVtdmh2aG5oaWt4YmpiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDgxMDgzNCwiZXhwIjoyMDk2Mzg2ODM0fQ.QJ3t7hNqVPBCqF-JFgCfPF4FrRJrO4CZ7kPFsGJfp3E';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error('Error: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are required.');
+  console.error('Set them in .env.local or export them before running this script.');
+  process.exit(1);
+}
 
 const neonUrl = process.argv[2];
 if (!neonUrl) {
