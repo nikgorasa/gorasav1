@@ -2,7 +2,7 @@
 
 > **Purpose:** Document every significant issue encountered, root cause analysis, resolution steps, and lessons learned to prevent recurrence.
 
-> **Last updated:** June 9, 2026
+> **Last updated:** June 11, 2026
 
 ---
 
@@ -146,6 +146,46 @@
 
 ---
 
+## Issue #5: Hotel Images Not Loading in Frontend
+
+**Date:** June 11, 2026
+**Duration:** ~2 hours (initial investigation) + ~30 min (corrective fix)
+**Severity:** High — images display as blanks in production
+
+### Symptoms
+- Hotel search results show blank images
+- Frontend renders empty picture area
+- Unsplash URLs exist in API response but are empty
+- Mock data has correct `imageUrl` fields
+
+### Root Cause (Revised June 11)
+- **Wrong initial diagnosis** — originally thought frontend wasn't consuming `picture` field
+- **Real cause:** Commit `53f7720` (Hotel REST API rewrite) changed route param extraction from `body.params` (`const params = body.params`) to destructuring from `body` root (`const { cityName } = body`)
+- Frontend sends params nested under `body.params`: `{ action: "search", params: { CityName, ... } }`
+- Route always received `cityName = undefined` → mock path couldn't find hotel info → `picture = ""`
+- **Secondary mistake:** My `cb1628b` commit added `cityCodeMap` complexity on top of broken param extraction instead of fixing the route
+
+### Resolution Steps
+1. Fixed `gorasa-next/src/app/api/tbo/route.ts` — extract search params from `body.params.CityName`, `body.params.CheckInDate`, `body.params.CheckOutDate`, `body.params.RoomGuests`
+2. Added `getHotelInfoByCode()` to `tbo-hotel-mock.ts` — searches all cities for hotel info by code
+3. Removed `cityCodeMap` from `tbo-hotel-client.ts` mock fallback — replaced with direct `getHotelInfoByCode` lookup
+4. Verified TypeScript compilation passes
+
+### Lessons Learned
+1. **Root cause before adding complexity** — Always fix the root problem before adding workarounds
+2. **API param structure matters** — If frontend nests params under `body.params`, the route must extract from there
+3. **Don't assume param names match** — Frontend sends `CityName` (camelCase), route read `cityName` (lowercase), different field entirely
+4. **City code lookup tables are fragile** — They break when city name isn't passed through
+5. **Generate Context Brief before debugging** — Initial 2-hour investigation was misdirected without structured analysis
+
+### Prevention Measures
+1. Add API route tests that verify param extraction from nested body structure
+2. Type-check request body structure against what route actually destructures
+3. Always trace the full data flow: Frontend → Route → Client → Mock before coding
+4. Never add lookup tables or mapping complexity before confirming the param pipeline is intact
+
+---
+
 ## Summary of Time Spent
 
 | Issue | Duration | Root Cause |
@@ -154,7 +194,8 @@
 | Vercel deployment failures | ~2 hours | Root directory misconfiguration |
 | Hardcoded data migration | ~6 hours | No database integration |
 | Supabase free tier limits | ~1 hour | Direct browser queries |
-| **Total** | **~17 hours** | |
+| Hotel images not loading | ~2 hours | Frontend not consuming API `picture` field |
+| **Total** | **~19 hours** | |
 
 ---
 
@@ -168,3 +209,5 @@
 6. **Test SSR output** — Check if content renders in initial HTML
 7. **Set initial={{ opacity: 1 }} for SSR content** — Prevents invisible content
 8. **Monorepo needs explicit root directory** — Vercel can't auto-detect
+9. **Generate Context Brief before debugging** — Saves time by clarifying the problem
+10. **Follow governance protocol** — Read Sprint-1.md, LEARNING-FROM-MISTAKES.md, CONFIG-REFERENCE.md first
