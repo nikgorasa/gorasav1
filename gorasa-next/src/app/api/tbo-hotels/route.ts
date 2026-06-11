@@ -10,6 +10,19 @@ import {
   getHotelCodes,
 } from "@/lib/tbo-hotel-client";
 
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "";
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  // MM/DD/YYYY or M/D/YYYY
+  const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) {
+    const [, month, day, year] = match;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+  return dateStr;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -20,8 +33,8 @@ export async function POST(req: NextRequest) {
         const p = body.params || body;
         const cityName = p.CityName || p.cityName || p.city;
         const hotelCodes = p.HotelCodes || p.hotelCodes;
-        const checkIn = p.CheckInDate || p.CheckIn || p.checkIn;
-        const checkOut = p.CheckOutDate || p.CheckOut || p.checkOut;
+        const checkIn = formatDate(p.CheckInDate || p.CheckIn || p.checkIn);
+        const checkOut = formatDate(p.CheckOutDate || p.CheckOut || p.checkOut);
         const roomsRaw = p.RoomGuests || p.rooms || [{ Adults: 1, Children: 0, ChildAge: [] }];
         const roomsArray = roomsRaw.map((r: any) => ({
           adults: r.Adults || r.adults || 1,
