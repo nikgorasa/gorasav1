@@ -18,7 +18,7 @@
 | **Vercel Project ID** | `prj_WLoI80KaCmVZSudP17ohcPbzTpSe` | `.vercel/project.json` |
 | **Vercel Team ID** | `team_0pR3Xnbjx12q8H8pZF9xgE5S` | `.vercel/project.json` |
 | **Vercel Root Directory** | **`gorasa-next/`** | Set via API (not vercel.json) |
-| **Vercel Env: TBO_FORCE_MOCK** | `true` (set to force mock data) | Vercel dashboard |
+| **Vercel Env: TBO_FORCE_MOCK** | Removed (was `true`) | Vercel dashboard — removed Jun 11, 2026 |
 | **Deploy target** | `git push neworigin main` → Vercel auto-deploy | Vercel Git integration |
 | **Git remote (deploy)** | `neworigin → https://github.com/nikgorasa/gorasav1.git` | `git remote -v` |
 | **Git remote (origin)** | `origin → https://github.com/nikjp2021/gorasa-app.git` | `git remote -v` |
@@ -283,25 +283,27 @@ All code defaults to mock via `TBO_FLIGHT_FORCE_MOCK=true`.
 > **⚠ CORRECTION (Jun 11, 2026):** The hotel REST API at `api.tbotechnology.in/TBOHolidays_HotelAPI/` uses **Basic Auth** (`Authorization: Basic base64(user:pass)`), NOT TokenId. The `affiliate.tektravels.com` endpoints listed in the old docs returned `Status: 500` or `Method not found`. The tbotechnology domain is the correct one for TBO Holidays hotel API.
 
 ### Endpoints
-| Service | URL | Auth |
-|---------|-----|------|
-| Search | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/Search` | Basic Auth |
-| PreBook | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/PreBook` | Basic Auth |
-| Book | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/Book` | Basic Auth |
-| Static Data — CountryList | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/CountryList` (GET) | Basic Auth |
-| Static Data — CityList | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/CityList?CountryCode=IN` (GET) | Basic Auth |
-| Static Data — HotelCodeList | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/TBOHotelCodeList?CityCode=X` (GET) | Basic Auth |
-| Static Data — HotelDetails | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/HotelDetails?HotelCode=X` (GET) | Basic Auth |
+| Service | URL | Auth | Method |
+|---------|-----|------|--------|
+| Search | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/Search` | Basic Auth | POST |
+| PreBook | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/PreBook` | Basic Auth | POST |
+| Book | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/Book` | Basic Auth | POST |
+| Static Data — CountryList | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/CountryList` | Basic Auth | GET |
+| Static Data — CityList | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/CityList` | Basic Auth | POST (body: `{CountryCode}`) |
+| Static Data — HotelCodeList | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/TBOHotelCodeList` | Basic Auth | POST (body: `{CityCode}`) |
+| Static Data — HotelDetails | `http://api.tbotechnology.in/TBOHolidays_HotelAPI/HotelDetails` | Basic Auth | POST (body: `{HotelCode}`) |
 
 ### Flow
 1. **Authenticate** — Basic Auth on every request (`Authorization: Basic base64(user:pass)`), plus `UserName`+`Password` in request body
-2. **Static Data** (cached at module level):
-   - CountryList → filter by `CountryCode=IN` (India)
-   - CityList(CountryCode=IN) → get list of cities
-   - TBOHotelCodeList(CityCode) → get `HotelCode[]` for that city
-3. **Search** — `CityName`, `CountryCode`, `CheckInDate`, `CheckOutDate`, `RoomGuests[]` with `Adults`/`Children`/`ChildAge`
+2. **Resolve City → Hotel Codes** (first search for a city):
+   - CityList(CountryCode=IN) → get city code (e.g., Goa = 15648)
+   - TBOHotelCodeList(CityCode) → get `HotelCode[]` for that city (up to 50 codes)
+   - Cached per city at module level (`_hotelCodesCache`)
+3. **Search** — `HotelCodes` (comma-separated), `CheckIn`, `CheckOut`, `PaxRooms[]`, `GuestNationality`
 4. **PreBook** — `BookingCode` from Search response room; returns pax detail requirements
 5. **Book** — `BookingCode`, `HotelRoomsDetails[]` with `HotelPassenger[]`
+
+> **⚠ IMPORTANT:** Search requires `HotelCodes` — city-based search alone returns `Status: 400: "Hotel Codes can not be null or empty"`. Always resolve hotel codes first via TBOHotelCodeList.
 
 ### Key Differences from Flight API
 | Flight API | Hotel API |
@@ -356,16 +358,19 @@ All code defaults to mock via `TBO_FLIGHT_FORCE_MOCK=true`.
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | ✅ | ✅ | Admin DB access |
 | `DATABASE_URL` | ✅ | ✅ | ✅ | Prisma pooled connection |
 | `DIRECT_URL` | ✅ | ✅ | ✅ | Prisma direct connection |
-| `TBO_USERNAME` | ✅ | ✅ | ✅ | TBO API login |
-| `TBO_PASSWORD` | ✅ | ✅ | ✅ | TBO API password |
-| `TBO_ENDPOINT` | ✅ | ❌ | ❌ | TBO SOAP endpoint |
-| `TBO_FORCE_MOCK` | ❌ | ✅ (`true`) | ❌ | Force mock data flag |
+| `TBO_USERNAME` | ✅ | ✅ | ✅ | TBO flight API login (`RasaT`) |
+| `TBO_PASSWORD` | ✅ | ✅ | ✅ | TBO flight API password (`RasaT@123`) |
+| `TBO_HOTEL_USERNAME` | ✅ | ✅ | ❌ | TBO hotel API login (`TBOStaticAPITest`) |
+| `TBO_HOTEL_PASSWORD` | ✅ | ✅ | ❌ | TBO hotel API password (`Tbo@11530818`) |
+| `TBO_FORCE_MOCK` | ❌ | ❌ (removed) | ❌ | Was forcing mock data — removed Jun 11, 2026 |
 | `VERCEL_OIDC_TOKEN` | Root `.env.local` only | ❌ | ❌ | Vercel auth (auto) |
 
 **Where each file lives:**
 - `gorasa-next/.env.local` — the app's env vars (gitignored)
 - `/home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/.env.local` — root .env.local (Vercel auto-generated, ONLY has VERCEL_OIDC_TOKEN)
 - Vercel dashboard — production env vars (set via `npx vercel env add` or Web UI)
+
+> **Note:** `TBO_FORCE_MOCK` was removed from Vercel Production on Jun 11, 2026 to enable live API. Hotel and flight APIs now use real credentials.
 
 ---
 
@@ -397,12 +402,12 @@ All code defaults to mock via `TBO_FLIGHT_FORCE_MOCK=true`.
 
 | Credential | Used In | `.env.local` | Vercel Prod | Status | Notes |
 |------------|---------|:---:|:---:|:---:|-------|
-| `TBO_USERNAME` | `lib/tbo-flight-api.ts` | ✅ (`RasaT`) | ✅ (`RasaT`) | ⚠️ Old creds | Flight API login. **Old (wrong) value was `RasaTAPI` — fixed Jun 11, 2026** |
-| `TBO_PASSWORD` | `lib/tbo-flight-api.ts` | ✅ (`RasaT@123`) | ✅ | ⚠️ Old creds | Flight API password |
+| `TBO_USERNAME` | `lib/tbo-flight-api.ts` | ✅ (`RasaT`) | ✅ (`RasaT`) | ✅ Live | Flight API login |
+| `TBO_PASSWORD` | `lib/tbo-flight-api.ts` | ✅ (`RasaT@123`) | ✅ | ✅ Live | Flight API password |
 | `TBO_CLIENT_ID` | `lib/tbo-flight-client.ts` | ✅ (`ApiIntegrationNew`) | ✅ | ✅ Config value | Static: `"ApiIntegrationNew"` |
-| `TBO_HOTEL_USERNAME` | `lib/tbo-hotel-api.ts` | ✅ (`TBOStaticAPITest`) | ❌ | ✅ Test creds | Hotel Basic Auth login (separate from flight) |
-| `TBO_HOTEL_PASSWORD` | `lib/tbo-hotel-api.ts` | ✅ (`Tbo@11530818`) | ❌ | ✅ Test creds | Hotel Basic Auth password (separate from flight) |
-| `TBO_FORCE_MOCK` | `lib/tbo-flight-client.ts`, `lib/tbo-hotel-client.ts` | ❌ | ✅ `"true"` | ✅ Active | Forces mock data, bypasses real API |
+| `TBO_HOTEL_USERNAME` | `lib/tbo-hotel-api.ts` | ✅ (`TBOStaticAPITest`) | ✅ | ✅ Live | Hotel Basic Auth login |
+| `TBO_HOTEL_PASSWORD` | `lib/tbo-hotel-api.ts` | ✅ (`Tbo@11530818`) | ✅ | ✅ Live | Hotel Basic Auth password |
+| `TBO_FORCE_MOCK` | `lib/tbo-flight-client.ts`, `lib/tbo-hotel-client.ts` | ❌ | ❌ (removed) | ❌ Disabled | Removed Jun 11, 2026 to enable live API |
 | `TBO_FLIGHT_FORCE_MOCK` | `lib/tbo-flight-client.ts` | ❌ | ❌ | N/A | Falls back to `TBO_FORCE_MOCK` |
 | `TBO_HOTEL_FORCE_MOCK` | `lib/tbo-hotel-client.ts` | ❌ | ❌ | N/A | Falls back to `TBO_FORCE_MOCK` |
 
@@ -669,6 +674,7 @@ Testimonial, PackageCategory, ValueProposition, City, Flight, Faq, FaqCategory, 
 - **Motion:** `motion` (Framer Motion successor)
 - **Icons:** `lucide-react`
 - **Database:** Prisma 6
+- **Search UI:** `cmdk` v1.1.1 (command palette for city dropdown)
 
 ### Scripts
 
@@ -706,10 +712,12 @@ All routes under `gorasa-next/src/app/api/` (27+ endpoints):
 | `/api/leads/stages` | GET | None | Pipeline stages |
 | `/api/users` | GET/PATCH | None | User management |
 | `/api/users/demo` | GET | None | Demo users for login |
-| `/api/flights` | GET | None | Flight search (mock) |
-| `/api/cities` | GET | None | Cities (domestic/international) |
+| `/api/flights` | GET | None | Flight search (TBO live API) |
+| `/api/cities` | GET | None | Cities from Supabase (domestic/international) |
+| `/api/cities/tbo` | GET | None | **1,083 Indian cities from TBO live API** (Supabase fallback) |
 | `/api/categories` | GET | None | Package categories |
-| `/api/tbo` | POST | None | TBO hotel search proxy |
+| `/api/tbo` | POST | None | **TBO flight search** (search, fare-rule, fare-quote, book, ticket) |
+| `/api/tbo-hotels` | POST | None | **TBO hotel search** (search, pre-book, book, booking-detail, static data) |
 | `/api/companies` | GET | None | Active companies |
 | `/api/companies/[id]` | PATCH | None | Wallet update |
 | `/api/profile` | GET/PATCH | `x-user-email` header | User profile |
@@ -733,11 +741,12 @@ All routes under `gorasa-next/src/app/api/` (27+ endpoints):
 
 ### Overview
 
-TBO Holidays (`api.tbotechnology.in`) — hotel booking API via SOAP/XML. Integrates with full mock fallback.
+TBO (Travel Boutiques Online) — flight and hotel booking APIs. Both are now **LIVE** on production.
+
+- **Flight API:** `api.tektravels.com` — TokenId auth, returns real flight results
+- **Hotel API:** `api.tbotechnology.in` — Basic Auth, returns real hotel rooms with prices
 
 ### Architecture
-
-**New (Jun 11, 2026) — Dedicated Routes:**
 
 ```
 /api/tbo (POST) — flight only
@@ -746,15 +755,22 @@ TBO Holidays (`api.tbotechnology.in`) — hotel booking API via SOAP/XML. Integr
     → tbo-flight-mock.ts (mock data)
   → tbo-flight-types.ts (TypeScript interfaces)
 
-/api/tbo-hotels (GET/POST) — hotel only
+/api/tbo-hotels (POST) — hotel only
   → tbo-hotel-client.ts (orchestrator)
     → tbo-hotel-api.ts (Basic Auth, REST client)
     → tbo-hotel-mock.ts (mock data — 9 cities)
   → tbo-hotel-types.ts (TypeScript interfaces)
-```
 
-**Legacy (deprecated):**
-Old `/api/tbo` handled both flight + hotel via SOAP. Now hotel lives at `/api/tbo-hotels`.
+/api/cities/tbo (GET) — city search for dropdown
+  → TBO CityList API (1,083 Indian cities)
+  → Supabase City table fallback
+  → 1-hour cache
+
+CitySearchDropdown (component) — searchable dropdown with cmdk
+  → Fetches from /api/cities/tbo
+  → Client-side filtering as user types
+  → Popular cities group + All Cities group
+```
 
 ### Client Logic
 
@@ -771,13 +787,19 @@ const hasHotelCreds = !!(TBO_HOTEL_USERNAME && TBO_HOTEL_PASSWORD) && TBO_HOTEL_
 - Credentials exist but API fails → falls back to mock
 - No credentials → mock data
 
-### Current Status
+### Current Status (Jun 11, 2026)
 
-- **Credentials:** `RasaT` / `RasaT@123` / `ClientId: ApiIntegrationNew` — from TBO support (Varsha Dhiman, Jun 5, 2026). Set in `.env.local` and Vercel.
-- **Old (wrong) username:** Was `RasaTAPI` — corrected to `RasaT` on Jun 11, 2026
-- **Real API:** Returns error code `04-6517` ("Technical Failure") — TBO needs to activate the account
-- **Mock data:** Working. 6 hotels in Goa, 3+ in other cities
-- **Vercel production:** `TBO_FORCE_MOCK=true` → mock data always
+| API | Status | Notes |
+|-----|--------|-------|
+| Flight search | ✅ LIVE | Returns real flights (IndiGo, SpiceJet, Air India) |
+| Hotel search | ✅ LIVE | Returns real rooms with prices (USD/INR) |
+| City dropdown | ✅ LIVE | 1,083 Indian cities from TBO CityList API |
+| Hotel PreBook | ⚠️ Test creds | Returns "Insufficient Balance" (expected for test account) |
+| Hotel Book | ⚠️ Untested | Requires production credentials |
+
+**Credentials:**
+- Flight: `RasaT` / `RasaT@123` / `ClientId: ApiIntegrationNew`
+- Hotel: `TBOStaticAPITest` / `Tbo@11530818` (test creds, no balance for booking)
 
 ### Booking Pipeline (in UI)
 
