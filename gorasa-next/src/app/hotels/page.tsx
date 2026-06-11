@@ -58,7 +58,7 @@ export default function HotelsPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/tbo", {
+      const res = await fetch("/api/tbo-hotels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -102,7 +102,7 @@ export default function HotelsPage() {
     setRoomsLoading(true);
 
     try {
-      const res = await fetch("/api/tbo", {
+      const res = await fetch("/api/tbo-hotels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
