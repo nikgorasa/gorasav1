@@ -100,13 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
 
-    // If Supabase auth fails (user doesn't exist in Supabase), try demo mode
+    // If Supabase auth fails, try demo mode (direct DB lookup, no password check)
     if (error) {
-      // For demo users, fetch profile directly from database
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
 
       if (res.ok) {
@@ -115,7 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      throw new Error(error.message);
+      const apiErr = await res.json().catch(() => ({}));
+      throw new Error(apiErr.error || error.message);
     }
 
     // If Supabase auth succeeds, sync with backend
