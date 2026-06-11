@@ -17,43 +17,53 @@ const hasCredentials = !!(process.env.TBO_HOTEL_USERNAME && process.env.TBO_HOTE
   && process.env.TBO_HOTEL_FORCE_MOCK !== "true";
 
 function toDisplay(
-  h: { HotelCode: number; Currency: string; Rooms: any[] },
+  h: { HotelCode: string; Currency: string; Rooms: any[] },
 ): TBOHotelDisplay {
-  const rooms: TBOHotelRoomDisplay[] = h.Rooms.map((r: any, ri: number) => ({
-    roomId: r.RoomID?.[0] || "",
-    roomName: r.Name?.[0] || "Room",
-    name: r.Name?.[0] || "Room",
-    bookingCode: r.BookingCode || "",
-    mealType: r.MealType || "Room_Only",
-    isRefundable: r.IsRefundable ?? false,
-    totalFare: r.TotalFare || 0,
-    totalTax: r.TotalTax || 0,
-    inclusion: r.Inclusion || "",
-    dayRates: (r.DayRates?.[0] || []).map((dr: any) => ({
-      basePrice: dr.BasePrice || 0,
-    })),
-    cancelPolicy: r.CancelPolicies?.[0]
-      ? `${r.CancelPolicies[0].ChargeType}: ${r.CancelPolicies[0].CancellationCharge}%`
-      : "Non Refundable",
-    cancellationPolicy: r.CancelPolicies?.[0]
-      ? `${r.CancelPolicies[0].ChargeType}: ${r.CancelPolicies[0].CancellationCharge}%`
-      : "Non Refundable",
-    roomIndex: ri + 1,
-    typeCode: "",
-    ratePlanCode: "",
-    roomFare: r.DayRates?.[0]?.[0]?.BasePrice || 0,
-    roomTax: (r.TotalTax || 0) / Math.max(1, (r.DayRates?.[0]?.length || 1)),
-    currency: h.Currency,
-    amenities: [],
-  }));
+  const rooms: TBOHotelRoomDisplay[] = h.Rooms.map((r: any, ri: number) => {
+    const roomName = Array.isArray(r.Name) ? r.Name[0] : (r.Name || "Room");
+    const totalFare = r.TotalFare || 0;
+    const totalTax = r.TotalTax || 0;
+    const dayRates = r.DayRates?.[0] || [];
+    const cancelPolicies = r.CancelPolicies || [];
+
+    return {
+      roomId: r.RoomID?.[0] || `${h.HotelCode}-${ri}`,
+      roomName,
+      name: roomName,
+      bookingCode: r.BookingCode || "",
+      mealType: r.MealType || "Room_Only",
+      isRefundable: r.IsRefundable ?? false,
+      totalFare,
+      totalTax,
+      inclusion: r.Inclusion || "",
+      dayRates: dayRates.map((dr: any) => ({
+        basePrice: dr.BasePrice || 0,
+      })),
+      cancelPolicy: cancelPolicies[0]
+        ? `${cancelPolicies[0].ChargeType}: ${cancelPolicies[0].CancellationCharge}%`
+        : "Non Refundable",
+      cancellationPolicy: cancelPolicies[0]
+        ? `${cancelPolicies[0].ChargeType}: ${cancelPolicies[0].CancellationCharge}%`
+        : "Non Refundable",
+      roomIndex: ri + 1,
+      typeCode: "",
+      ratePlanCode: "",
+      roomFare: dayRates[0]?.BasePrice || totalFare,
+      roomTax: totalTax / Math.max(1, dayRates.length || 1),
+      currency: h.Currency,
+      amenities: [],
+    };
+  });
+
+  const minFare = Math.min(...rooms.map(r => r.totalFare));
 
   return {
-    hotelCode: h.HotelCode,
+    hotelCode: Number(h.HotelCode) || 0,
     name: "",
     hotelRating: 0,
     location: "",
     currency: h.Currency,
-    minTotalFare: Math.min(...rooms.map(r => r.totalFare)),
+    minTotalFare: minFare,
     rooms,
     resultIndex: 1,
     picture: "",
@@ -61,9 +71,9 @@ function toDisplay(
     address: "",
     tripAdvisorRating: 0,
     description: "",
-    price: Math.min(...rooms.map(r => r.totalFare)),
+    price: minFare,
     starRating: 3,
-    originalPrice: Math.min(...rooms.map(r => r.totalFare)) * 1.2,
+    originalPrice: minFare * 1.2,
   };
 }
 
@@ -73,6 +83,56 @@ let _lastTraceId = "";
 export function setLastHotelResults(results: any[], traceId: string): void {
   _lastHotelResults = results;
   _lastTraceId = traceId;
+}
+
+const CITY_TO_CODE: Record<string, number> = {
+  goa: 15648,
+  mumbai: 13484,
+  delhi: 13482,
+  "new delhi": 13482,
+  jaipur: 15197,
+  bangalore: 14565,
+  bengaluru: 14565,
+  chennai: 14564,
+  hyderabad: 15664,
+  kolkata: 13543,
+  pune: 14612,
+  ahmedabad: 15584,
+  dubai: 10471,
+  bangkok: 10285,
+  singapore: 12346,
+  "kuala lumpur": 11234,
+};
+
+let _hotelCodesCache: Record<string, string> = {};
+
+async function resolveHotelCodes(city?: string, hotelCodes?: string): Promise<string> {
+  if (hotelCodes) return hotelCodes;
+  if (!city) return "";
+
+  const key = city.toLowerCase().trim();
+  if (_hotelCodesCache[key]) return _hotelCodesCache[key];
+
+  const cityCode = CITY_TO_CODE[key];
+  if (!cityCode) {
+    console.warn(`No city code mapping for "${city}"`);
+    return "";
+  }
+
+  try {
+    const res = await api.getHotelCodeList(String(cityCode));
+    if (res.Status?.Code === 200 && res.Hotels?.length > 0) {
+      const codeStr = res.Hotels.slice(0, 50).map(c => c.HotelCode).join(",");
+      _hotelCodesCache[key] = codeStr;
+      console.log(`Resolved ${res.Hotels.length} hotel codes for ${city} (showing first 50)`);
+      return codeStr;
+    }
+    console.warn(`No hotel codes returned for ${city}:`, res.Status?.Description);
+  } catch (e) {
+    console.warn(`Failed to fetch hotel codes for ${city}:`, e);
+  }
+
+  return "";
 }
 
 export async function searchHotels(params: {
@@ -86,21 +146,25 @@ export async function searchHotels(params: {
 }): Promise<TBOHotelSearchOutput> {
   if (hasCredentials) {
     try {
-      const searchReq: TBOHotelSearchRequest = {
-        CheckIn: params.checkIn,
-        CheckOut: params.checkOut,
-        HotelCodes: params.hotelCodes || "",
-        GuestNationality: params.guestNationality || "IN",
-        PaxRooms: params.rooms.map(r => ({ Adults: r.adults, Children: r.children, ChildrenAges: r.childrenAges })),
-        PreferredCurrency: params.preferredCurrency || "INR",
-        SearchedCities: params.city ? [params.city] : undefined,
-      };
-      const res = await api.searchHotels(searchReq);
-      if (res.Status?.Code === 200 && res.HotelResult?.length > 0) {
-        const hotels = res.HotelResult.map(h => toDisplay(h));
-        return { hotels, traceId: _lastTraceId };
+      const resolvedCodes = await resolveHotelCodes(params.city, params.hotelCodes);
+      if (!resolvedCodes) {
+        console.warn("No hotel codes resolved for city:", params.city, "— falling back to mock");
+      } else {
+        const searchReq: TBOHotelSearchRequest = {
+          CheckIn: params.checkIn,
+          CheckOut: params.checkOut,
+          HotelCodes: resolvedCodes,
+          GuestNationality: params.guestNationality || "IN",
+          PaxRooms: params.rooms.map(r => ({ Adults: r.adults, Children: r.children, ChildrenAges: r.childrenAges })),
+          PreferredCurrency: params.preferredCurrency || "INR",
+        };
+        const res = await api.searchHotels(searchReq);
+        if (res.Status?.Code === 200 && res.HotelResult?.length > 0) {
+          const hotels = res.HotelResult.map(h => toDisplay(h));
+          return { hotels, traceId: _lastTraceId };
+        }
+        throw new Error(`Hotel search failed: ${res.Status?.Description}`);
       }
-      throw new Error(`Hotel search failed: ${res.Status?.Description}`);
     } catch (e) {
       console.warn("TBO hotel API search failed, fallback to mock:", e);
     }
@@ -154,7 +218,7 @@ export async function searchHotels(params: {
     }));
 
     return {
-      hotelCode: h.HotelCode,
+      hotelCode: Number(h.HotelCode) || 0,
       name: info?.HotelName || `Hotel ${h.HotelCode}`,
       hotelRating: info?.HotelRating || 0,
       location,
