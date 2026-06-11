@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -45,6 +46,7 @@ export async function GET() {
       const { data: newUser, error: createError } = await supabaseAdmin
         .from("User")
         .insert({
+          id: randomUUID(),
           supabaseId: user.id,
           email: user.email!,
           name:

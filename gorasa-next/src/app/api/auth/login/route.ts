@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -23,10 +24,10 @@ export async function POST(request: Request) {
       .single();
 
     if (!existingUser) {
-      // Create new user
       const { data: newUser, error: createError } = await supabaseAdmin
         .from("User")
         .insert({
+          id: randomUUID(),
           supabaseId: supabaseId || null,
           email,
           name: name || email.split("@")[0],
