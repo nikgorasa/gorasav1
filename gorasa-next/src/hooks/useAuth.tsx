@@ -28,6 +28,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
+  signInDemo: (email: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -131,6 +132,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInDemo = async (email: string) => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Demo login failed");
+    }
+
+    const userData = await res.json();
+    setUser(userData);
+  };
+
   const signUpWithEmail = async (
     email: string,
     password: string,
@@ -164,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signInWithGoogle,
         signInWithEmail,
+        signInDemo,
         signUpWithEmail,
         signOut,
         refreshUser,

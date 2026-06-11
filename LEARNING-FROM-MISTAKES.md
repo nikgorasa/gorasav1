@@ -186,7 +186,38 @@
 
 ---
 
-## Summary of Time Spent
+## Issue #6: Demo Login Fails — Supabase Auth + Wrong Fallback Emails
+
+**Date:** June 11, 2026
+**Duration:** ~1 hour
+**Severity:** Medium — blocks quick access to the app
+
+### Symptoms
+- Clicking demo user buttons in login modal showed "Invalid login credentials"
+- After fixing Supabase Auth fallback, showed "Failed to create user"
+- Demo login buttons showed wrong email addresses
+
+### Root Cause Analysis
+1. **Supabase Auth has no demo users** — `signInWithEmail` tried `supabase.auth.signInWithPassword` first with all demo users, but no Supabase Auth user exists for demo accounts (they're only in the `User` DB table)
+2. **Wrong fallback emails** — Hardcoded `DEMO_FALLBACK` had `@gorasa.com` emails, but actual DB users use `@gorasa.in` and `@example.com`
+3. **Anon key used as service key** — Three API routes (`/api/auth/login`, `/api/auth/me`, `/api/users/demo`) used `NEXT_PUBLIC_SUPABASE_ANON_KEY` for server-side queries, preventing row-level access to the `User` table
+
+### Resolution
+1. **Added `signInDemo()` to `useAuth.tsx`** — Direct API call with just `{email}`, no Supabase Auth attempt, no password needed
+2. **Fixed `DEMO_FALLBACK` emails** — Changed to match actual DB users (`hmittal@gorasa.in`, `admin@gorasa.in`, `sales@gorasa.in`, `neha@corp.in`, `amit@example.com`, `priya@example.com`)
+3. **Switched to `SUPABASE_SERVICE_ROLE_KEY`** — All three API routes now use the service role key for DB queries
+
+### Lessons Learned
+1. **Don't mix Auth flow with simple DB lookup** — Demo users should skip Supabase Auth entirely
+2. **Fallback data must match production** — Hardcoded demo emails that don't match the database cause confusing failures
+3. **Environment variables need verification** — Both dev and production (`VERCEL_ENV`) env vars must be checked
+
+### Prevention Measures
+1. Demo login should always use a dedicated path (no Supabase Auth, no password)
+2. Fallback/seed data should match actual DB records or be auto-generated from the same source
+3. Verify `SUPABASE_SERVICE_ROLE_KEY` is set in both `.env.local` and Vercel project settings
+
+---
 
 | Issue | Duration | Root Cause |
 |-------|----------|------------|
@@ -195,7 +226,8 @@
 | Hardcoded data migration | ~6 hours | No database integration |
 | Supabase free tier limits | ~1 hour | Direct browser queries |
 | Hotel images not loading | ~2 hours | Frontend not consuming API `picture` field |
-| **Total** | **~19 hours** | |
+| Demo login broken | ~1 hour | `signInWithEmail` tried Supabase Auth (no Auth user exists); hardcoded fallback emails didn't match DB; `NEXT_PUBLIC_SUPABASE_ANON_KEY` used as service key |
+| **Total** | **~20 hours** | |
 
 ---
 
