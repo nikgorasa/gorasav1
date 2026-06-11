@@ -247,15 +247,29 @@ export default function HotelsPage() {
                       onClick={() => handleHotelClick(hotel)}
                     >
                       <div className="h-48 relative overflow-hidden">
-                        <img
-                          src={hotel.picture}
-                          alt={hotel.name}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
+                        {hotel.picture ? (
+                          <img
+                            src={hotel.picture}
+                            alt={hotel.name}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                            <Building2 size={48} className="text-slate-300" />
+                          </div>
+                        )}
                         <div className="absolute top-3 left-3">
-                          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-600 text-white">
-                            TBO
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                            hotel.source === "fallback"
+                              ? "bg-amber-500 text-white"
+                              : "bg-blue-600 text-white"
+                          }`}>
+                            {hotel.source === "fallback" ? "Fallback" : "TBO"}
                           </span>
                         </div>
                         <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[11px] px-2 py-1 rounded-lg">
@@ -308,17 +322,33 @@ export default function HotelsPage() {
               className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
             >
               <div className="h-56 relative">
-                <img
-                  src={selectedHotel.picture}
-                  alt={selectedHotel.name}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                />
+                {selectedHotel.picture ? (
+                  <img
+                    src={selectedHotel.picture}
+                    alt={selectedHotel.name}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                    <Building2 size={64} className="text-slate-300" />
+                  </div>
+                )}
                 <button onClick={() => { setSelectedHotel(null); setSelectedRoom(null); }} className="absolute top-4 right-4 p-2 bg-white/90 rounded-full">
                   <X size={18} />
                 </button>
                 <div className="absolute bottom-4 left-4 flex gap-2">
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-600 text-white">TBO</span>
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    selectedHotel.source === "fallback"
+                      ? "bg-amber-500 text-white"
+                      : "bg-blue-600 text-white"
+                  }`}>
+                    {selectedHotel.source === "fallback" ? "Fallback" : "TBO"}
+                  </span>
                   <span className={`text-xs font-bold px-3 py-1 rounded-full bg-black/60 text-white ${getStarColor(STAR_MAP[selectedHotel.rating] || 3)}`}>
                     {STAR_LABELS[selectedHotel.rating] || "★★★"}
                   </span>

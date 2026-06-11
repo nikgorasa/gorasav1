@@ -304,21 +304,29 @@ export interface TBOHotelDetail {
   HotelCode: string;
   HotelName: string;
   HotelRating: string;
-  HotelAddress: string;
-  HotelDescription: string;
-  HotelEmail: string;
-  HotelContact: string;
-  HotelWebsite: string;
-  HotelFax: string;
-  HotelPinCode: string;
-  Amenities: string[];
-  Images: string[];
-  CountryCode: string;
-  CountryName: string;
-  CityCode: number;
-  CityName: string;
-  Latitude: number;
-  Longitude: number;
+  HotelAddress?: string;
+  Address?: string;
+  HotelDescription?: string;
+  Description?: string;
+  HotelEmail?: string;
+  Email?: string;
+  HotelContact?: string;
+  PhoneNumber?: string;
+  HotelWebsite?: string;
+  HotelFax?: string;
+  HotelPinCode?: string;
+  PinCode?: string;
+  Amenities?: string[];
+  HotelFacilities?: string[];
+  Images?: string[];
+  Image?: string;
+  CountryCode?: string;
+  CountryName?: string;
+  CityCode?: number;
+  CityId?: number;
+  CityName?: string;
+  Latitude?: number;
+  Longitude?: number;
 }
 
 export interface TBOHotelRoomDisplay {
@@ -360,6 +368,7 @@ export interface TBOHotelDisplay {
   price: number;
   starRating: number;
   originalPrice: number;
+  source?: "tbo" | "mock" | "fallback";
 }
 
 export interface TBOHotelSearchOutput {

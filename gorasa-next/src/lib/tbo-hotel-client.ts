@@ -70,7 +70,7 @@ function toDisplay(
     minTotalFare: minFare,
     rooms,
     resultIndex: 1,
-    picture: "",
+    picture: details.imageUrl || "",
     rating: "ThreeStar",
     address: details.address || "",
     tripAdvisorRating: 0,
@@ -108,7 +108,33 @@ const CITY_TO_CODE: Record<string, number> = {
 };
 
 let _hotelCodesCache: Record<string, string> = {};
-let _hotelDetailsCache: Record<string, { name: string; rating: string; address: string; city: string }> = {};
+let _hotelDetailsCache: Record<string, { name: string; rating: string; address: string; city: string; imageUrl?: string }> = {};
+
+async function fetchHotelImages(hotelCodes: string[]): Promise<void> {
+  // Fetch images for top 10 hotels (to avoid too many API calls)
+  const codesToFetch = hotelCodes.filter(code => !_hotelDetailsCache[code]?.imageUrl).slice(0, 10);
+
+  if (codesToFetch.length === 0) return;
+
+  try {
+    const res = await api.getHotelDetails(codesToFetch.join(","));
+    if (res.HotelDetails && Array.isArray(res.HotelDetails)) {
+      for (const detail of res.HotelDetails) {
+        const existing = _hotelDetailsCache[detail.HotelCode] || {};
+        const images = detail.Images || [];
+        _hotelDetailsCache[detail.HotelCode] = {
+          ...existing,
+          name: detail.HotelName || existing.name || "",
+          rating: detail.HotelRating || existing.rating || "",
+          address: detail.Address || existing.address || "",
+          imageUrl: images[0] || existing.imageUrl,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to fetch hotel images:", e);
+  }
+}
 
 async function resolveHotelCodes(city?: string, hotelCodes?: string, cityCode?: string): Promise<string> {
   // 1. If hotel codes provided directly, use them
@@ -193,6 +219,9 @@ export async function searchHotels(params: {
       if (!resolvedCodes) {
         console.warn("No hotel codes resolved for city:", params.city, "— falling back to mock");
       } else {
+        // Fetch images for resolved hotel codes
+        await fetchHotelImages(resolvedCodes.split(","));
+
         const searchReq: TBOHotelSearchRequest = {
           CheckIn: params.checkIn,
           CheckOut: params.checkOut,
@@ -203,7 +232,7 @@ export async function searchHotels(params: {
         };
         const res = await api.searchHotels(searchReq);
         if (res.Status?.Code === 200 && res.HotelResult?.length > 0) {
-          const hotels = res.HotelResult.map(h => toDisplay(h));
+          const hotels = res.HotelResult.map(h => ({ ...toDisplay(h), source: "tbo" as const }));
           return { hotels, traceId: _lastTraceId };
         }
         throw new Error(`Hotel search failed: ${res.Status?.Description}`);
@@ -227,6 +256,9 @@ export async function searchHotels(params: {
   if (mockRes.HotelResult.length === 0) {
     return { hotels: [], traceId: "" };
   }
+
+  // Check if this is fallback data
+  const isFallback = mockRes.Status.Description === "Fallback";
 
   const hotels = mockRes.HotelResult.map(h => {
     const info = mock.getHotelInfoByCode(h.HotelCode);
@@ -277,6 +309,7 @@ export async function searchHotels(params: {
       price: Math.min(...rooms.map(r => r.totalFare)),
       starRating: info?.HotelRating || 3,
       originalPrice: Math.min(...rooms.map(r => r.totalFare)) * 1.2,
+      source: isFallback ? "fallback" as const : "mock" as const,
     };
   });
 
