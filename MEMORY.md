@@ -1,7 +1,7 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-12 06:45 IST
+> **Last updated:** 2026-06-12 12:30 IST
 
 ---
 
@@ -22,7 +22,8 @@
 5. Fallback hotels for cities without TBO inventory — **DONE**
 6. Hotel search with real TBO images — **DONE**
 7. Dynamic city code resolution (no hardcoded mapping) — **DONE**
-4. Internal beta readiness — **IN PROGRESS**
+8. User-facing ticket creation on /support page — **DONE**
+9. Internal beta readiness — **IN PROGRESS**
 
 ---
 
@@ -48,6 +49,7 @@
 | AI Holiday Planner | Integrated to /holidays route (was at /planner) | 2026-06-12 |
 | Governance hooks | session.start + session.idle + session.end enforce preflight + post-task | 2026-06-12 |
 | Post-task checks | 15 compulsory checks (docs, env, TSC, build, DB, RLS, API, components, hooks) | 2026-06-12 |
+| Support page tickets | Tabbed UI (AI Chat + My Tickets), auth-gated form, POST /api/tickets | 2026-06-12 |
 | Pre-flight checks | 10 compulsory checks (docs, env, TSC, git, critical files, hooks) | 2026-06-12 |
 
 ---
@@ -88,6 +90,9 @@
 | `gorasa-next/src/lib/tbo-hotel-client.ts` | TBO hotel orchestrator (auth cache, search→prebook→book) |
 | `gorasa-next/src/app/api/tbo-hotels/route.ts` | TBO hotel API proxy route |
 | `gorasa-next/src/app/api/tbo/route.ts` | Legacy TBO route (flight + hotel, migrated to dedicated routes) |
+| `gorasa-next/src/app/support/page.tsx` | Support center: AI Chat tab + My Tickets tab (create/list tickets) |
+| `gorasa-next/src/lib/ticket/serverManager.ts` | Ticket CRUD operations (createTicket, getUserTickets, etc.) |
+| `gorasa-next/src/lib/ticket/types.ts` | Ticket TypeScript types and constants |
 | `.github/workflows/deploy-dev.yml` | GitHub Actions workflow for dev deployment |
 | `.github/workflows/deploy-qa.yml` | GitHub Actions workflow for QA deployment |
 | `scripts/setup-github-secrets.sh` | Helper script for GitHub environment secrets |
