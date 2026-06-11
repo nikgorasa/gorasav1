@@ -57,7 +57,7 @@ export default function HotelBookingModal({
     setStep("blocking");
 
     try {
-      const blockRes = await fetch("/api/tbo", {
+      const blockRes = await fetch("/api/tbo-hotels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -146,7 +146,7 @@ export default function HotelBookingModal({
         },
       };
 
-      const bookRes = await fetch("/api/tbo", {
+      const bookRes = await fetch("/api/tbo-hotels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "book", params: bookReqPayload }),
