@@ -7,6 +7,10 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-11 | 70146ef | feat: searchable city dropdown with TBO live data (cmdk) |
+| 2026-06-11 | 261e988 | fix: cache hotel names and ratings from TBOHotelCodeList API |
+| 2026-06-11 | 8f4170f | feat: add 15+ Indian cities to hotel search (Kodaikanal, Ooty, Manali, etc.) |
+| 2026-06-11 | 8fcab32 | fix: convert MM/DD/YYYY dates to YYYY-MM-DD for TBO API |
 | 2026-06-11 | 485a340 | fix: hotel frontend calls /api/tbo-hotels instead of /api/tbo |
 | 2026-06-11 | e54df33 | fix: /api/tbo route now uses flight client (not hotel) |
 | 2026-06-11 | a6918ff | fix: extract hotel search params from body.params (frontend nested format) |
