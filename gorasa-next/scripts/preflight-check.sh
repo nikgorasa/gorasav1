@@ -50,6 +50,18 @@ else
     echo -e "${GREEN}✓ DEPLOYMENT_LOG.md found${NC}"
 fi
 
+if [ ! -f "../MEMORY.md" ]; then
+    echo -e "${RED}WARNING: MEMORY.md not found${NC}"
+else
+    echo -e "${GREEN}✓ MEMORY.md found${NC}"
+fi
+
+if [ ! -f "CHANGE-LOG.md" ]; then
+    echo -e "${RED}WARNING: CHANGE-LOG.md not found${NC}"
+else
+    echo -e "${GREEN}✓ CHANGE-LOG.md found${NC}"
+fi
+
 echo ""
 echo -e "${YELLOW}Step 2: Checking current state...${NC}"
 
@@ -107,8 +119,10 @@ echo "Next steps:"
 echo "1. Read the project documentation if you haven't already"
 echo "2. Create a context brief if working on a new issue"
 echo "3. Make your changes"
-echo "4. Update LEARNING-FROM-MISTAKES.md if debugging >30 min"
-echo "5. Update DEPLOYMENT_LOG.md if deployment changed"
-echo "6. Create ADR if making architectural decisions"
+echo "4. Update CHANGE-LOG.md with a summary of changes"
+echo "5. Update LEARNING-FROM-MISTAKES.md if debugging >30 min"
+echo "6. Update DEPLOYMENT_LOG.md if deployment changed"
+echo "7. Update MEMORY.md with session context"
+echo "8. Create ADR if making architectural decisions"
 echo ""
 echo "Run './scripts/post-task-check.sh' after completing work"

@@ -27,6 +27,8 @@
 | 2026-06-11 | Hotel REST API rewrite | 53f7720 | gorasa-next | ✅ Ready | gorasa-next-qj2gil2l5... | Included in cb1628b deployment |
 | 2026-06-11 | RLS Security Fix | (supabase migration) | Supabase | ✅ Applied | — | 27 tables, 5 policy groups |
 | 2026-06-11 | Manual deploy test | (manual) | rasa-zero-app-main | ✅ Ready | rasa-zero-app-main-5co7wtph1... | Wrong project (repo root) |
+| 2026-06-11 | Hotel images fix + Demo login fix | 130bafd | gorasa-next | ✅ Ready | gorasa-next-2j9fvet4h... | Service role key switch + signInDemo() |
+| 2026-06-11 | Stale JWT fix (service key) | 28eb748 | gorasa-next | ✅ Ready | gorasa-next-3xbvwpts1... | Got correct service key from Supabase dashboard |
 | 2026-06-11 | Last successful auto-deploy | (unknown) | gorasa-next | ✅ Ready | gorasa-next-asz7wttee... | Before recent commits |
 
 ---
