@@ -23,6 +23,7 @@
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
+| 2026-06-11 | Searchable city dropdown (cmdk + TBO) | 70146ef | gorasa-next | ✅ Ready | gorasa-next-... | 1083 cities from TBO API |
 | 2026-06-11 | Hotel frontend fix (tbo-hotels endpoint) | 485a340 | gorasa-next | ✅ Ready | gorasa-next-... | Frontend now calls /api/tbo-hotels |
 | 2026-06-11 | Flight route fix (use flight client) | e54df33 | gorasa-next | ✅ Ready | gorasa-next-69hlbolmw... | /api/tbo now uses flight client |
 | 2026-06-11 | Hotel param extraction fix | a6918ff | gorasa-next | ✅ Ready | gorasa-next-69hlbolmw... | Extract from body.params |
