@@ -20,7 +20,7 @@
 | **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 30+ tables) |
 | **NEON Dev** | gorasa-dev (29 tables, 210 rows) |
 | **NEON QA** | gorasa-qa (28 tables, 210 rows) |
-| **Latest Commit** | 80f9033 (GitHub Actions workflow fix) |
+| **Latest Commit** | b742e8d (ticket system + AI planner + governance) |
 | **Auto-Deploy Status** | ✅ WORKING — All 3 environments active |
 
 ---
@@ -30,6 +30,7 @@
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
 | 2026-06-12 | Fix Vercel deploy path | 80f9033 | dev-gorasa, qa-gorasa | ✅ Ready | dev-gorasa-*, qa-gorasa-* | Run vercel from repo root, not subdirectory |
+| 2026-06-12 | Ticket system + AI planner + governance | b742e8d | gorasa-next | ✅ Pushed | gorasa-next.vercel.app | 45 files, tickets tables, /holidays AI planner, 15 compulsory checks |
 | 2026-06-12 | Staging env setup complete | 4b38848 | dev-gorasa, qa-gorasa | ✅ Ready | dev-gorasa-*, qa-gorasa-* | NEON databases, env vars, GitHub secrets |
 | 2026-06-12 | Remove hardcoded credentials | d89d75a | All | ✅ Ready | all | Security fix: remove PostgreSQL URIs from scripts |
 | 2026-06-12 | Governance protocol update (operational modes) | df00f6a | gorasa-next | ✅ Ready | gorasa-next-... | Added plan/build modes to AGENTS.md |
