@@ -246,6 +246,46 @@ const CITY_CODES: Record<string, number> = {
   Singapore: 52188, "Kuala Lumpur": 52203,
 };
 
+export function generateFallbackHotels(cityName: string): MockHotelDef[] {
+  const city = cityName || "Unknown";
+  return [
+    {
+      code: 9999001,
+      name: `Hotel in ${city}`,
+      rating: 3,
+      location: `${city} City Center`,
+      currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+      rooms: [
+        { name: "Standard Room", refundable: false, mealType: "Room_Only", inclusion: "Free WiFi", basePrice: 1500, tax: 270, amenities: ["Free WiFi", "Air Conditioning"] },
+        { name: "Deluxe Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast", basePrice: 2500, tax: 450, amenities: ["Free WiFi", "Breakfast", "Air Conditioning"] },
+      ],
+    },
+    {
+      code: 9999002,
+      name: `Resort in ${city}`,
+      rating: 4,
+      location: `${city} Outskirts`,
+      currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
+      rooms: [
+        { name: "Garden View Room", refundable: true, mealType: "Breakfast", inclusion: "Free breakfast, Pool access", basePrice: 3500, tax: 630, amenities: ["Free WiFi", "Breakfast", "Pool", "Air Conditioning"] },
+      ],
+    },
+    {
+      code: 9999003,
+      name: `Guest House in ${city}`,
+      rating: 2,
+      location: `${city} Main Area`,
+      currency: "INR",
+      imageUrl: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
+      rooms: [
+        { name: "Economy Room", refundable: false, mealType: "Room_Only", inclusion: "Free WiFi", basePrice: 1500, tax: 270, amenities: ["Free WiFi"] },
+      ],
+    },
+  ];
+}
+
 function buildRoom(
   def: MockHotelDef["rooms"][0],
   hotelCode: number,
@@ -306,10 +346,20 @@ export function mockSearchHotels(req: TBOHotelSearchRequest): TBOHotelSearchResp
   const defs = HotelCodes ? findHotelsByCodes(HotelCodes) : findHotelsByCity(cityKey);
 
   if (defs.length === 0) {
+    // Generate fallback hotels for the city
+    const fallbackCity = cityKey || "Unknown";
+    const fallbackDefs = generateFallbackHotels(fallbackCity);
+
+    const fallbackResults: TBOHotelResult[] = fallbackDefs.map(h => ({
+      HotelCode: String(h.code),
+      Currency: h.currency,
+      Rooms: h.rooms.map((r, ri) => buildRoom(r, h.code, ri, CheckIn, CheckOut, nights)),
+    }));
+
     return {
-      Status: { Code: 200, Description: "No hotels found" },
-      HotelResult: [],
-      NoOfRooms: 0,
+      Status: { Code: 200, Description: "Fallback" },
+      HotelResult: fallbackResults,
+      NoOfRooms: fallbackResults.reduce((s, r) => s + r.Rooms.length, 0),
     };
   }
 

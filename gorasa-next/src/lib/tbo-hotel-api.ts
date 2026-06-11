@@ -78,6 +78,6 @@ export function getHotelCodeList(cityCode: string): Promise<{ Status: TBOStatus;
   return post(`${BASE_URL}/TBOHotelCodeList`, { CityCode: cityCode });
 }
 
-export function getHotelDetails(hotelCode: string): Promise<TBOHotelDetail> {
-  return get<TBOHotelDetail>(`${BASE_URL}/HotelDetails?HotelCode=${hotelCode}`);
+export function getHotelDetails(hotelCodes: string): Promise<{ Status: { Code: number; Description: string }; HotelDetails: TBOHotelDetail[] }> {
+  return post(`${BASE_URL}/HotelDetails`, { HotelCodes: hotelCodes });
 }
