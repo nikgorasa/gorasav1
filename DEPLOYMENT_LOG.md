@@ -121,6 +121,29 @@ ADR reference: N/A
 
 ---
 
+## 2026-06-12
+
+### Staging Environment Setup
+
+**Summary:** Created Dev and QA staging environments with separate NEON databases.
+
+| Environment | Vercel Project | Branch | Database | Status |
+|-------------|---------------|--------|----------|--------|
+| Production | gorasa-next | main | Supabase | ✅ Active |
+| Development | dev-gorasa | dev | NEON gorasa-dev | ✅ Setup Complete |
+| QA | qa-gorasa | qa | NEON gorasa-qa | ✅ Setup Complete |
+
+**Data Migration:** 210 rows copied from Supabase to both NEON databases.
+
+**Remaining Steps:**
+1. Set Root Directory to `gorasa-next` for both Vercel projects
+2. Set Production Branch to `dev` for dev-gorasa
+3. Set Production Branch to `qa` for qa-gorasa
+4. Add environment variables for qa-gorasa (same as dev-gorasa but with NEON QA URLs)
+5. Deploy and verify
+
+---
+
 
 ## 2026-06-12
 
