@@ -251,15 +251,81 @@ export async function searchHotels(params: {
     PreferredCurrency: params.preferredCurrency || "INR",
     SearchedCities: params.city ? [params.city] : undefined,
   };
+
+  // If no hotels found in mock data, generate fallback for the city
   const mockRes = mock.mockSearchHotels(mockReq);
 
   if (mockRes.HotelResult.length === 0) {
-    return { hotels: [], traceId: "" };
+    // Generate fallback hotels for the city
+    const fallbackCity = params.city || "Unknown";
+    const fallbackHotels = mock.generateFallbackHotels(fallbackCity);
+    const fallbackResults = fallbackHotels.map(h => ({
+      HotelCode: String(h.code),
+      Currency: h.currency,
+      Rooms: h.rooms.map((r, ri) => ({
+        RoomID: [`${h.code}-${ri}`],
+        Name: [r.name],
+        BookingCode: `${h.code}!TB!${ri + 1}!TB!fallback`,
+        Inclusion: r.inclusion,
+        TotalFare: r.basePrice,
+        TotalTax: r.tax,
+        MealType: r.mealType,
+        IsRefundable: r.refundable,
+        DayRates: [[{ BasePrice: r.basePrice, ExtraGuest: 0, Child: 0 }]],
+        CancelPolicies: [],
+        Amenities: { Amenity: r.amenities },
+      })),
+    }));
+
+    const hotels = fallbackResults.map(h => {
+      const info = mock.getHotelInfoByCode(h.HotelCode);
+      const rooms: TBOHotelRoomDisplay[] = h.Rooms.map((r: any, ri: number) => ({
+        roomId: r.RoomID?.[0] || `${h.HotelCode}-${ri}`,
+        roomName: r.Name?.[0] || "Room",
+        name: r.Name?.[0] || "Room",
+        bookingCode: r.BookingCode || "",
+        mealType: r.MealType || "Room_Only",
+        isRefundable: r.IsRefundable ?? false,
+        totalFare: r.TotalFare || 0,
+        totalTax: r.TotalTax || 0,
+        inclusion: r.Inclusion || "",
+        dayRates: (r.DayRates?.[0] || []).map((dr: any) => ({ basePrice: dr.BasePrice || 0 })),
+        cancelPolicy: "Non Refundable",
+        cancellationPolicy: "Non Refundable",
+        roomIndex: ri + 1,
+        typeCode: "",
+        ratePlanCode: "",
+        roomFare: r.DayRates?.[0]?.[0]?.BasePrice || 0,
+        roomTax: r.TotalTax || 0,
+        currency: h.Currency,
+        amenities: r.Amenities?.Amenity || [],
+      }));
+
+      return {
+        hotelCode: Number(h.HotelCode) || 0,
+        name: info?.HotelName || `Hotel ${h.HotelCode}`,
+        hotelRating: info?.HotelRating || 3,
+        location: info?.CityName || fallbackCity,
+        currency: h.Currency,
+        minTotalFare: Math.min(...rooms.map(r => r.totalFare)),
+        rooms,
+        resultIndex: 1,
+        picture: info?.imageUrl || "",
+        rating: "ThreeStar",
+        address: "",
+        tripAdvisorRating: 0,
+        description: "",
+        price: Math.min(...rooms.map(r => r.totalFare)),
+        starRating: info?.HotelRating || 3,
+        originalPrice: Math.min(...rooms.map(r => r.totalFare)) * 1.2,
+        source: "fallback" as const,
+      };
+    });
+
+    return { hotels, traceId: "" };
   }
 
-  // Check if this is fallback data
-  const isFallback = mockRes.Status.Description === "Fallback";
-
+  // Mock data found - use it
   const hotels = mockRes.HotelResult.map(h => {
     const info = mock.getHotelInfoByCode(h.HotelCode);
     const location = info?.CityName || params.city || "";
@@ -309,7 +375,7 @@ export async function searchHotels(params: {
       price: Math.min(...rooms.map(r => r.totalFare)),
       starRating: info?.HotelRating || 3,
       originalPrice: Math.min(...rooms.map(r => r.totalFare)) * 1.2,
-      source: isFallback ? "fallback" as const : "mock" as const,
+      source: "mock" as const,
     };
   });
 
