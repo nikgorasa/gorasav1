@@ -2,7 +2,7 @@
 
 ## Environment Setup
 ```bash
-export TBO_USERNAME=RasaTAPI
+export TBO_USERNAME=RasaT
 export TBO_PASSWORD=RasaT@123
 export TBO_CLIENT_ID=ApiIntegrationNew
 export TBO_FLIGHT_FORCE_MOCK=false

@@ -10,8 +10,6 @@ hooks:
 
   - event: file.changed
     scope: main
-    conditions:
-      - matchesCodeFiles
     actions:
       - bash:
           command: "echo '=== GoRASA Documentation Check ===' && cd gorasa-next && if [ -f CHANGE-LOG.md ] && [ -f ../MEMORY.md ] && [ -f ../LEARNING-FROM-MISTAKES.md ] && [ -f ../DEPLOYMENT_LOG.md ]; then echo '✓ All governance docs exist'; else echo '⚠ Missing governance docs — run post-task checklist'; fi"

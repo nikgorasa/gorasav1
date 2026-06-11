@@ -232,6 +232,65 @@
 
 ---
 
+## Issue #7: TBO Hotel API Auth Mismatch (Wrong Endpoint + Wrong Credentials)
+
+**Date:** June 11, 2026
+**Duration:** ~3 hours
+**Severity:** High — blocked live hotel search
+
+### Symptoms
+- Hotel search endpoint returned `Status: 3` ("No Result") or empty results
+- Browser hotel search showed "No hotels found"
+- Auth endpoint returned success (TokenId), but hotel search with TokenId returned Status: 3
+- `api.tektravels.com` hotel endpoint returned `Status: 500` or `Method not found`
+- The `api.tbotechnology.in` endpoint returned `401 Unauthorized` with shared flight credentials
+
+### Root Cause (3 layers)
+
+1. **Wrong auth method** — The hotel API at `api.tbotechnology.in` uses **Basic Auth** (`Authorization: Basic base64`), NOT the TokenId-in-body pattern used by the flight API at `api.tektravels.com`
+   - Old code passed `TokenId` in the request body (flight pattern)
+   - Hotel API requires `UserName` + `Password` in the body AND Basic Auth header
+   
+2. **Wrong credentials** — The shared TBO flight credentials (`RasaT`/`RasaT@123`) are for `api.tektravels.com` only
+   - Hotel domain `api.tbotechnology.in` uses separate test credentials: `TBOStaticAPITest`/`Tbo@11530818`
+   - These are shared test credentials provided by TBO support, NOT our production account
+   
+3. **Wrong username** — Even the flight credentials had the wrong username: code used `RasaTAPI` but official TBO credentials are `RasaT`
+   - This caused flight authenticate endpoint to return `Status: 3`
+
+### Resolution Steps
+
+1. **Identified correct auth method** — Read TBO hotel API docs, confirmed Basic Auth pattern
+2. **Created dedicated hotel API module**:
+   - `tbo-hotel-types.ts` — typed interfaces for Search/PreBook/Book requests and responses
+   - `tbo-hotel-api.ts` — raw HTTP client with Basic Auth, handles XML envelope for static data
+   - `tbo-hotel-client.ts` — orchestrator with auth cache, search→prebook→book pipeline
+3. **Corrected credentials**:
+   - Added `TBO_HOTEL_USERNAME`/`TBO_HOTEL_PASSWORD` to `.env.local` for hotel API
+   - Fixed flight username from `RasaTAPI` to `RasaT` in `.env.local` and TBO hotel client
+4. **Updated `.env.local`** with both credential sets
+5. **Verified hotel search** returned rooms for Goa/Mumbai/Delhi
+6. **PreBook tested** — returns "Insufficient Balance" (expected for test credentials)
+
+### Lessons Learned
+
+1. **Never assume auth method** — Different API endpoints for the same provider can use completely different auth schemes (TokenId vs Basic Auth)
+2. **Check domain ownership** — `api.tektravels.com` (flight) and `api.tbotechnology.in` (hotel) are different companies; they don't share auth
+3. **Verify credentials with TBO support** — The username `RasaTAPI` was a guess; official creds are `RasaT`
+4. **Read the API docs carefully** — Hotel API docs specify Basic Auth + `UserName`/`Password` in body, not TokenId
+5. **Test each endpoint in isolation** — curl hotel endpoint directly before integrating into full pipeline
+6. **Separate env vars for separate APIs** — Don't reuse `TBO_USERNAME`/`TBO_PASSWORD` for both flight and hotel
+7. **Use base64 encoding correctly** — `Buffer.from(`${user}:${pass}`).toString('base64')` for Basic Auth
+
+### Prevention Measures
+1. Always read the API documentation for auth method before coding
+2. Test each credential set independently with curl before integrating
+3. Use separate env var names for separate API providers (`TBO_HOTEL_*` vs `TBO_*`)
+4. Add API doc reference to code comments
+5. When TBO support provides test credentials, use them verbatim — don't substitute production creds
+
+---
+
 | Issue | Duration | Root Cause |
 |-------|----------|------------|
 | Homepage carousels blank | ~8 hours | Multiple issues (column casing, Footer, Promise.all, motion opacity) |
@@ -240,7 +299,8 @@
 | Supabase free tier limits | ~1 hour | Direct browser queries |
 | Hotel images not loading | ~2 hours | Frontend not consuming API `picture` field |
 | Demo login broken | ~2 hours | Phase 1: Supabase Auth used instead of direct DB lookup; Phase 2: Anon key used as service key (RLS blocked); Phase 3: Service key JWT signature stale |
-| **Total** | **~21 hours** | |
+| TBO Hotel API auth mismatch | ~3 hours | Wrong auth method (TokenId vs Basic), wrong creds (shared flight vs dedicated hotel), wrong username |
+| **Total** | **~24 hours** | |
 
 ---
 
@@ -258,3 +318,10 @@
 10. **Follow governance protocol** — Read Sprint-1.md, LEARNING-FROM-MISTAKES.md, CONFIG-REFERENCE.md first
 11. **JWT signatures can go stale independently of the payload** — If "Invalid API key" appears, the JWT secret may have been rotated; get a fresh key from the Supabase dashboard
 12. **Test Supabase keys locally before deploying** — `createClient(url, key).from('User').select()` instantly reveals invalid keys vs. RLS issues
+13. **Never assume auth method** — Different API endpoints from the same provider can use completely different auth schemes (TokenId vs Basic Auth)
+14. **Check domain ownership** — Flight (`api.tektravels.com`) and hotel (`api.tbotechnology.in`) run on different domains with different auth
+15. **Verify credentials with support** — Don't guess usernames; get the exact string from the provider
+16. **Read API docs before coding** — Saves hours of guessing auth patterns
+17. **Use separate env vars for separate APIs** — Don't overload one set of vars for two providers (`TBO_HOTEL_*` vs `TBO_*`)
+18. **Test each endpoint with curl first** — Isolates auth issues from integration issues
+19. **Test credentials mean no balance** — "Insufficient Balance" on PreBook is expected for test creds; not a bug
