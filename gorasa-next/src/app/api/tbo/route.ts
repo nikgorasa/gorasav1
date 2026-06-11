@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  searchHotels as searchHotelsNew,
-  preBook,
-  bookHotel as bookHotelNew,
-  setLastHotelResults,
-} from "@/lib/tbo-hotel-client";
+  searchFlights,
+  getFareRule,
+  getFareQuote,
+  bookFlight,
+  ticketFlight,
+  getBookingDetail,
+} from "@/lib/tbo-flight-client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,53 +16,77 @@ export async function POST(req: NextRequest) {
     switch (action) {
       case "search": {
         const p = body.params || {};
-        const roomsArray = (p.RoomGuests || [{ AdultCount: 1, ChildCount: 0 }]).map(
-          (r: { AdultCount: number; ChildCount: number }) => ({
-            adults: r.AdultCount || 1,
-            children: r.ChildCount || 0,
-            childrenAges: [],
-          }),
-        );
-        const result = await searchHotelsNew({
-          checkIn: p.CheckInDate,
-          checkOut: p.CheckOutDate,
-          city: p.CityName,
-          rooms: roomsArray,
-          preferredCurrency: p.PreferredCurrencyCode || "INR",
+        const tripType = p.tripType || p.TripType || "OneWay";
+        const journeyType = tripType === "Return" ? 2 : tripType === "Circle" ? 3 : 1;
+        const result = await searchFlights({
+          Origin: p.origin || p.Origin || "",
+          Destination: p.destination || p.Destination || "",
+          AdultCount: p.adults || p.AdultCount || 1,
+          ChildCount: p.children || p.ChildCount || 0,
+          InfantCount: p.infants || p.InfantCount || 0,
+          JourneyType: journeyType,
+          PreferredDepartureTime: p.departureDate || p.DepartureDate || "",
         });
         return NextResponse.json(result);
       }
 
-      case "rooms": {
-        const { hotelCode } = body;
-        return NextResponse.json({ hotelCode, rooms: [] });
+      case "fare-rule": {
+        const p = body.params || body;
+        if (!p.traceId || !p.resultIndex) {
+          return NextResponse.json({ error: "traceId and resultIndex required" }, { status: 400 });
+        }
+        const result = await getFareRule({ traceId: p.traceId, resultIndex: p.resultIndex });
+        return NextResponse.json(result);
       }
 
-      case "block": {
-        const { bookingCode } = body;
-        if (!bookingCode) {
-          return NextResponse.json({ error: "bookingCode required" }, { status: 400 });
+      case "fare-quote": {
+        const p = body.params || body;
+        if (!p.traceId || !p.resultIndex) {
+          return NextResponse.json({ error: "traceId and resultIndex required" }, { status: 400 });
         }
-        const result = await preBook({ bookingCode });
+        const result = await getFareQuote({ traceId: p.traceId, resultIndex: p.resultIndex });
         return NextResponse.json(result);
       }
 
       case "book": {
-        const {
-          bookingCode, guestNationality, netAmount, hotelRoomsDetails,
-        } = body;
-        if (!bookingCode || !hotelRoomsDetails) {
-          return NextResponse.json(
-            { error: "bookingCode and hotelRoomsDetails required" },
-            { status: 400 },
-          );
+        const p = body.params || body;
+        if (!p.traceId || !p.resultIndex || !p.passengers) {
+          return NextResponse.json({ error: "traceId, resultIndex, passengers required" }, { status: 400 });
         }
-        const result = await bookHotelNew({
-          bookingCode,
-          guestNationality: guestNationality || "IN",
-          netAmount: netAmount || 0,
-          hotelRoomsDetails,
+        const result = await bookFlight({
+          traceId: p.traceId,
+          resultIndex: p.resultIndex,
+          passengers: p.passengers,
         });
+        return NextResponse.json(result);
+      }
+
+      case "ticket": {
+        const p = body.params || body;
+        if (!p.traceId || !p.passengers || !p.segments || !p.fare || !p.fareBreakdown) {
+          return NextResponse.json({ error: "traceId, passengers, segments, fare, fareBreakdown required" }, { status: 400 });
+        }
+        const result = await ticketFlight({
+          traceId: p.traceId,
+          resultIndex: p.resultIndex,
+          PNR: p.pnr,
+          BookingId: p.bookingId,
+          passengers: p.passengers,
+          segments: p.segments,
+          fare: p.fare,
+          fareBreakdown: p.fareBreakdown,
+          isLCC: p.isLCC ?? false,
+        });
+        return NextResponse.json(result);
+      }
+
+      case "booking-detail": {
+        const p = body.params || body;
+        if (!p.bookingIds && !p.bookingId) {
+          return NextResponse.json({ error: "bookingIds or bookingId required" }, { status: 400 });
+        }
+        const ids = p.bookingIds || [p.bookingId];
+        const result = await getBookingDetail({ bookingIds: ids });
         return NextResponse.json(result);
       }
 
@@ -68,7 +94,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
     }
   } catch (e) {
-    console.error("TBO API route error:", e);
+    console.error("TBO flight API route error:", e);
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 },
