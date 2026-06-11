@@ -1,16 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { addTicketNote, getTicketNotes } from "@/lib/ticket/serverManager";
 
 export async function GET(
-  request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const { searchParams } = new URL(request.url);
-    const includeInternal = searchParams.get("includeInternal") === "true";
-
-    const notes = await getTicketNotes(id, includeInternal);
+    const notes = await getTicketNotes(id, true);
     return NextResponse.json(notes);
   } catch (error) {
     console.error("Failed to fetch notes:", error);
@@ -19,33 +16,29 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const body = await request.json();
+    const { content, author, authorRole, isInternal } = body;
 
-    const { author, authorRole, content, isInternal } = body;
-
-    if (!author || !authorRole || !content) {
-      return NextResponse.json(
-        { error: "Author, authorRole, and content are required" },
-        { status: 400 }
-      );
+    if (!content || !author) {
+      return NextResponse.json({ error: "content and author are required" }, { status: 400 });
     }
 
     const note = await addTicketNote({
       ticketId: id,
       author,
-      authorRole,
+      authorRole: authorRole || "agent",
       content,
-      isInternal,
+      isInternal: isInternal || false,
     });
 
     return NextResponse.json(note, { status: 201 });
   } catch (error) {
-    console.error("Failed to add note:", error);
-    return NextResponse.json({ error: "Failed to add note" }, { status: 500 });
+    console.error("Failed to create note:", error);
+    return NextResponse.json({ error: "Failed to create note" }, { status: 500 });
   }
 }

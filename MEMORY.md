@@ -1,7 +1,7 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-12 12:30 IST
+> **Last updated:** 2026-06-12 08:20 IST
 
 ---
 
@@ -48,6 +48,7 @@
 | Ticket user_id type | TEXT (not UUID) — app uses string IDs from own User table, not Supabase Auth | 2026-06-12 |
 | AI Holiday Planner | Integrated to /holidays route (was at /planner) | 2026-06-12 |
 | Governance hooks | session.start + session.idle + session.end enforce preflight + post-task | 2026-06-12 |
+| Admin CRUD | Full CRUD on all 12 admin pages (corporate, B2B, loyalty, tickets, AI leads) | 2026-06-12 |
 | Post-task checks | 15 compulsory checks (docs, env, TSC, build, DB, RLS, API, components, hooks) | 2026-06-12 |
 | Support page tickets | Tabbed UI (AI Chat + My Tickets), auth-gated form, POST /api/tickets | 2026-06-12 |
 | Pre-flight checks | 10 compulsory checks (docs, env, TSC, git, critical files, hooks) | 2026-06-12 |
@@ -104,6 +105,9 @@
 | `gorasa-next/src/app/api/tickets/route.ts` | Ticket list/create API |
 | `gorasa-next/src/app/api/tickets/[id]/route.ts` | Single ticket GET/PATCH API |
 | `gorasa-next/src/app/api/tickets/[id]/notes/route.ts` | Ticket notes GET/POST API |
+| `gorasa-next/src/app/api/leads/assignable-users/route.ts` | Assignable users for lead assignment | 2026-06-12 |
+| `gorasa-next/src/app/api/rewards/[id]/route.ts` | Loyalty rewards PATCH/DELETE API | 2026-06-12 |
+| `gorasa-next/src/app/api/corporate-rates/[id]/route.ts` | Corporate rates PATCH/DELETE API | 2026-06-12 |
 | `gorasa-next/src/app/admin/tickets/page.tsx` | Admin ticket dashboard |
 | `gorasa-next/src/lib/ai/holidayPlanner.ts` | Rule-based holiday planner (no API key needed) |
 | `gorasa-next/src/lib/ai/holidayPlannerAI.ts` | AI-powered holiday planner (requires API key) |
@@ -242,3 +246,31 @@ Work completed:
 
 ---
 
+
+### Session 2026-06-12 — Admin Navigation Full CRUD Implementation
+
+**Duration:** ~1 hour
+**Problem:** Admin pages had UI but missing backend CRUD operations (PATCH/DELETE routes, create forms, edit/delete capabilities).
+
+**Changes:**
+1. Created `api/corporate-rates/[id]/route.ts` — PATCH + DELETE for corporate rates
+2. Created `api/rewards/[id]/route.ts` — PATCH + DELETE for loyalty rewards
+3. Created `api/tickets/[id]/notes/route.ts` — GET + POST for admin ticket notes (uses existing serverManager)
+4. Created `api/leads/assignable-users/route.ts` — GET list of SALES/ADMIN users for assignment
+5. Extended `api/companies/route.ts` — Added POST for company creation
+6. Extended `api/companies/[id]/route.ts` — Extended PATCH to all fields + added DELETE
+7. Extended `api/rewards/route.ts` — Added POST + `?all=true` param for admin view
+8. Updated `admin/corporate/page.tsx` — Company dropdown, inline edit, delete
+9. Updated `admin/b2b/page.tsx` — Company create/edit/delete UI
+10. Updated `admin/loyalty/page.tsx` — Admin mode toggle with full CRUD for rewards
+11. Updated `admin/tickets/page.tsx` — Priority dropdown, admin notes, archive (no delete)
+12. Updated `admin/ai-leads/page.tsx` — Stage update buttons, assignment dropdown
+
+**Key Decisions:**
+- Tickets: Archive only (status → "closed"), no hard delete per user requirement
+- Tickets notes: Uses existing `ticket_notes` table via serverManager (not a new table)
+- Corporate rates: Company selector dropdown replaces raw companyId text input
+- Rewards: Admin mode toggle keeps customer-facing catalog clean while enabling management
+- AI Leads: Reuses same PATCH pattern as regular leads for stage/assignment updates
+
+**Status:** All 12 admin pages now have full CRUD. TypeScript compiles, build succeeds, 15/15 post-task checks pass.
