@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
 import Link from "next/link";
-import { LayoutDashboard, BarChart3, Package, Tag, Star, Building2, Users, Settings } from "lucide-react";
+import { LayoutDashboard, BarChart3, Package, Tag, Star, Building2, Users, Settings, DollarSign } from "lucide-react";
 
 const ADMIN_ICONS: Record<string, React.ReactNode> = {
   LayoutDashboard: <LayoutDashboard size={18} />,
@@ -17,6 +17,7 @@ const ADMIN_ICONS: Record<string, React.ReactNode> = {
   Building2: <Building2 size={18} />,
   Users: <Users size={18} />,
   Settings: <Settings size={18} />,
+  DollarSign: <DollarSign size={18} />,
 };
 
 export default function AdminLayout({

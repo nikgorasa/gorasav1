@@ -111,17 +111,19 @@ export async function searchFlights(params: {
           },
         ],
       };
-      const res = await api.searchFlights(tokenId, searchReq);
+          const res = await api.searchFlights(tokenId, searchReq);
       if (res.Response?.ResponseStatus === 1) {
-        const flights = res.Response.Results.map(r => {
-          const isReturn = params.JourneyType === 2 || params.JourneyType === 5;
-          const tripInd = r.Segments[0]?.TripIndicator ?? 1;
-          let leg: "outbound" | "inbound" | "oneway";
-          if (!isReturn) leg = "oneway";
-          else if (tripInd === 1) leg = "outbound";
-          else leg = "inbound";
-          return toDisplay(r, leg);
-        });
+        const flights = await Promise.all(
+          res.Response.Results.map(async (r) => {
+            const isReturn = params.JourneyType === 2 || params.JourneyType === 5;
+            const tripInd = r.Segments[0]?.TripIndicator ?? 1;
+            let leg: "outbound" | "inbound" | "oneway";
+            if (!isReturn) leg = "oneway";
+            else if (tripInd === 1) leg = "outbound";
+            else leg = "inbound";
+            return toDisplay(r, leg);
+          })
+        );
         return { flights, traceId: res.Response.TraceId };
       }
       throw new Error(`TBO search failed: ${res.Response?.ResponseStatus}`);
@@ -138,15 +140,17 @@ export async function searchFlights(params: {
     JourneyType: params.JourneyType,
     PreferredDepartureTime: params.PreferredDepartureTime,
   });
-  const flights = mockRes.Response.Results.map(r => {
-    const isReturn = params.JourneyType === 2 || params.JourneyType === 5;
-    const tripInd = r.Segments[0]?.TripIndicator ?? 1;
-    let leg: "outbound" | "inbound" | "oneway";
-    if (!isReturn) leg = "oneway";
-    else if (tripInd === 1) leg = "outbound";
-    else leg = "inbound";
-    return toDisplay(r, leg);
-  });
+  const flights = await Promise.all(
+    mockRes.Response.Results.map(async (r) => {
+      const isReturn = params.JourneyType === 2 || params.JourneyType === 5;
+      const tripInd = r.Segments[0]?.TripIndicator ?? 1;
+      let leg: "outbound" | "inbound" | "oneway";
+      if (!isReturn) leg = "oneway";
+      else if (tripInd === 1) leg = "outbound";
+      else leg = "inbound";
+      return toDisplay(r, leg);
+    })
+  );
   return { flights, traceId: mockRes.Response.TraceId };
 }
 
