@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/lib";
 import { Plane, Search, Calendar, Users, ArrowRight, Star, Clock, Luggage, X, Loader2 } from "lucide-react";
 import FlightBookingModal from "@/components/FlightBookingModal";
+import CitySearchDropdown from "@/components/CitySearchDropdown";
 
 interface Flight {
   id: string;
@@ -37,16 +38,6 @@ export default function FlightsPage() {
   const [searching, setSearching] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [cities, setCities] = useState<string[]>([]);
-  const [citiesLoading, setCitiesLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/cities?type=domestic")
-      .then((r) => r.json())
-      .then((data) => setCities(Array.isArray(data) ? data.map((c: { name: string }) => c.name) : []))
-      .catch(() => setCities(["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata"]))
-      .finally(() => setCitiesLoading(false));
-  }, []);
 
   const handleSearch = async () => {
     setSearching(true);
@@ -115,30 +106,18 @@ export default function FlightsPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="relative">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">From</label>
-                  <select
-                    value={origin}
-                    onChange={(e) => setOrigin(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    {citiesLoading ? <option>Loading...</option> : cities.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="relative">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">To</label>
-                  <select
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    {citiesLoading ? <option>Loading...</option> : cities.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
+                <CitySearchDropdown
+                  value={origin}
+                  onChange={setOrigin}
+                  placeholder="Search cities..."
+                  label="From"
+                />
+                <CitySearchDropdown
+                  value={destination}
+                  onChange={setDestination}
+                  placeholder="Search cities..."
+                  label="To"
+                />
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Date</label>
                   <input

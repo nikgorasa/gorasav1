@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/lib";
 import { Building2, Search, MapPin, X, Star, Wifi, Coffee, Car, Loader2, ChevronDown, ChevronUp, Bed, Users } from "lucide-react";
 import HotelBookingModal from "@/components/HotelBookingModal";
+import CitySearchDropdown from "@/components/CitySearchDropdown";
 import type { TBODisplayHotel, TBODisplayRoom } from "@/lib/tbo-hotel-types";
 
 const STAR_LABELS: Record<string, string> = {
@@ -40,16 +41,6 @@ export default function HotelsPage() {
   const [sessionId, setSessionId] = useState("");
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [error, setError] = useState("");
-  const [cities, setCities] = useState<string[]>([]);
-  const [citiesLoading, setCitiesLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/cities")
-      .then((r) => r.json())
-      .then((data) => setCities(Array.isArray(data) ? data.map((c: { name: string }) => c.name) : []))
-      .catch(() => setCities(["Goa", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Maldives", "Dubai", "Singapore", "Bangkok", "Kuala Lumpur"]))
-      .finally(() => setCitiesLoading(false));
-  }, []);
 
   const handleSearch = async () => {
     if (!location) return;
@@ -161,18 +152,12 @@ export default function HotelsPage() {
               className="bg-white rounded-2xl p-5 shadow-xl"
             >
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Location</label>
-                  <select
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-                  >
-                    {citiesLoading ? <option>Loading...</option> : cities.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
+                <CitySearchDropdown
+                  value={location}
+                  onChange={setLocation}
+                  placeholder="Search cities..."
+                  label="Location"
+                />
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Check-in</label>
                   <input
