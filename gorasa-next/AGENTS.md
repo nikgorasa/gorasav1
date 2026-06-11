@@ -7,6 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ---
 
 <!-- BEGIN:gorasa-governance -->
+
 # GoRASA Project Governance
 
 > **This governance framework is MANDATORY for all work on this project.**  
@@ -81,31 +82,31 @@ If making significant architectural decisions, create an ADR in `../docs/adr/`:
 ## Enforcement Rules
 
 ### Rule 1: No Changes Without Context
-**Never make significant changes without:**
+**Never** make significant changes without:
 - Reading project documentation
 - Understanding current state
 - Generating context brief
 
 ### Rule 2: Document All Issues
-**Every issue that takes >30 minutes to debug must be documented in:**
+**Every** issue that takes >30 minutes to debug must be documented in:
 - LEARNING-FROM-MISTAKES.md
 - With complete root cause analysis
 - With prevention measures
 
 ### Rule 3: Track All Deployments
-**Every deployment must be logged in:**
+**Every** deployment must be logged in:
 - DEPLOYMENT_LOG.md
 - With commit SHA and status
 - With production URL
 
 ### Rule 4: Architectural Decisions Need ADRs
-**Any significant architectural decision requires:**
+**Any** significant architectural decision requires:
 - ADR in docs/adr/ directory
 - Proper status tracking
 - Consequences documented
 
 ### Rule 5: Verification Before Completion
-**Before marking work complete:**
+**Before** marking work complete:
 - TypeScript compilation must pass
 - All tests must pass
 - Documentation must be updated
@@ -184,4 +185,17 @@ This governance framework works across all AI models because:
 ---
 
 *This framework ensures consistent, auditable, and model-agnostic development practices for the GoRASA project.*
+
+---
+
+## GoRASA Governance Skill
+
+For programmatic governance, use the **gorasa-governance** skill which provides:
+
+- Automated governance protocol enforcement
+- Pre-flight and post-task validation scripts
+- Comprehensive documentation guidance
+- Model-agnostic compliance tracking
+
+This skill complements the manual governance protocol with executable validation and automation capabilities.
 <!-- END:gorasa-governance -->
