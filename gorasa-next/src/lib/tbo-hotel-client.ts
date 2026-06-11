@@ -252,11 +252,13 @@ export async function searchHotels(params: {
     SearchedCities: params.city ? [params.city] : undefined,
   };
 
-  // If no hotels found in mock data, generate fallback for the city
   const mockRes = mock.mockSearchHotels(mockReq);
 
-  if (mockRes.HotelResult.length === 0) {
-    // Generate fallback hotels for the city
+  // Check if mock returned fallback hotels (no real inventory for this city)
+  const isFallback = mockRes.Status.Description === "Fallback";
+
+  if (isFallback) {
+    // Use fallback hotels with correct city name
     const fallbackCity = params.city || "Unknown";
     const fallbackHotels = mock.generateFallbackHotels(fallbackCity);
     const fallbackResults = fallbackHotels.map(h => ({

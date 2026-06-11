@@ -38,7 +38,7 @@ REQUIRED_DOCS=(
     "../CONFIG-REFERENCE.md"
     "../DEPLOYMENT_LOG.md"
     "../MEMORY.md"
-    "CHANGE-LOG.md"
+    "../CHANGE-LOG.md"
 )
 
 MISSING_DOCS=()
@@ -52,7 +52,7 @@ done
 
 if [[ ${#MISSING_DOCS[@]} -gt 0 ]]; then
     print_error "Missing required documentation files: ${MISSING_DOCS[*]}"
-    print_error "Run: cat ../Sprint-1.md ../LEARNING-FROM-MISTAKES.md ../CONFIG-REFERENCE.md ../DEPLOYMENT_LOG.md ../MEMORY.md"
+    print_error "Run: cat ../Sprint-1.md ../LEARNING-FROM-MISTAKES.md ../CONFIG-REFERENCE.md ../DEPLOYMENT_LOG.md ../MEMORY.md ../CHANGE-LOG.md"
     exit 1
 fi
 
