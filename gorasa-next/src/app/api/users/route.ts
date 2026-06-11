@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,6 +65,41 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Users fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { email, name, role, companyId } = body;
+
+    if (!email || !name) {
+      return NextResponse.json({ error: "email and name are required" }, { status: 400 });
+    }
+
+    const { data: user, error } = await supabase
+      .from("User")
+      .insert({
+        email,
+        name,
+        role: role || "CUSTOMER",
+        companyId: companyId || null,
+        isActive: true,
+        walletBalance: 0,
+        loyaltyPoints: 0,
+        loyaltyTier: "Silver",
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("User create error:", error);
+      return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
+    }
+
+    return NextResponse.json(user, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }
 
