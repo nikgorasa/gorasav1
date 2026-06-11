@@ -1,0 +1,57 @@
+name: Deploy to QA
+
+on:
+  push:
+    branches: [qa]
+
+concurrency:
+  group: qa-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Production – qa-gorasa
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: gorasa-next/package-lock.json
+
+      - name: Install dependencies
+        working-directory: gorasa-next
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: gorasa-next
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Build
+        working-directory: gorasa-next
+        run: npx next build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          TBO_USERNAME: ${{ secrets.TBO_USERNAME }}
+          TBO_PASSWORD: ${{ secrets.TBO_PASSWORD }}
+          TBO_HOTEL_USERNAME: ${{ secrets.TBO_HOTEL_USERNAME }}
+          TBO_HOTEL_PASSWORD: ${{ secrets.TBO_HOTEL_PASSWORD }}
+          TBO_ENDPOINT: ${{ secrets.TBO_ENDPOINT }}
+
+      - name: Deploy to Vercel
+        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: gorasa-next
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_QA_PROJECT_ID }}
