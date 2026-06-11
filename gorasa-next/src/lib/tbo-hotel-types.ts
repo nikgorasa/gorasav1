@@ -34,9 +34,9 @@ export interface TBOHotelSearchRequest {
   HotelCodes: string;
   GuestNationality: string;
   PaxRooms: TBOHotelPaxRoom[];
-  EndUserIp: string;
-  TokenId: string;
-  PreferredCurrency: string;
+  EndUserIp?: string;
+  TokenId?: string;
+  PreferredCurrency?: string;
   IsNearBySearch?: boolean;
   MaxRating?: number;
   MinRating?: number;
@@ -96,9 +96,9 @@ export interface TBOHotelSearchResponse {
 
 export interface TBOHotelPreBookRequest {
   BookingCode: string;
-  EndUserIp: string;
-  TokenId: string;
-  TraceId: string;
+  EndUserIp?: string;
+  TokenId?: string;
+  TraceId?: string;
 }
 
 export interface TBOHotelValidationInfo {
@@ -171,9 +171,9 @@ export interface TBOHotelBookRequest {
   BookingCode: string;
   IsVoucherBooking: boolean;
   GuestNationality: string;
-  EndUserIp: string;
-  TokenId: string;
-  TraceId: string;
+  EndUserIp?: string;
+  TokenId?: string;
+  TraceId?: string;
   NetAmount: number;
   HotelRoomsDetails: TBOHotelRoomDetail[];
 }
@@ -203,8 +203,8 @@ export interface TBOHotelBookResponse {
 }
 
 export interface TBOHotelBookingDetailRequest {
-  EndUserIp: string;
-  TokenId: string;
+  EndUserIp?: string;
+  TokenId?: string;
   BookingId?: number;
   TraceId?: string;
 }

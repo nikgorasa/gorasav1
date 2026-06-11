@@ -10,9 +10,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { action } = body;
-    const endUserIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-      || req.headers.get("x-real-ip")
-      || "192.168.1.1";
 
     switch (action) {
       case "search": {
@@ -30,7 +27,6 @@ export async function POST(req: NextRequest) {
           city: p.CityName,
           rooms: roomsArray,
           preferredCurrency: p.PreferredCurrencyCode || "INR",
-          EndUserIp: endUserIp,
         });
         return NextResponse.json(result);
       }
@@ -45,7 +41,7 @@ export async function POST(req: NextRequest) {
         if (!bookingCode) {
           return NextResponse.json({ error: "bookingCode required" }, { status: 400 });
         }
-        const result = await preBook({ bookingCode, EndUserIp: endUserIp });
+        const result = await preBook({ bookingCode });
         return NextResponse.json(result);
       }
 
@@ -64,7 +60,6 @@ export async function POST(req: NextRequest) {
           guestNationality: guestNationality || "IN",
           netAmount: netAmount || 0,
           hotelRoomsDetails,
-          EndUserIp: endUserIp,
         });
         return NextResponse.json(result);
       }

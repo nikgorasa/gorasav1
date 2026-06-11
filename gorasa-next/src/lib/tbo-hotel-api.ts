@@ -15,17 +15,17 @@ import type {
   TBOHotelDetail,
 } from "./tbo-hotel-types";
 
-const AUTH_URL = "http://Sharedapi.tektravels.com/SharedData.svc/rest/Authenticate";
-const SEARCH_URL = "https://affiliate.tektravels.com/HotelAPI/Search";
-const PREBOOK_URL = "https://affiliate.tektravels.com/HotelAPI/PreBook";
-const BOOK_URL = "https://HotelBE.tektravels.com/hotelservice.svc/rest/book/";
-const BOOKING_DETAIL_URL = "https://affiliate.tektravels.com/HotelAPI/GetBookingDetail";
-const STATIC_BASE = "http://api.tbotechnology.in/TBOHolidays_HotelAPI";
+const BASE_URL = "https://api.tbotechnology.in/TBOHolidays_HotelAPI";
+
+const HOTEL_USERNAME = process.env.TBO_HOTEL_USERNAME || "TBOStaticAPITest";
+const HOTEL_PASSWORD = process.env.TBO_HOTEL_PASSWORD || "Tbo@11530818";
+
+const AUTH_HEADER = { Authorization: `Basic ${btoa(`${HOTEL_USERNAME}:${HOTEL_PASSWORD}`)}` };
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH_HEADER },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -37,7 +37,7 @@ async function post<T>(url: string, body: unknown): Promise<T> {
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH_HEADER },
   });
   if (!res.ok) {
     throw new Error(`TBO Hotel HTTP GET ${res.status}: ${res.statusText}`);
@@ -46,37 +46,37 @@ async function get<T>(url: string): Promise<T> {
 }
 
 export function authenticate(req: TBOHotelAuthRequest): Promise<TBOHotelAuthResponse> {
-  return post<TBOHotelAuthResponse>(AUTH_URL, req);
+  return post<TBOHotelAuthResponse>(`${BASE_URL}/Authenticate`, req);
 }
 
 export function searchHotels(req: TBOHotelSearchRequest): Promise<TBOHotelSearchResponse> {
-  return post<TBOHotelSearchResponse>(SEARCH_URL, req);
+  return post<TBOHotelSearchResponse>(`${BASE_URL}/Search`, req);
 }
 
 export function preBook(req: TBOHotelPreBookRequest): Promise<TBOHotelPreBookResponse> {
-  return post<TBOHotelPreBookResponse>(PREBOOK_URL, req);
+  return post<TBOHotelPreBookResponse>(`${BASE_URL}/PreBook`, req);
 }
 
 export function bookHotel(req: TBOHotelBookRequest): Promise<TBOHotelBookResponse> {
-  return post<TBOHotelBookResponse>(BOOK_URL, req);
+  return post<TBOHotelBookResponse>(`${BASE_URL}/Book`, req);
 }
 
 export function getBookingDetail(req: TBOHotelBookingDetailRequest): Promise<TBOHotelBookingDetailResponse> {
-  return post<TBOHotelBookingDetailResponse>(BOOKING_DETAIL_URL, req);
+  return post<TBOHotelBookingDetailResponse>(`${BASE_URL}/GetBookingDetail`, req);
 }
 
 export function getCountries(): Promise<TBOHotelCountry[]> {
-  return get<TBOHotelCountry[]>(`${STATIC_BASE}/CountryList`);
+  return get<TBOHotelCountry[]>(`${BASE_URL}/CountryList`);
 }
 
 export function getCities(countryCode: string): Promise<TBOHotelCity[]> {
-  return get<TBOHotelCity[]>(`${STATIC_BASE}/CityList?CountryCode=${countryCode}`);
+  return get<TBOHotelCity[]>(`${BASE_URL}/CityList?CountryCode=${countryCode}`);
 }
 
 export function getHotelCodeList(cityCode: string): Promise<TBOHotelCodeItem[]> {
-  return get<TBOHotelCodeItem[]>(`${STATIC_BASE}/TBOHotelCodeList?CityCode=${cityCode}`);
+  return get<TBOHotelCodeItem[]>(`${BASE_URL}/TBOHotelCodeList?CityCode=${cityCode}`);
 }
 
 export function getHotelDetails(hotelCode: string): Promise<TBOHotelDetail> {
-  return get<TBOHotelDetail>(`${STATIC_BASE}/HotelDetails?HotelCode=${hotelCode}`);
+  return get<TBOHotelDetail>(`${BASE_URL}/HotelDetails?HotelCode=${hotelCode}`);
 }

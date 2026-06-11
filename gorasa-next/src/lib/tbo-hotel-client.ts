@@ -1,5 +1,4 @@
 import type {
-  TBOHotelAuthRequest,
   TBOHotelSearchRequest,
   TBOHotelPreBookRequest,
   TBOHotelBookRequest,
@@ -10,40 +9,12 @@ import type {
   TBOHotelPreBookOutput,
   TBOHotelBookOutput,
   TBOHotelBookingDetailOutput,
-  TBOHotelPaxRoom,
 } from "./tbo-hotel-types";
 import * as api from "./tbo-hotel-api";
 import * as mock from "./tbo-hotel-mock";
 
-const hasCredentials = !!(process.env.TBO_USERNAME && process.env.TBO_PASSWORD)
+const hasCredentials = !!(process.env.TBO_HOTEL_USERNAME && process.env.TBO_HOTEL_PASSWORD)
   && process.env.TBO_HOTEL_FORCE_MOCK !== "true";
-
-const CLIENT_ID = process.env.TBO_CLIENT_ID || "ApiIntegrationNew";
-
-let cachedToken: { tokenId: string; date: string } | null = null;
-
-function getEndUserIp(): string {
-  return "192.168.1.1";
-}
-
-async function ensureToken(): Promise<string> {
-  const today = new Date().toISOString().slice(0, 10);
-  if (cachedToken?.date === today) {
-    return cachedToken.tokenId;
-  }
-  const req: TBOHotelAuthRequest = {
-    ClientId: CLIENT_ID,
-    UserName: process.env.TBO_USERNAME || "",
-    Password: process.env.TBO_PASSWORD || "",
-    EndUserIp: getEndUserIp(),
-  };
-  const res = await api.authenticate(req);
-  if (res.Status !== 1) {
-    throw new Error(`TBO Hotel auth failed: Status=${res.Status} ${res.Error?.ErrorMessage || ""}`);
-  }
-  cachedToken = { tokenId: res.TokenId, date: today };
-  return res.TokenId;
-}
 
 function toDisplay(
   h: { HotelCode: number; Currency: string; Rooms: any[] },
@@ -112,19 +83,15 @@ export async function searchHotels(params: {
   rooms: { adults: number; children: number; childrenAges: number[] }[];
   guestNationality?: string;
   preferredCurrency?: string;
-  EndUserIp?: string;
 }): Promise<TBOHotelSearchOutput> {
   if (hasCredentials) {
     try {
-      const tokenId = await ensureToken();
       const searchReq: TBOHotelSearchRequest = {
         CheckIn: params.checkIn,
         CheckOut: params.checkOut,
         HotelCodes: params.hotelCodes || "",
         GuestNationality: params.guestNationality || "IN",
         PaxRooms: params.rooms.map(r => ({ Adults: r.adults, Children: r.children, ChildrenAges: r.childrenAges })),
-        EndUserIp: params.EndUserIp || getEndUserIp(),
-        TokenId: tokenId,
         PreferredCurrency: params.preferredCurrency || "INR",
         SearchedCities: params.city ? [params.city] : undefined,
       };
@@ -145,8 +112,6 @@ export async function searchHotels(params: {
     HotelCodes: params.hotelCodes || "",
     GuestNationality: params.guestNationality || "IN",
     PaxRooms: params.rooms.map(r => ({ Adults: r.adults, Children: r.children, ChildrenAges: r.childrenAges })),
-    EndUserIp: params.EndUserIp || getEndUserIp(),
-    TokenId: "",
     PreferredCurrency: params.preferredCurrency || "INR",
     SearchedCities: params.city ? [params.city] : undefined,
   };
@@ -213,16 +178,11 @@ export async function searchHotels(params: {
 
 export async function preBook(params: {
   bookingCode: string;
-  EndUserIp?: string;
 }): Promise<TBOHotelPreBookOutput> {
   if (hasCredentials) {
     try {
-      const tokenId = await ensureToken();
       const req: TBOHotelPreBookRequest = {
         BookingCode: params.bookingCode,
-        EndUserIp: params.EndUserIp || getEndUserIp(),
-        TokenId: tokenId,
-        TraceId: _lastTraceId,
       };
       const res = await api.preBook(req);
       if (res.Status?.Code === 200) {
@@ -279,14 +239,10 @@ export async function bookHotel(params: {
 }): Promise<TBOHotelBookOutput> {
   if (hasCredentials) {
     try {
-      const tokenId = await ensureToken();
       const req: TBOHotelBookRequest = {
         BookingCode: params.bookingCode,
         IsVoucherBooking: true,
         GuestNationality: params.guestNationality,
-        EndUserIp: params.EndUserIp || getEndUserIp(),
-        TokenId: tokenId,
-        TraceId: _lastTraceId,
         NetAmount: params.netAmount,
         HotelRoomsDetails: params.hotelRoomsDetails.map(rd => ({
           HotelPassenger: rd.passengers.map(p => ({
@@ -322,9 +278,6 @@ export async function bookHotel(params: {
     BookingCode: params.bookingCode,
     IsVoucherBooking: true,
     GuestNationality: params.guestNationality,
-    EndUserIp: params.EndUserIp || getEndUserIp(),
-    TokenId: "",
-    TraceId: _lastTraceId,
     NetAmount: params.netAmount,
     HotelRoomsDetails: params.hotelRoomsDetails.map(rd => ({
       HotelPassenger: rd.passengers.map(p => ({
@@ -352,14 +305,10 @@ export async function bookHotel(params: {
 
 export async function getBookingDetail(params: {
   bookingId: number;
-  EndUserIp?: string;
 }): Promise<TBOHotelBookingDetailOutput> {
   if (hasCredentials) {
     try {
-      const tokenId = await ensureToken();
       const req: TBOHotelBookingDetailRequest = {
-        EndUserIp: params.EndUserIp || getEndUserIp(),
-        TokenId: tokenId,
         BookingId: params.bookingId,
       };
       const res = await api.getBookingDetail(req);
@@ -450,7 +399,6 @@ export function getHotelCodes(cityCode: number): any[] {
 
 export function resetClient(): void {
   mock.resetMock();
-  cachedToken = null;
   _lastHotelResults = [];
   _lastTraceId = "";
 }

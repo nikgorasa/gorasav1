@@ -10,17 +10,10 @@ import {
   getHotelCodes,
 } from "@/lib/tbo-hotel-client";
 
-function getEndUserIp(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || req.headers.get("x-real-ip")
-    || "192.168.1.1";
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { action } = body;
-    const endUserIp = getEndUserIp(req);
 
     switch (action) {
       case "search": {
@@ -37,7 +30,6 @@ export async function POST(req: NextRequest) {
           rooms: roomsArray,
           guestNationality: guestNationality || "IN",
           preferredCurrency: preferredCurrency || "INR",
-          EndUserIp: endUserIp,
         });
         return NextResponse.json(result);
       }
@@ -47,7 +39,7 @@ export async function POST(req: NextRequest) {
         if (!bookingCode) {
           return NextResponse.json({ error: "bookingCode required" }, { status: 400 });
         }
-        const result = await preBook({ bookingCode, EndUserIp: endUserIp });
+        const result = await preBook({ bookingCode });
         return NextResponse.json(result);
       }
 
@@ -66,7 +58,6 @@ export async function POST(req: NextRequest) {
           guestNationality: guestNationality || "IN",
           netAmount: netAmount || 0,
           hotelRoomsDetails,
-          EndUserIp: endUserIp,
         });
         return NextResponse.json(result);
       }
@@ -76,7 +67,7 @@ export async function POST(req: NextRequest) {
         if (!bookingId) {
           return NextResponse.json({ error: "bookingId required" }, { status: 400 });
         }
-        const result = await getBookingDetail({ bookingId: Number(bookingId), EndUserIp: endUserIp });
+        const result = await getBookingDetail({ bookingId: Number(bookingId) });
         return NextResponse.json(result);
       }
 
