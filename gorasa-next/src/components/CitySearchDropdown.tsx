@@ -3,19 +3,35 @@
 import { useState, useEffect, useRef } from "react";
 import { Command } from "cmdk";
 
-interface City {
+export interface City {
   code: string;
   name: string;
   state: string;
+  source: "tbo" | "fallback";
 }
 
 interface CitySearchDropdownProps {
   value: string;
-  onChange: (city: string) => void;
+  onChange: (city: City) => void;
   placeholder?: string;
   label?: string;
   className?: string;
 }
+
+const FALLBACK_CITIES: City[] = [
+  { code: "15648", name: "Goa", state: "Goa", source: "fallback" },
+  { code: "13484", name: "Mumbai", state: "Maharashtra", source: "fallback" },
+  { code: "13482", name: "Delhi", state: "Delhi", source: "fallback" },
+  { code: "14565", name: "Bangalore", state: "Karnataka", source: "fallback" },
+  { code: "15664", name: "Hyderabad", state: "Telangana", source: "fallback" },
+  { code: "14564", name: "Chennai", state: "Tamil Nadu", source: "fallback" },
+  { code: "15197", name: "Jaipur", state: "Rajasthan", source: "fallback" },
+  { code: "13543", name: "Kolkata", state: "West Bengal", source: "fallback" },
+  { code: "14612", name: "Pune", state: "Maharashtra", source: "fallback" },
+  { code: "123608", name: "Kodaikanal", state: "Tamil Nadu", source: "fallback" },
+  { code: "13014", name: "Ooty", state: "Tamil Nadu", source: "fallback" },
+  { code: "12597", name: "Manali", state: "Himachal Pradesh", source: "fallback" },
+];
 
 export default function CitySearchDropdown({
   value,
@@ -36,20 +52,7 @@ export default function CitySearchDropdown({
         setCities(data.cities || []);
       })
       .catch(() => {
-        setCities([
-          { code: "goa", name: "Goa", state: "Goa" },
-          { code: "mumbai", name: "Mumbai", state: "Maharashtra" },
-          { code: "delhi", name: "Delhi", state: "Delhi" },
-          { code: "bangalore", name: "Bangalore", state: "Karnataka" },
-          { code: "hyderabad", name: "Hyderabad", state: "Telangana" },
-          { code: "chennai", name: "Chennai", state: "Tamil Nadu" },
-          { code: "jaipur", name: "Jaipur", state: "Rajasthan" },
-          { code: "kolkata", name: "Kolkata", state: "West Bengal" },
-          { code: "pune", name: "Pune", state: "Maharashtra" },
-          { code: "kodaikanal", name: "Kodaikanal", state: "Tamil Nadu" },
-          { code: "ooty", name: "Ooty", state: "Tamil Nadu" },
-          { code: "manali", name: "Manali", state: "Himachal Pradesh" },
-        ]);
+        setCities(FALLBACK_CITIES);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -65,15 +68,42 @@ export default function CitySearchDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (cityName: string) => {
-    onChange(cityName);
+  const handleSelect = (city: City) => {
+    onChange(city);
     setOpen(false);
   };
 
   // Show popular cities first, then alphabetical
-  const popularCities = ["Goa", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Jaipur", "Kolkata", "Pune"];
-  const popular = cities.filter(c => popularCities.includes(c.name));
-  const rest = cities.filter(c => !popularCities.includes(c.name));
+  const popularNames = ["Goa", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Jaipur", "Kolkata", "Pune"];
+  const popular = cities.filter(c => popularNames.includes(c.name));
+  const rest = cities.filter(c => !popularNames.includes(c.name));
+
+  const renderCityItem = (city: City, isPopular: boolean) => (
+    <Command.Item
+      key={city.code}
+      value={city.name}
+      onSelect={() => handleSelect(city)}
+      className="px-3 py-2 text-sm cursor-pointer rounded-lg hover:bg-emerald-50 data-[selected=true]:bg-emerald-50 flex items-center justify-between"
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span className={isPopular ? "font-medium text-slate-900" : "text-slate-700"}>
+          {city.name}
+        </span>
+        {city.state && (
+          <span className="text-[11px] text-slate-400 truncate">· {city.state}</span>
+        )}
+      </div>
+      <span
+        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+          city.source === "tbo"
+            ? "bg-emerald-100 text-emerald-700"
+            : "bg-amber-100 text-amber-700"
+        }`}
+      >
+        {city.source === "tbo" ? "TBO" : "Fallback"}
+      </span>
+    </Command.Item>
+  );
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -122,38 +152,14 @@ export default function CitySearchDropdown({
               {/* Popular cities group */}
               {popular.length > 0 && (
                 <Command.Group heading="Popular" className="px-1">
-                  {popular.map((city) => (
-                    <Command.Item
-                      key={city.code}
-                      value={city.name}
-                      onSelect={() => handleSelect(city.name)}
-                      className="px-3 py-2 text-sm cursor-pointer rounded-lg hover:bg-emerald-50 data-[selected=true]:bg-emerald-50 flex items-center justify-between"
-                    >
-                      <span className="font-medium text-slate-900">{city.name}</span>
-                      {city.state && (
-                        <span className="text-[11px] text-slate-400">{city.state}</span>
-                      )}
-                    </Command.Item>
-                  ))}
+                  {popular.map((city) => renderCityItem(city, true))}
                 </Command.Group>
               )}
 
               {/* All cities group */}
               {rest.length > 0 && (
                 <Command.Group heading="All Cities" className="px-1">
-                  {rest.map((city) => (
-                    <Command.Item
-                      key={city.code}
-                      value={city.name}
-                      onSelect={() => handleSelect(city.name)}
-                      className="px-3 py-2 text-sm cursor-pointer rounded-lg hover:bg-emerald-50 data-[selected=true]:bg-emerald-50 flex items-center justify-between"
-                    >
-                      <span className="text-slate-700">{city.name}</span>
-                      {city.state && (
-                        <span className="text-[11px] text-slate-400">{city.state}</span>
-                      )}
-                    </Command.Item>
-                  ))}
+                  {rest.map((city) => renderCityItem(city, false))}
                 </Command.Group>
               )}
             </Command.List>
