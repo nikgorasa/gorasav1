@@ -23,6 +23,7 @@
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
+| 2026-06-11 | Hotel frontend fix (tbo-hotels endpoint) | 485a340 | gorasa-next | ✅ Ready | gorasa-next-... | Frontend now calls /api/tbo-hotels |
 | 2026-06-11 | Flight route fix (use flight client) | e54df33 | gorasa-next | ✅ Ready | gorasa-next-69hlbolmw... | /api/tbo now uses flight client |
 | 2026-06-11 | Hotel param extraction fix | a6918ff | gorasa-next | ✅ Ready | gorasa-next-69hlbolmw... | Extract from body.params |
 | 2026-06-11 | Hotel search with real API | 7e7a93d | gorasa-next | ✅ Ready | gorasa-next-nsfkj97e4... | Resolve hotel codes from city |

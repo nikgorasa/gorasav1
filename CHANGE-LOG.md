@@ -7,6 +7,7 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-11 | 485a340 | fix: hotel frontend calls /api/tbo-hotels instead of /api/tbo |
 | 2026-06-11 | e54df33 | fix: /api/tbo route now uses flight client (not hotel) |
 | 2026-06-11 | a6918ff | fix: extract hotel search params from body.params (frontend nested format) |
 | 2026-06-11 | 7e7a93d | fix: TBO hotel search with real API - resolve hotel codes from city name |
