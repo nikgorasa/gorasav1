@@ -191,3 +191,31 @@ Description:
 - `admin/ai-leads/page.tsx` — Stage update buttons, assignment dropdown from assignable users API
 
 **Verification:** TypeScript compiles cleanly (`npx tsc --noEmit`), Next.js build succeeds, all 15 post-task checks pass.
+
+---
+
+## 2026-06-12 — Staging Environments Go-Live
+
+### Changes Made:
+
+**Documentation Updates:**
+- Updated CONFIG-REFERENCE.md, DEPLOYMENT_LOG.md, MEMORY.md, STAGING-README.md with real Vercel URLs
+
+**Git Branch Sync:**
+- Merged `main` into `dev` and `qa` (synced 8-commit gap)
+- Cherry-picked URL commit to `dev` + `qa` branches
+- Pushed all 3 branches to `neworigin`
+
+**Deployment Fixes:**
+- Renewed expired Vercel token (`vca_L7xKp5...` → `vca_7ajKdYhA...`)
+- Updated VERCEL_TOKEN GitHub environment secrets
+
+**Supabase Env Var Fix (Critical):**
+- Discovered `.env.local` had been updated with a **different Supabase project** (`isubgeemvhvhnhikxbjb`)
+- Vercel dev/QA project env vars still had old ref (`isubgeemvhvhnikxhbjb`) → demo users API returned "Failed to fetch demo users"
+- Replaced NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY on both dev-gorasa and qa-gorasa Vercel projects via API
+- Redeployed both environments — all endpoints now functional
+
+**Verification:**
+- Dev HTTP 200: home, cities (35), tickets (3), demo users (6)
+- QA HTTP 200: home, cities (35), tickets (3), demo users (6)
