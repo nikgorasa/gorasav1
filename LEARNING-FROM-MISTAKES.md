@@ -424,3 +424,47 @@
 31. **GitHub Actions needs `npm install` before `vercel deploy`** — The Vercel CLI needs node_modules to be installed first.
 32. **Vercel API doesn't support setting production branch** — Must be set via dashboard UI, not programmatically.
 33. **SSO protection enabled by default on Vercel team projects** — Disable via API: `{"ssoProtection":null}` for public staging environments.
+34. **Vercel env vars can have stale Supabase keys even when `.env.local` has correct keys** — If a dev server component that relies on a different environment project's env vars has different or outdated values compared to the local `.env.local`, API routes that use `SUPABASE_SERVICE_ROLE_KEY` will fail silently (showing only a generic "Failed to fetch" error).
+35. **Check Vercel project env vars via API when debugging staging deployment issues** — `GET /v10/projects/{projectId}/env` reveals exactly what values are set per environment. Use this to compare against `.env.local`.
+36. **Vercel environment variables for staging projects are NOT synced from `.env.local`** — They must be set separately per project. The GitHub Actions workflow does NOT pass them; they must exist on the Vercel project directly.
+
+---
+
+## Issue #10: Staging Demo Users API Failure — Stale Supabase Project Ref in Vercel Env Vars
+
+**Date:** June 12, 2026
+**Duration:** ~30 min
+**Severity:** Medium — staging demo login broken
+
+### Symptoms
+- `GET /api/users/demo` returned `{"error":"Failed to fetch demo users"}` on both dev and QA staging
+- `GET /api/cities` and `GET /api/tickets` worked fine on staging
+- Production demo users endpoint worked fine
+- No build errors in GitHub Actions logs
+
+### Root Cause
+- The `.env.local` file had been updated at some point with a **different Supabase project** (`isubgeemvhvhnhikxbjb`)
+- The Vercel project env vars for dev-gorasa and qa-gorasa still had Supabase keys from the **old project** (`isubgeemvhvhnikxhbjb`)
+- The old service role key was rejected by the new Supabase instance with "Invalid API key"
+- The error was caught by the API route's catch block and returned as generic "Failed to fetch demo users"
+- `/api/cities` worked because it uses the anon key with RLS (both old and new might have same data)
+- `/api/tickets` worked because it uses the anon key with permissive RLS policy
+
+### Resolution
+1. Identified the correct Supabase keys from `.env.local`
+2. Deleted and re-created 3 Supabase env vars on both dev and QA Vercel projects via Vercel API
+3. Re-deployed both environments
+4. Verified demo users API returned 6 users on both staging environments
+
+### Lessons Learned
+1. **Vercel staging project env vars are NOT synced from `.env.local`** — They must be set independently per project
+2. **Stale Supabase keys cause silent failures** — The API returns a generic error, not "Invalid API key"
+3. **Some endpoints may work while others fail** — Routes using anon key (cities, tickets) may work while service role key routes (demo users) fail
+4. **Always verify with a key-checking test** — `createClient(url, key).from('User').select()` locally validates the keys
+5. **The old and new Supabase URLs may look nearly identical** — `isubgeemvhvhnikxhbjb` vs `isubgeemvhvhnhikxbjb` differ by two characters — easy to miss
+
+### Prevention Measures
+1. When `.env.local` changes, update all Vercel project env vars immediately
+2. Add a health check endpoint that verifies Supabase keys are valid
+3. Compare Vercel project env vars against `.env.local` during staging deployment validation
+4. Test both anon-key and service-role-key API routes after env var changes
