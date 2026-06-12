@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as cities from "@/lib/db/cities";
 
 const BASE_URL = "https://api.tbotechnology.in/TBOHolidays_HotelAPI";
 const HOTEL_USERNAME = process.env.TBO_HOTEL_USERNAME || "TBOStaticAPITest";
@@ -21,22 +21,15 @@ interface CityResult {
 
 let _tboCitiesCache: CityResult[] | null = null;
 let _tboCitiesCacheTime = 0;
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const CACHE_TTL = 60 * 60 * 1000;
 
 async function fetchIATACodes(): Promise<Record<string, string>> {
-  const { data, error } = await supabase
-    .from("City")
-    .select("name, iata_code")
-    .eq("isactive", true)
-    .not("iata_code", "is", null);
-
-  if (error || !data) {
-    return {};
-  }
-
+  const data = await cities.findTBOCodes();
   const iataMap: Record<string, string> = {};
-  for (const c of data) {
-    iataMap[c.name.toLowerCase()] = c.iata_code;
+  for (const c of data as any[]) {
+    if (c.name && c.iata_code) {
+      iataMap[c.name.toLowerCase()] = c.iata_code;
+    }
   }
   return iataMap;
 }
@@ -58,13 +51,11 @@ async function fetchTBOCities(): Promise<CityResult[]> {
   }
 
   const data = await res.json();
-  const cities: TBOCity[] = data.CityList || [];
+  const tboCities: TBOCity[] = data.CityList || [];
 
-  // Fetch IATA codes from Supabase
   const iataMap = await fetchIATACodes();
 
-  // Parse "CityName,   State" format
-  const parsed = cities.map(c => {
+  const parsed = tboCities.map(c => {
     const parts = c.Name.split(",").map(s => s.trim());
     const name = parts[0];
     return {
@@ -76,7 +67,6 @@ async function fetchTBOCities(): Promise<CityResult[]> {
     };
   });
 
-  // Sort alphabetically, dedupe by name
   const seen = new Set<string>();
   const unique = parsed.filter(c => {
     const key = c.name.toLowerCase();
@@ -92,17 +82,9 @@ async function fetchTBOCities(): Promise<CityResult[]> {
 }
 
 async function fetchSupabaseCities(): Promise<CityResult[]> {
-  const { data, error } = await supabase
-    .from("City")
-    .select("id, name, country, iata_code")
-    .eq("isactive", true)
-    .order("name", { ascending: true });
+  const data = await cities.findAll();
 
-  if (error || !data) {
-    return [];
-  }
-
-  return data.map((c: { id: string; name: string; country: string; iata_code: string | null }) => ({
+  return (data as any[]).map((c) => ({
     code: c.id,
     name: c.name,
     state: c.country || "",
@@ -113,7 +95,6 @@ async function fetchSupabaseCities(): Promise<CityResult[]> {
 
 export async function GET(_req: NextRequest) {
   try {
-    // Try TBO first
     const tboCities = await fetchTBOCities();
     if (tboCities.length > 0) {
       return NextResponse.json({ source: "tbo", cities: tboCities });
@@ -122,7 +103,6 @@ export async function GET(_req: NextRequest) {
     console.warn("TBO CityList failed, falling back to Supabase:", e);
   }
 
-  // Fallback to Supabase
   try {
     const supabaseCities = await fetchSupabaseCities();
     return NextResponse.json({ source: "supabase", cities: supabaseCities });

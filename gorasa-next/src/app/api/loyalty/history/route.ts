@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as bookings from "@/lib/db/bookings";
+import * as rewards from "@/lib/db/rewards";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,36 +11,53 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
 
-    const { data: bookings, error: bookingError } = await supabase
-      .from("Booking")
-      .select("itemName, bookedAt, price")
-      .eq("userId", userId)
-      .order("bookedAt", { ascending: false })
-      .limit(50);
+    const { isPrisma, prisma, supabaseAdmin } = await import("@/lib/db");
 
-    if (bookingError) {
-      return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });
+    let bookingRows: any[] = [];
+    let redemptionRows: any[] = [];
+
+    if (isPrisma()) {
+      [bookingRows, redemptionRows] = await Promise.all([
+        prisma.booking.findMany({
+          where: { userId },
+          select: { itemName: true, bookedAt: true, price: true },
+          orderBy: { bookedAt: 'desc' },
+          take: 50,
+        }),
+        prisma.redemption.findMany({
+          where: { userId },
+          select: { pointsCost: true, createdAt: true, rewardId: true },
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        }),
+      ]);
+    } else {
+      const [bookingsRes, redemptionsRes] = await Promise.all([
+        supabaseAdmin
+          .from('Booking')
+          .select('itemName, bookedAt, price')
+          .eq('userId', userId)
+          .order('bookedAt', { ascending: false })
+          .limit(50),
+        supabaseAdmin
+          .from('Redemption')
+          .select('pointsCost, createdAt, rewardId')
+          .eq('userId', userId)
+          .order('createdAt', { ascending: false })
+          .limit(50),
+      ]);
+      bookingRows = bookingsRes.data || [];
+      redemptionRows = redemptionsRes.data || [];
     }
 
-    const { data: redemptions, error: redeemError } = await supabase
-      .from("Redemption")
-      .select("pointsCost, createdAt, rewardId")
-      .eq("userId", userId)
-      .order("createdAt", { ascending: false })
-      .limit(50);
-
-    if (redeemError) {
-      return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });
-    }
-
-    const earned = (bookings || []).map((b: Record<string, unknown>) => ({
+    const earned = bookingRows.map((b: any) => ({
       action: `Booking (${b.itemName})`,
       points: `+${Math.round(Number(b.price) / 100)}`,
       date: String(b.bookedAt || ""),
       type: "earned" as const,
     }));
 
-    const redeemed = (redemptions || []).map((r: Record<string, unknown>) => ({
+    const redeemed = redemptionRows.map((r: any) => ({
       action: "Redeemed reward",
       points: `-${Number(r.pointsCost).toLocaleString()}`,
       date: String(r.createdAt || ""),

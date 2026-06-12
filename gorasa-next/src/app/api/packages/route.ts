@@ -1,36 +1,13 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  db: { schema: "public" },
-});
+import * as packages from "@/lib/db/packages";
 
 export async function GET() {
   try {
-    const { data: packages, error } = await supabase
-      .from("Package")
-      .select("*")
-      .eq("isActive", true)
-      .order("createdAt", { ascending: false });
-
-    if (error) {
-      console.error("Packages error:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch packages" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(packages);
+    const data = await packages.findAll();
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Packages error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch packages" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch packages" }, { status: 500 });
   }
 }
 
@@ -46,40 +23,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: pkg, error } = await supabase
-      .from("Package")
-      .insert({
-        title,
-        duration,
-        price: Number(price),
-        originalPrice: originalPrice ? Number(originalPrice) : null,
-        rating: rating ? Number(rating) : 4.5,
-        provider: provider || "GoRASA Direct",
-        overview: overview || "{}",
-        itinerary: itinerary || "{}",
-        inclusions: inclusions || "[]",
-        exclusions: exclusions || "[]",
-        importantNotes: importantNotes || "{}",
-        images: images || "[]",
-        status: status || "DRAFT",
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Package create error:", error);
-      return NextResponse.json(
-        { error: "Failed to create package" },
-        { status: 500 }
-      );
-    }
+    const pkg = await packages.create({
+      title,
+      duration,
+      price: Number(price),
+      originalPrice: originalPrice ? Number(originalPrice) : null,
+      rating: rating ? Number(rating) : 4.5,
+      provider: provider || "GoRASA Direct",
+      overview: overview || "{}",
+      itinerary: itinerary || "{}",
+      inclusions: inclusions || "[]",
+      exclusions: exclusions || "[]",
+      importantNotes: importantNotes || "{}",
+      images: images || "[]",
+      status: status || "DRAFT",
+    });
 
     return NextResponse.json(pkg, { status: 201 });
   } catch (error) {
     console.error("Package create error:", error);
-    return NextResponse.json(
-      { error: "Failed to create package" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create package" }, { status: 500 });
   }
 }

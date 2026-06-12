@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { isPrisma, prisma, supabaseAdmin } from "@/lib/db";
 
 export async function PATCH(
   request: NextRequest,
@@ -14,15 +9,20 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const { data: rate, error } = await supabase
-      .from("CorporateRate")
-      .update({ ...body, updatedAt: new Date().toISOString() })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to update corporate rate" }, { status: 500 });
+    let rate;
+    if (isPrisma()) {
+      rate = await prisma.corporateRate.update({
+        where: { id },
+        data: { ...body, updatedAt: new Date().toISOString() },
+      });
+    } else {
+      const { data } = await supabaseAdmin
+        .from('CorporateRate')
+        .update({ ...body, updatedAt: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      rate = data;
     }
 
     return NextResponse.json(rate);
@@ -37,15 +37,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const { error } = await supabase
-      .from("CorporateRate")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to delete corporate rate" }, { status: 500 });
+    if (isPrisma()) {
+      await prisma.corporateRate.delete({ where: { id } });
+    } else {
+      await supabaseAdmin.from('CorporateRate').delete().eq('id', id);
     }
-
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

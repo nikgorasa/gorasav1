@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createCheckout } from "@/lib/payment";
-import { PAYMENT_CONFIG } from "@/lib/payment";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { createCheckout, PAYMENT_CONFIG } from "@/lib/payment";
+import * as users from "@/lib/db/users";
+import { isPrisma, prisma, supabaseAdmin } from "@/lib/db";
 
 async function getUserFromRequest(request: Request) {
   const userEmail = request.headers.get("x-user-email");
   if (!userEmail) return null;
-  const { data: dbUser } = await supabase
-    .from("User")
-    .select("*")
-    .eq("email", userEmail)
-    .single();
-  return dbUser;
+  return users.findByEmail(userEmail);
 }
 
 export async function POST(request: NextRequest) {
@@ -35,11 +25,17 @@ export async function POST(request: NextRequest) {
 
     const selectedGateway = gateway || PAYMENT_CONFIG.gateway;
 
-    const { data: booking } = await supabase
-      .from("Booking")
-      .select("price")
-      .eq("id", bookingId)
-      .single();
+    let booking: any;
+    if (isPrisma()) {
+      booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { price: true } });
+    } else {
+      const { data } = await supabaseAdmin
+        .from('Booking')
+        .select('price')
+        .eq('id', bookingId)
+        .single();
+      booking = data;
+    }
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
@@ -49,7 +45,7 @@ export async function POST(request: NextRequest) {
       bookingId,
       amount: booking.price,
       gateway: selectedGateway,
-      userEmail: user.email,
+      userEmail: (user as any).email,
     });
 
     return NextResponse.json(result);

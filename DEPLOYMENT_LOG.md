@@ -15,13 +15,15 @@
 | **Vercel Project (Dev)** | dev-gorasa (prj_BWE4hfy72DwYF39XamAwGYi3qg63) |
 | **Vercel Project (QA)** | qa-gorasa (prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN) |
 | **Root Directory** | gorasa-next/ (all projects) |
-| **GitHub Repo** | nikgorasa/gorasav1 |
+| **GitHub Repo** | Gorasa-In-2026/gorasav1 |
 | **Deploy Remote** | neworigin → main (prod), dev, qa |
 | **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 30+ tables) |
 | **NEON Dev** | gorasa-dev (29 tables, 210 rows) |
 | **NEON QA** | gorasa-qa (28 tables, 210 rows) |
 | **Latest Commit** | 4d5367b (admin CRUD + users API fix) |
-| **Auto-Deploy Status** | ✅ WORKING — All 3 environments active |
+| **Prod Deploy Method** | Manual `workflow_dispatch` + nikjp2021 approval (Vercel auto-deploy disconnected) |
+| **Branch Protection** | main: ✅ (PR+1), qa: ✅ (PR+1), dev: ❌ |
+| **Auto-Deploy Status** | ✅ Dev/QA auto, Prod manual only |
 
 ---
 
@@ -75,7 +77,7 @@
 ## Auto-Deploy Verification Checklist
 
 ### Production (gorasa-next)
-- [x] Vercel dashboard: Connected Repository = `nikgorasa/gorasav1`
+- [x] Vercel dashboard: Connected Repository = `Gorasa-In-2026/gorasav1`
 - [x] Vercel dashboard: Root Directory = `gorasa-next/`
 - [x] Vercel dashboard: Auto-deploy = Enabled
 - [x] Test commit triggers deployment
@@ -212,6 +214,16 @@ ADR reference: N/A
 **Env Var Fix Detail:** Vercel dev/QA projects had Supabase keys from old project ref (`isubgeemvhvhnikxhbjb`) while `.env.local` pointed to a different Supabase project (`isubgeemvhvhnhikxbjb`). Replaced all 3 Supabase env vars on both projects via Vercel API.
 
 **Status:** ✅ All 3 environments active and fully verified (homepage, cities, tickets, demo users)
+
+---
+
+## 2026-06-12 — Branch Protection + Prod Approval Gate
+
+| Date | Commit | SHA | Project | Status | URL | Notes |
+|------|--------|-----|---------|--------|-----|-------|
+| 2026-06-12 | Branch protection + approval gate | 1a4de24 | All | ✅ Applied | gorasa-next.vercel.app | main/qa protected, Prod env requires nikjp2021, Vercel auto-deploy disconnected |
+| 2026-06-12 | Repo moved to org | — | All | ✅ Done | gorasa-next.vercel.app | nikgorasa/gorasav1 → Gorasa-In-2026/gorasav1 |
+| 2026-06-12 | Deploy-prod workflow | 1a4de24 | gorasa-next | ✅ Created | gorasa-next.vercel.app | Manual workflow_dispatch + Production environment |
 
 ---
 

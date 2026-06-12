@@ -1,7 +1,7 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-12 08:20 IST
+> **Last updated:** 2026-06-12 12:30 IST
 
 ---
 
@@ -304,3 +304,23 @@ Work completed:
 - Production: https://gorasa-next.vercel.app
 - Development: https://project-uul0v.vercel.app
 - QA: https://project-sm6gc.vercel.app
+
+### Session 2026-06-12 — Branch Protection + Prod Approval Gate + README Update
+
+**Duration:** ~15 min
+**Problem:** main and qa branches had no protection rules; Production environment had no approval gate.
+
+**Changes:**
+1. Moved repo from `nikgorasa/gorasav1` → `Gorasa-In-2026/gorasav1`
+2. Updated git remote `neworigin` to new org URL
+3. Set branch protection on `main`: PR required, 1 approval, enforce admins
+4. Set branch protection on `qa`: PR required, 1 approval
+5. Set `nikjp2021` as required reviewer on Production environment
+6. Updated root `README.md` and `gorasa-next/README.md` with current project structure and deployment pipeline
+
+**Deployment pipeline now fully gated:**
+- Dev → auto-deploy on push to `dev`
+- QA → PR into `qa` → auto-deploy on merge
+- Prod → PR into `main` → merge → manual `workflow_dispatch` → nikjp2021 approval
+
+**Commit:** 1a4de24

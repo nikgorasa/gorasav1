@@ -7,6 +7,7 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-12 | 1a4de24 | ci: branch protection (main/qa) + Prod env approval gate + repo moved to org |
 | 2026-06-12 | 2e513a7 | feat: add user-facing ticket creation and listing to support page |
 | 2026-06-12 | (pending) | feat: ticket system productionization + AI planner integration |
 | 2026-06-12 | 80f9033 | ci: fix Vercel deploy path in GitHub Actions |

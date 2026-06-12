@@ -1,22 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import * as pricing from "@/lib/db/pricing";
 
 export async function GET() {
-  const { data: rules, error } = await supabase
-    .from("PricingRule")
-    .select("*")
-    .order("priority", { ascending: false });
-
-  if (error) {
+  try {
+    const data = await pricing.findAll();
+    return NextResponse.json(data);
+  } catch (error) {
     return NextResponse.json({ error: "Failed to fetch pricing rules" }, { status: 500 });
   }
-
-  return NextResponse.json(rules);
 }
 
 export async function POST(request: NextRequest) {
@@ -35,31 +26,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: rule, error } = await supabase
-      .from("PricingRule")
-      .insert({
-        name,
-        type,
-        category: category || "ALL",
-        destination: destination || null,
-        hotelName: hotelName || null,
-        airlineCode: airlineCode || null,
-        roomType: roomType || null,
-        markupType: markupType || "PERCENT",
-        markupValue,
-        minPrice: minPrice || null,
-        maxPrice: maxPrice || null,
-        priority: priority || 0,
-        isActive: isActive !== false,
-        validFrom: validFrom || null,
-        validTo: validTo || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to create pricing rule" }, { status: 500 });
-    }
+    const rule = await pricing.create({
+      name,
+      type,
+      category: category || "ALL",
+      destination: destination || null,
+      hotelName: hotelName || null,
+      airlineCode: airlineCode || null,
+      roomType: roomType || null,
+      markupType: markupType || "PERCENT",
+      markupValue,
+      minPrice: minPrice || null,
+      maxPrice: maxPrice || null,
+      priority: priority || 0,
+      isActive: isActive !== false,
+      validFrom: validFrom || null,
+      validTo: validTo || null,
+    });
 
     return NextResponse.json(rule, { status: 201 });
   } catch (error) {
