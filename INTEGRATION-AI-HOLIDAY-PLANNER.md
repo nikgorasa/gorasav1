@@ -1,55 +1,177 @@
-# Integration Guide: AI Holiday Planner
+# Integration Guide: GoRASA AI Ecosystem
 
-> **Status:** Ready for Integration
-> **Built at:** `/planner` route (safe, non-destructive)
-> **Target:** `/holidays` route (replace existing form)
-
----
-
-## What Was Built
-
-A complete AI-powered holiday planning assistant at `/planner` that replaces the static inquiry form with:
-
-- **Conversational chat interface** — AI asks questions, user responds
-- **Instant itinerary generation** — Day-by-day plan with activities, hotels, costs
-- **Interactive refinement** — Modify itinerary via natural language
-- **Handoff to human expert** — Full context transfer to sales team
-- **Mobile responsive** — Chat/itinerary toggle on small screens
+> **Status:** All Phases Complete
+> **Last Updated:** June 12, 2026
+> **Total Files:** 55+ new, 0 modified existing
 
 ---
 
-## Files to Integrate
+## Table of Contents
 
-### New Files (15)
+1. [What Was Built](#1-what-was-built)
+2. [Module Overview](#2-module-overview)
+3. [File Inventory](#3-file-inventory)
+4. [Integration Steps](#4-integration-steps)
+5. [Configuration](#5-configuration)
+6. [Testing Checklist](#6-testing-checklist)
+7. [Troubleshooting](#7-troubleshooting)
 
-| Source | Destination |
-|--------|-------------|
-| `gorasa-next/src/app/planner/page.tsx` | `gorasa-next/src/app/holidays/page.tsx` |
-| `gorasa-next/src/components/HolidayPlanner.tsx` | (keep in place) |
-| `gorasa-next/src/components/ChatInterface.tsx` | (keep in place) |
-| `gorasa-next/src/components/ItineraryPreview.tsx` | (keep in place) |
-| `gorasa-next/src/components/DayCard.tsx` | (keep in place) |
-| `gorasa-next/src/components/QuickReplies.tsx` | (keep in place) |
-| `gorasa-next/src/components/TypingIndicator.tsx` | (keep in place) |
-| `gorasa-next/src/components/HandoffModal.tsx` | (keep in place) |
-| `gorasa-next/src/lib/ai/holidayPlanner.ts` | Rule-based planner (no API key needed) |
-| `gorasa-next/src/lib/ai/holidayPlannerAI.ts` | AI-powered planner (requires API key) |
-| `gorasa-next/src/lib/ai/client.ts` | AI provider client |
-| `gorasa-next/src/lib/ai/providers/types.ts` | Provider type definitions |
-| `gorasa-next/src/lib/ai/providers/gemini.ts` | Google Gemini provider |
-| `gorasa-next/src/lib/ai/providers/openai.ts` | OpenAI provider |
-| `gorasa-next/src/lib/ai/providers/mimo.ts` | XIAOMI MiMo provider |
-| `gorasa-next/src/lib/ai/providers/index.ts` | Provider exports |
-| `gorasa-next/src/app/api/ai/holiday-plan/route.ts` | Rule-based API endpoint |
-| `gorasa-next/src/app/api/ai/holiday-plan-ai/route.ts` | AI-powered API endpoint |
+---
 
-### Existing Files (0 modified)
+## 1. What Was Built
+
+### Complete AI Ecosystem
+
+| Module | Purpose | Status |
+|--------|---------|--------|
+| **AI Holiday Planner** | Conversational trip planning with itinerary generation | ✅ Complete |
+| **Intent Classification** | Unified intent detection across all modules | ✅ Complete |
+| **AI Providers** | Multi-provider support (Gemini, OpenAI, MiMo) | ✅ Complete |
+| **Support System** | FAQ engine + smart routing + escalation | ✅ Complete |
+| **Ticket Management** | Supabase-backed ticket CRUD + admin dashboard | ✅ Complete |
+| **Unified Chat** | Single chat component for all modules | ✅ Complete |
+| **Feature Flags** | Environment-based feature toggles | ✅ Complete |
+| **Analytics** | Event tracking for all user actions | ✅ Complete |
+
+---
+
+## 2. Module Overview
+
+### Module 1: AI Core (`lib/ai/`)
+
+**Purpose:** AI provider abstraction, intent classification, holiday planning
+
+| File | Purpose |
+|------|---------|
+| `client.ts` | Auto-selects AI provider based on env vars |
+| `holidayPlanner.ts` | Rule-based planner (no API key needed) |
+| `holidayPlannerAI.ts` | AI-powered planner (requires API key) |
+| `providers/*.ts` | Gemini, OpenAI, MiMo implementations |
+| `intent/*.ts` | Local + AI intent classifiers |
+| `filters/*.ts` | Hotel/flight filter utilities |
+| `i18n/translations.ts` | Hindi/English translations |
+| `session/*.ts` | Session persistence (localStorage) |
+| `unified/*.ts` | Unified intent system |
+
+### Module 2: Support System (`lib/support/`)
+
+**Purpose:** FAQ matching, smart routing, escalation
+
+| File | Purpose |
+|------|---------|
+| `faqEngine.ts` | 12 FAQ rules with fuzzy matching |
+| `intentRouter.ts` | Intent detection + escalation |
+| `quickActions.ts` | Related page suggestions |
+| `smartRouter.ts` | Main routing logic (FAQ → Intent → Default) |
+
+### Module 3: Ticket Management (`lib/ticket/`)
+
+**Purpose:** Supabase-backed ticket CRUD
+
+| File | Purpose |
+|------|---------|
+| `types.ts` | Ticket, Note, Activity types |
+| `ticketManager.ts` | Client-side (localStorage) |
+| `serverManager.ts` | Server-side (Supabase) |
+
+### Module 4: Components
+
+| Component | Purpose |
+|-----------|---------|
+| `UnifiedChat.tsx` | Single chat for support/planner/general |
+| `HolidayPlanner.tsx` | AI planner wrapper |
+| `ChatInterface.tsx` | Reusable chat UI |
+| `ItineraryPreview.tsx` | Sidebar with day cards |
+| `DayCard.tsx` | Collapsible day card |
+| `QuickReplies.tsx` | Pill buttons |
+| `TypingIndicator.tsx` | Animated dots |
+| `HandoffModal.tsx` | "Get Full Quote" form |
+| `FilterPanel.tsx` | Hotel/flight filters |
+| `IntentDemo.tsx` | Intent classifier demo |
+| `SupportDemo.tsx` | Support system demo |
+| `CreateTicketModal.tsx` | Ticket creation form |
+| `TicketList.tsx` | Ticket list with filters |
+| `TicketDetail.tsx` | Ticket detail + notes |
+| `EscalationFlow.tsx` | Escalation → ticket/WhatsApp/call |
+| `PlannerHandoff.tsx` | Support → Planner handoff |
+| `FeatureFlag.tsx` | Conditional rendering |
+
+### Module 5: Hooks
+
+| Hook | Purpose |
+|------|---------|
+| `useIntentClassifier.ts` | Intent classification |
+| `useFilters.ts` | Hotel/flight filters |
+| `useLanguage.ts` | Hindi/English i18n |
+| `useSupport.ts` | Support chat |
+
+### Module 6: API Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/ai/holiday-plan` | Rule-based planner |
+| `POST /api/ai/holiday-plan-ai` | AI-powered planner |
+| `POST /api/ai/classify-intent` | Intent classification |
+| `POST /api/support` | Support responses |
+| `GET/POST /api/tickets` | List/Create tickets |
+| `GET/PATCH /api/tickets/[id]` | Get/Update ticket |
+| `GET/POST /api/tickets/[id]/notes` | List/Add notes |
+
+### Module 7: Pages
+
+| Page | Purpose |
+|------|---------|
+| `/planner` | AI Holiday Planner |
+| `/admin/ai-leads` | Admin AI leads dashboard |
+| `/admin/tickets` | Admin ticket dashboard |
+
+### Module 8: Config & Analytics
+
+| File | Purpose |
+|------|---------|
+| `lib/config/flags.ts` | Feature flags |
+| `lib/analytics/events.ts` | Event tracking |
+
+---
+
+## 3. File Inventory
+
+### New Files (55+)
+
+```
+gorasa-next/src/
+├── lib/
+│   ├── ai/
+│   │   ├── client.ts
+│   │   ├── holidayPlanner.ts
+│   │   ├── holidayPlannerAI.ts
+│   │   ├── providers/ (5 files)
+│   │   ├── intent/ (5 files)
+│   │   ├── filters/ (3 files)
+│   │   ├── i18n/ (1 file)
+│   │   ├── session/ (3 files)
+│   │   └── unified/ (3 files)
+│   ├── support/ (6 files)
+│   ├── ticket/ (3 files + serverManager.ts)
+│   ├── config/flags.ts
+│   └── analytics/events.ts
+├── components/ (17 files)
+├── hooks/ (4 files)
+├── app/
+│   ├── planner/page.tsx
+│   ├── admin/ai-leads/page.tsx
+│   ├── admin/tickets/page.tsx
+│   └── api/ (7 endpoints)
+└── supabase/migrations/20260612_tickets.sql
+```
+
+### Modified Files (0)
 
 No existing files were changed.
 
 ---
 
-## Integration Steps
+## 4. Integration Steps
 
 ### Step 1: Verify Build
 
@@ -59,241 +181,172 @@ npx tsc --noEmit
 npm run build
 ```
 
-Both should pass with no errors.
-
-### Step 2: Test at /planner
+### Step 2: Run Supabase Migration
 
 ```bash
+# Apply ticket tables to Supabase
+# Option 1: Supabase Dashboard → SQL Editor → Run migration
+# Option 2: Supabase CLI
 cd gorasa-next
+npx supabase db push
+```
+
+### Step 3: Test Each Module
+
+| Module | URL | Test |
+|--------|-----|------|
+| AI Planner | `/planner` | Chat, generate itinerary, handoff |
+| Support | `/support` | FAQ matching, escalation |
+| Tickets | `/admin/tickets` | Create, list, status change |
+| Intent | IntentDemo component | Classify messages |
+
+### Step 4: Configure Feature Flags
+
+Add to `.env.local`:
+
+```bash
+# AI Features
+NEXT_PUBLIC_AI_PLANNER_ENABLED=true
+NEXT_PUBLIC_UNIFIED_CHAT_ENABLED=true
+NEXT_PUBLIC_INTENT_CLASSIFICATION_ENABLED=true
+
+# Support Features
+NEXT_PUBLIC_SUPPORT_CHAT_ENABLED=true
+NEXT_PUBLIC_TICKETS_ENABLED=true
+
+# Other
+NEXT_PUBLIC_FILTER_PANEL_ENABLED=true
+NEXT_PUBLIC_MULTI_LANGUAGE_ENABLED=true
+NEXT_PUBLIC_SESSION_PERSISTENCE_ENABLED=true
+```
+
+### Step 5: Configure AI Provider (Optional)
+
+```bash
+# Add one of:
+GEMINI_API_KEY=your_key
+OPENAI_API_KEY=your_key
+MIMO_API_KEY=your_key
+```
+
+---
+
+## 5. Configuration
+
+### Environment Variables
+
+| Variable | Required | Default | Purpose |
+|----------|----------|---------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | — | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | — | Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | — | Supabase service role |
+| `GEMINI_API_KEY` | No | — | Google Gemini API |
+| `OPENAI_API_KEY` | No | — | OpenAI API |
+| `MIMO_API_KEY` | No | — | XIAOMI MiMo API |
+| `NEXT_PUBLIC_AI_PLANNER_ENABLED` | No | false | Enable AI planner |
+| `NEXT_PUBLIC_SUPPORT_CHAT_ENABLED` | No | false | Enable support chat |
+| `NEXT_PUBLIC_TICKETS_ENABLED` | No | false | Enable tickets |
+
+### Feature Flags
+
+| Flag | Controls |
+|------|----------|
+| `AI_PLANNER_ENABLED` | AI Holiday Planner at `/planner` |
+| `SUPPORT_CHAT_ENABLED` | Support chat at `/support` |
+| `TICKETS_ENABLED` | Ticket system |
+| `UNIFIED_CHAT_ENABLED` | Unified chat component |
+| `FILTER_PANEL_ENABLED` | Filter panels on search pages |
+| `INTENT_CLASSIFICATION_ENABLED` | Intent classifier |
+| `MULTI_LANGUAGE_ENABLED` | Hindi support |
+| `SESSION_PERSISTENCE_ENABLED` | Session save/resume |
+
+---
+
+## 6. Testing Checklist
+
+### AI Planner
+- [ ] Greeting appears automatically
+- [ ] Quick replies work
+- [ ] Itinerary generates after 4 questions
+- [ ] Day cards are collapsible
+- [ ] "Get Full Quote" opens modal
+- [ ] Handoff creates lead
+
+### Support System
+- [ ] FAQ matching works (baggage, cancellation, etc.)
+- [ ] Intent detection routes correctly
+- [ ] Escalation creates ticket
+- [ ] Quick actions show relevant pages
+
+### Ticket System
+- [ ] Ticket creation works
+- [ ] Tickets appear in admin dashboard
+- [ ] Status changes save to Supabase
+- [ ] Notes can be added
+- [ ] Stats cards show correct counts
+
+### Unified Chat
+- [ ] Mode switching works (support/planner/general)
+- [ ] Intent classification works
+- [ ] Routing to pages works
+- [ ] Escalation flow works
+
+### Feature Flags
+- [ ] Flags toggle features on/off
+- [ ] Components respect flags
+
+---
+
+## 7. Troubleshooting
+
+### Issue: Build fails with pricing-service error
+**Cause:** Pre-existing issue in `promos/validate/route.ts`
+**Solution:** Not related to this work. Can be ignored.
+
+### Issue: Tickets not saving
+**Cause:** Supabase migration not applied
+**Solution:** Run migration in Supabase dashboard
+
+### Issue: AI not responding
+**Cause:** No API key configured
+**Solution:** Add `GEMINI_API_KEY` or use rule-based mode
+
+### Issue: Intent classification inaccurate
+**Cause:** Using local classifier (keyword-based)
+**Solution:** Add AI API key for LLM-powered classification
+
+---
+
+## Quick Reference
+
+### Key Paths
+
+| What | Path |
+|------|------|
+| AI Library | `gorasa-next/src/lib/ai/` |
+| Support Library | `gorasa-next/src/lib/support/` |
+| Ticket Library | `gorasa-next/src/lib/ticket/` |
+| Components | `gorasa-next/src/components/` |
+| Hooks | `gorasa-next/src/hooks/` |
+| API Endpoints | `gorasa-next/src/app/api/` |
+| Planner Page | `gorasa-next/src/app/planner/page.tsx` |
+| Admin Dashboard | `gorasa-next/src/app/admin/tickets/page.tsx` |
+| Migration | `gorasa-next/supabase/migrations/20260612_tickets.sql` |
+
+### Quick Commands
+
+```bash
+# Type check
+npx tsc --noEmit
+
+# Build
+npm run build
+
+# Dev server
 npm run dev
 ```
 
-Visit `http://localhost:5173/planner` and verify:
-
-1. [ ] AI greeting appears automatically
-2. [ ] Quick reply buttons work (clicking sends message)
-3. [ ] Typing indicator shows while AI responds
-4. [ ] After 4 questions, itinerary generates
-5. [ ] Itinerary appears in right sidebar (desktop)
-6. [ ] Day cards are collapsible
-7. [ ] "Get Full Quote" button opens modal
-8. [ ] Modal form submits successfully
-9. [ ] Mobile view toggles between chat and itinerary
-10. [ ] Existing `/holidays` page still works
-
-### Step 3: Integrate to /holidays
-
-When ready to go live:
-
-```bash
-# Copy planner page to holidays
-cp gorasa-next/src/app/planner/page.tsx gorasa-next/src/app/holidays/page.tsx
-
-# Remove planner route
-rm -rf gorasa-next/src/app/planner/
-
-# Rebuild
-cd gorasa-next
-npm run build
-```
-
-### Step 4: Verify Production
-
-1. [ ] `/holidays` loads with AI planner
-2. [ ] All 10 test cases pass
-3. [ ] No console errors
-4. [ ] Mobile responsive works
-
 ---
 
-## AI Provider Configuration
-
-### Supported Providers
-
-| Provider | Environment Variable | Model (Default) |
-|----------|---------------------|-----------------|
-| Google Gemini | `GEMINI_API_KEY` | `gemini-2.0-flash` |
-| OpenAI | `OPENAI_API_KEY` | `gpt-4o-mini` |
-| XIAOMI MiMo | `MIMO_API_KEY` | `MiMo-7B-RL` |
-
-### Setup Steps
-
-1. **Get an API key** from one of the providers above
-
-2. **Add to `.env.local`** in `gorasa-next/`:
-   ```bash
-   # Option 1: Google Gemini (recommended - free tier available)
-   GEMINI_API_KEY=your_gemini_api_key_here
-
-   # Option 2: OpenAI
-   OPENAI_API_KEY=your_openai_api_key_here
-
-   # Option 3: XIAOMI MiMo
-   MIMO_API_KEY=your_mimo_api_key_here
-   ```
-
-3. **Optional: Override default models**
-   ```bash
-   GEMINI_MODEL=gemini-1.5-pro
-   OPENAI_MODEL=gpt-4o
-   MIMO_MODEL=MiMo-7B-RL
-   ```
-
-4. **Switch HolidayPlanner to use AI**
-
-   Edit `gorasa-next/src/components/HolidayPlanner.tsx`:
-   ```typescript
-   // Change this line:
-   import { generateHolidayResponse } from "@/lib/ai/holidayPlanner";
-
-   // To this:
-   import { generateHolidayResponse } from "@/lib/ai/holidayPlannerAI";
-   ```
-
-   Edit `gorasa-next/src/app/api/ai/holiday-plan/route.ts`:
-   ```typescript
-   // Change this line:
-   import { generateHolidayResponse } from "@/lib/ai/holidayPlanner";
-
-   // To this:
-   import { generateHolidayResponse } from "@/lib/ai/holidayPlannerAI";
-   ```
-
-5. **Restart dev server**
-   ```bash
-   cd gorasa-next
-   npm run dev
-   ```
-
-### How It Works
-
-The AI module (`client.ts`) automatically selects the provider based on which API key is set:
-
-```
-GEMINI_API_KEY set?  → Use Gemini
-OPENAI_API_KEY set?  → Use OpenAI
-MIMO_API_KEY set?    → Use MiMo
-None set?            → Throw error
-```
-
-### Fallback Behavior
-
-If the AI API fails (network error, rate limit, etc.), the system automatically falls back to the rule-based planner. No user-facing errors.
-
-### Cost Estimates
-
-| Provider | Free Tier | Paid (per 1M tokens) |
-|----------|-----------|---------------------|
-| Gemini | 60 RPM, 1M tokens/day | $0.075 input / $0.30 output |
-| OpenAI | None | $0.15 input / $0.60 output (gpt-4o-mini) |
-| MiMo | Check provider | Check provider |
-
----
-
-## Architecture Notes
-
-### AI Logic
-
-The system supports two modes:
-
-**Rule-Based (Default):** No API key required. Uses conversation state to determine what question to ask next:
-
-| User Messages | State | AI Action |
-|---------------|-------|-----------|
-| 0 | GREETING | Ask destination |
-| 1 | CLARIFYING | Ask duration |
-| 2 | CLARIFYING | Ask travelers |
-| 3 | CLARIFYING | Ask budget |
-| 4 | GENERATING | Generate itinerary |
-| 5+ | REFINING | Modify based on feedback |
-
-### Itinerary Generation
-
-Itineraries are generated based on:
-- **Destination** — Matches against known destinations (Goa, Kerala, Maldives, etc.)
-- **Duration** — Creates day-by-day plan (1-10 days)
-- **Budget** — Adjusts hotel tier and activities (Budget/Comfortable/Luxury)
-- **Special requests** — Romantic, adventure, family, etc.
-
-### Handoff Flow
-
-When user clicks "Get Full Quote":
-1. Modal opens with name/email/phone form
-2. Form pre-fills for logged-in users
-3. On submit, creates lead via `POST /api/leads`
-4. Lead includes: full conversation + itinerary + user preferences
-5. Success message shows expert name + 4-hour timeframe
-
----
-
-## Customization Points
-
-### Change AI Responses
-
-Edit `gorasa-next/src/lib/ai/holidayPlanner.ts`:
-- `generateHolidayResponse()` — Main logic function
-- `DESTINATIONS` — Add/modify destination data
-- `generateItinerary()` — Customize itinerary templates
-
-### Change Quick Replies
-
-Edit `quickReplies` arrays in `generateHolidayResponse()`:
-- Greeting: `["Goa", "Kerala", ...]`
-- Duration: `["3 days", "5 days", ...]`
-- Budget: `["Budget-friendly", "Luxury", ...]`
-
-### Change UI Styling
-
-All components use Tailwind CSS with brand colors:
-- `orange-500` — Primary brand color
-- `orange-600` — Hover states
-- `slate-900` — Dark backgrounds
-- `slate-50` — Light backgrounds
-
-### Connect to Real AI (Gemini/OpenAI)
-
-Replace rule-based logic in `holidayPlanner.ts`:
-
-```typescript
-// Instead of rule-based, call Gemini API
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-export async function generateHolidayResponse(messages: Message[]) {
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-  const result = await model.generateContent(buildPrompt(messages));
-  return parseAIResponse(result.response.text());
-}
-```
-
----
-
-## Dependencies
-
-No new dependencies required. Uses existing stack:
-- Next.js 16 + React 19
-- Tailwind CSS v4
-- Motion (Framer Motion)
-- Lucide React icons
-- Supabase (for leads API)
-
----
-
-## Rollback
-
-If issues arise after integration:
-
-```bash
-# Restore original holidays page from git
-git checkout gorasa-next/src/app/holidays/page.tsx
-
-# Rebuild
-cd gorasa-next
-npm run build
-```
-
----
-
-*Integration guide for AI Holiday Planner*
+*Integration guide for GoRASA AI Ecosystem*
 *Last updated: June 12, 2026*

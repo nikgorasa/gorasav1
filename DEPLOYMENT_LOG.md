@@ -4,18 +4,24 @@
 
 ---
 
-## Baseline Snapshot (2026-06-11)
+## Baseline Snapshot (2026-06-12)
 
 | Field | Value |
 |-------|-------|
 | **Production URL** | https://gorasa-next.vercel.app |
-| **Vercel Project** | gorasa-next (prj_WLoI80KaCmVZSudP17ohcPbzTpSe) |
-| **Root Directory** | gorasa-next/ |
+| **Development URL** | https://dev-gorasa-*.vercel.app |
+| **QA URL** | https://qa-gorasa-*.vercel.app |
+| **Vercel Project (Prod)** | gorasa-next (prj_WLoI80KaCmVZSudP17ohcPbzTpSe) |
+| **Vercel Project (Dev)** | dev-gorasa (prj_BWE4hfy72DwYF39XamAwGYi3qg63) |
+| **Vercel Project (QA)** | qa-gorasa (prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN) |
+| **Root Directory** | gorasa-next/ (all projects) |
 | **GitHub Repo** | nikgorasa/gorasav1 |
-| **Deploy Remote** | neworigin → main |
-| **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 27 tables) |
-| **Latest Commit** | cb1628b (Hotel images fix) |
-| **Auto-Deploy Status** | ✅ WORKING - Latest deployment 49 min ago includes latest commits |
+| **Deploy Remote** | neworigin → main (prod), dev, qa |
+| **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 30+ tables) |
+| **NEON Dev** | gorasa-dev (29 tables, 210 rows) |
+| **NEON QA** | gorasa-qa (28 tables, 210 rows) |
+| **Latest Commit** | 2e513a7 (support page ticket creation) |
+| **Auto-Deploy Status** | ✅ WORKING — All 3 environments active |
 
 ---
 
@@ -23,6 +29,11 @@
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
+| 2026-06-12 | Fix Vercel deploy path | 80f9033 | dev-gorasa, qa-gorasa | ✅ Ready | dev-gorasa-*, qa-gorasa-* | Run vercel from repo root, not subdirectory |
+| 2026-06-12 | User-facing ticket creation on support page | 2e513a7 | gorasa-next | ✅ Pushed | gorasa-next.vercel.app | /support page: AI Chat + My Tabs tabs, ticket create form, user ticket list |
+| 2026-06-12 | Ticket system + AI planner + governance | b742e8d | gorasa-next | ✅ Pushed | gorasa-next.vercel.app | 45 files, tickets tables, /holidays AI planner, 15 compulsory checks |
+| 2026-06-12 | Staging env setup complete | 4b38848 | dev-gorasa, qa-gorasa | ✅ Ready | dev-gorasa-*, qa-gorasa-* | NEON databases, env vars, GitHub secrets |
+| 2026-06-12 | Remove hardcoded credentials | d89d75a | All | ✅ Ready | all | Security fix: remove PostgreSQL URIs from scripts |
 | 2026-06-12 | Governance protocol update (operational modes) | df00f6a | gorasa-next | ✅ Ready | gorasa-next-... | Added plan/build modes to AGENTS.md |
 | 2026-06-12 | Fallback hotel names fix | b45ab07 | gorasa-next | ✅ Ready | gorasa-next-... | Fixed "Hotel in Unknown" → "Hotel in Ayodhya" |
 | 2026-06-12 | Fallback status check | c49dce2 | gorasa-next | ✅ Ready | gorasa-next-... | Check Status.Description for fallback |
@@ -62,12 +73,35 @@
 
 ## Auto-Deploy Verification Checklist
 
+### Production (gorasa-next)
 - [x] Vercel dashboard: Connected Repository = `nikgorasa/gorasav1`
 - [x] Vercel dashboard: Root Directory = `gorasa-next/`
 - [x] Vercel dashboard: Auto-deploy = Enabled
 - [x] Test commit triggers deployment
 - [x] Deployment status = `Ready`
 - [x] Production URL serves latest commit (verified: hotel images load)
+
+### Development (dev-gorasa)
+- [x] Vercel project created: `dev-gorasa` (prj_BWE4hfy72DwYF39XamAwGYi3qg63)
+- [x] Root Directory = `gorasa-next/`
+- [x] Environment variables configured (10 vars)
+- [x] GitHub Actions workflow created (deploy-dev.yml)
+- [x] GitHub environment secrets configured (13 secrets)
+- [x] NEON database created (gorasa-dev, 29 tables, 210 rows)
+- [x] Push to `dev` branch triggers deployment
+- [x] Deployment status = `Ready`
+- [x] Dev URL serves content (HTTP 200)
+
+### QA (qa-gorasa)
+- [x] Vercel project created: `qa-gorasa` (prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN)
+- [x] Root Directory = `gorasa-next/`
+- [x] Environment variables configured (10 vars)
+- [x] GitHub Actions workflow created (deploy-qa.yml)
+- [x] GitHub environment secrets configured (13 secrets)
+- [x] NEON database created (gorasa-qa, 28 tables, 210 rows)
+- [x] Push to `qa` branch triggers deployment
+- [x] Deployment status = `Ready`
+- [x] QA URL serves content (HTTP 200)
 
 ---
 
@@ -148,6 +182,17 @@ ADR reference: N/A
 ## 2026-06-12
 
 ### Commit: df00f6aad4baf25a8d1d33df848e7fa9173e2f05
+
+Project: GoRASA
+Status: Ready
+ADR reference: N/A
+
+---
+
+
+## 2026-06-12
+
+### Commit: 80f90337305dc5d21f112b58c077b30dae2fbc4b
 
 Project: GoRASA
 Status: Ready

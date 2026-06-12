@@ -340,7 +340,52 @@
 | TBO Hotel API auth mismatch | ~3 hours | Wrong auth method (TokenId vs Basic), wrong creds (shared flight vs dedicated hotel), wrong username |
 | Hotel search param extraction | ~30 min | Route extracted from `body` root, not `body.params`; field names differed (CityName vs city) |
 | Fallback hotel names "Unknown" | ~2 hours | `getHotelInfoByCode()` hardcoded to `generateFallbackHotels("Unknown")` instead of using actual city name |
-| **Total** | **~27 hours** | |
+| GitHub Actions Vercel deploy path | ~30 min | `vercel deploy` from `gorasa-next/` subdirectory with `rootDirectory: gorasa-next` doubled the path to `gorasa-next/gorasa-next` |
+| Hardcoded PostgreSQL URIs in scripts | ~15 min | GitGuardian detected NEON connection strings committed in `setup-github-secrets.sh` |
+| **Total** | **~28 hours** | |
+
+---
+
+## Issue #9: Ticket System — Missing `await` + UUID Format + RLS
+
+**Date:** June 12, 2026
+**Duration:** ~2 hours
+**Severity:** High — ticket API returned empty `{}` on all operations
+
+### Symptoms
+- `GET /api/tickets` returned `{}` instead of ticket array
+- `POST /api/tickets` returned `{}` instead of created ticket
+- Supabase logs showed `401` (Invalid API key) and `400` (Bad Request) on tickets endpoints
+- Direct Supabase client test worked fine — data was in the database
+
+### Root Cause (4 layers)
+
+1. **Missing `await`** — All 3 ticket API routes called async serverManager functions without `await`. `NextResponse.json(getAllTickets())` passed a Promise object, which serialized as `{}`.
+
+2. **Invalid UUID format** — `generateId()` returned `TKT-xxx` string but `id` column is UUID type. Supabase rejected with `400 Bad Request`.
+
+3. **Column type mismatch** — `user_id` and `assigned_to` were UUID type referencing `auth.users`, but the app passes string user IDs from its own `User` table.
+
+4. **RLS blocking inserts** — Anon key can't insert with RLS enabled and no auth session. Service role key was invalid (stale JWT).
+
+### Resolution
+1. Added `await` to all async calls in `tickets/route.ts`, `tickets/[id]/route.ts`, `tickets/[id]/notes/route.ts`
+2. Changed `generateId()` to use `crypto.randomUUID()`
+3. Changed `user_id` and `assigned_to` columns from UUID to TEXT, dropped FK constraints
+4. Enabled RLS with permissive "Full access" policy (matches `Lead` table pattern)
+
+### Lessons Learned
+1. **ALWAYS `await` async functions in API routes** — Missing `await` silently returns a Promise object instead of data. The response looks "successful" (200/201) but contains `{}`.
+2. **UUID columns reject non-UUID strings** — If the column is UUID type, you must insert valid UUIDs. Custom ID formats like `TKT-xxx` fail silently.
+3. **Match column types to actual data** — If the app uses string IDs (not Supabase Auth UUIDs), the column should be TEXT, not UUID.
+4. **Check Supabase logs for 400/401 errors** — The logs immediately showed the real errors (invalid key, bad format) while the API returned empty success responses.
+5. **RLS policy patterns matter** — Other tables (Lead, Package) use permissive policies with the anon key. New tables should follow the same pattern.
+
+### Prevention Measures
+1. Add ESLint rule to warn on unawaited async calls in API routes
+2. Test API routes with actual curl requests, not just TypeScript compilation
+3. Check Supabase logs when API returns unexpected empty responses
+4. Follow existing RLS policy patterns when creating new tables
 
 ---
 
@@ -374,3 +419,8 @@
 26. **Check hardcoded values first** — "Unknown" in `generateFallbackHotels("Unknown")` was the smoking gun
 27. **Test with cities that trigger fallback paths** — Goa works (mock), Ayodhya triggers fallback; test both
 28. **Operational modes matter** — Plan mode (read-only) vs Build mode (read-write); always check system reminders
+29. **Vercel rootDirectory doubles when deploying from subdirectory** — If project has `rootDirectory: gorasa-next` and you run `vercel deploy` from `gorasa-next/`, it tries `gorasa-next/gorasa-next`. Always deploy from repo root.
+30. **Never commit database connection strings** — GitGuardian detects PostgreSQL URIs. Use environment variables and GitHub secrets instead.
+31. **GitHub Actions needs `npm install` before `vercel deploy`** — The Vercel CLI needs node_modules to be installed first.
+32. **Vercel API doesn't support setting production branch** — Must be set via dashboard UI, not programmatically.
+33. **SSO protection enabled by default on Vercel team projects** — Disable via API: `{"ssoProtection":null}` for public staging environments.
