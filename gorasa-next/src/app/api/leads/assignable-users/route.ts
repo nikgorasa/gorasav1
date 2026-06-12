@@ -1,22 +1,15 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import * as users from "@/lib/db/users";
 
 export async function GET() {
-  const { data: users, error } = await supabase
-    .from("User")
-    .select("id, name, email, role")
-    .in("role", ["SALES", "ADMIN", "SUPER_ADMIN"])
-    .eq("isActive", true)
-    .order("name");
-
-  if (error) {
+  try {
+    const result = await users.findAll();
+    const assignable = (result.users as any[])
+      .filter((u) => ["SALES", "ADMIN", "SUPER_ADMIN"].includes(u.role) && u.isActive)
+      .map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return NextResponse.json(assignable);
+  } catch {
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
-
-  return NextResponse.json(users);
 }

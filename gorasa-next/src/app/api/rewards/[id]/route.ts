@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import * as rewards from "@/lib/db/rewards";
 
 export async function PATCH(
   request: NextRequest,
@@ -14,16 +9,10 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const { data: reward, error } = await supabase
-      .from("LoyaltyReward")
-      .update({ ...body, updatedAt: new Date().toISOString() })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to update reward" }, { status: 500 });
-    }
+    const reward = await rewards.update(id, {
+      ...body,
+      updatedAt: new Date().toISOString(),
+    });
 
     return NextResponse.json(reward);
   } catch {
@@ -37,15 +26,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const { error } = await supabase
-      .from("LoyaltyReward")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to delete reward" }, { status: 500 });
-    }
-
+    await rewards.remove(id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

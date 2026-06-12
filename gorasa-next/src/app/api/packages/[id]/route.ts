@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as packages from "@/lib/db/packages";
 
 export async function GET(
   _request: NextRequest,
@@ -7,18 +7,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const { data: pkg, error } = await supabase
-      .from("Package")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const pkg = await packages.findById(id);
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "Package not found" }, { status: 404 });
-      }
-      console.error("Package fetch error:", error);
-      return NextResponse.json({ error: "Failed to fetch package" }, { status: 500 });
+    if (!pkg) {
+      return NextResponse.json({ error: "Package not found" }, { status: 404 });
     }
 
     return NextResponse.json(pkg);
@@ -36,33 +28,23 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const { data: pkg, error } = await supabase
-      .from("Package")
-      .update({
-        title: body.title,
-        duration: body.duration,
-        price: body.price ? Number(body.price) : undefined,
-        originalPrice: body.originalPrice ? Number(body.originalPrice) : null,
-        rating: body.rating ? Number(body.rating) : undefined,
-        provider: body.provider,
-        overview: body.overview,
-        itinerary: body.itinerary,
-        inclusions: body.inclusions,
-        exclusions: body.exclusions,
-        importantNotes: body.importantNotes,
-        images: body.images,
-        status: body.status,
-        isActive: body.isActive,
-      })
-      .eq("id", id)
-      .select()
-      .single();
+    const updateData: Record<string, unknown> = {};
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.duration !== undefined) updateData.duration = body.duration;
+    if (body.price !== undefined) updateData.price = Number(body.price);
+    if (body.originalPrice !== undefined) updateData.originalPrice = body.originalPrice ? Number(body.originalPrice) : null;
+    if (body.rating !== undefined) updateData.rating = Number(body.rating);
+    if (body.provider !== undefined) updateData.provider = body.provider;
+    if (body.overview !== undefined) updateData.overview = body.overview;
+    if (body.itinerary !== undefined) updateData.itinerary = body.itinerary;
+    if (body.inclusions !== undefined) updateData.inclusions = body.inclusions;
+    if (body.exclusions !== undefined) updateData.exclusions = body.exclusions;
+    if (body.importantNotes !== undefined) updateData.importantNotes = body.importantNotes;
+    if (body.images !== undefined) updateData.images = body.images;
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.isActive !== undefined) updateData.isActive = body.isActive;
 
-    if (error) {
-      console.error("Package update error:", error);
-      return NextResponse.json({ error: "Failed to update package" }, { status: 500 });
-    }
-
+    const pkg = await packages.update(id, updateData);
     return NextResponse.json(pkg);
   } catch (error) {
     console.error("Package update error:", error);
@@ -76,16 +58,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const { error } = await supabase
-      .from("Package")
-      .update({ isActive: false })
-      .eq("id", id);
-
-    if (error) {
-      console.error("Package delete error:", error);
-      return NextResponse.json({ error: "Failed to delete package" }, { status: 500 });
-    }
-
+    await packages.update(id, { isActive: false });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Package delete error:", error);

@@ -1,10 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import * as leads from "@/lib/db/leads";
 
 export async function PATCH(
   request: Request,
@@ -20,27 +15,10 @@ export async function PATCH(
     if (assignedTo) updateData.assignedTo = assignedTo;
     if (notes !== undefined) updateData.notes = notes;
 
-    const { data: lead, error } = await supabase
-      .from("Lead")
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Lead update error:", error);
-      return NextResponse.json(
-        { error: "Failed to update lead" },
-        { status: 500 }
-      );
-    }
-
+    const lead = await leads.update(id, updateData);
     return NextResponse.json(lead);
   } catch (error) {
     console.error("Lead update error:", error);
-    return NextResponse.json(
-      { error: "Failed to update lead" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
   }
 }

@@ -1,23 +1,15 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as packages from "@/lib/db/packages";
 
 export async function GET() {
   try {
-    const { data: packages, error } = await supabase
-      .from("Package")
-      .select("id, title, duration, price, originalPrice, rating, provider, inclusions, images, category")
-      .eq("isActive", true)
-      .order("createdAt", { ascending: false });
+    const allPackages = await packages.findAll();
 
-    if (error) {
-      return NextResponse.json({ error: "Failed to fetch packages" }, { status: 500 });
-    }
-
-    const mapped = (packages || []).map((p: Record<string, unknown>) => {
+    const mapped = (allPackages || []).map((p: Record<string, unknown>) => {
       let images: string[] = [];
-      try { images = typeof p.images === "string" ? JSON.parse(p.images) : (p.images as string[]) || []; } catch { images = []; }
+      try { images = typeof p.images === "string" ? JSON.parse(p.images as string) : (p.images as string[]) || []; } catch { images = []; }
       let inclusions: string[] = [];
-      try { inclusions = typeof p.inclusions === "string" ? JSON.parse(p.inclusions) : (p.inclusions as string[]) || []; } catch { inclusions = []; }
+      try { inclusions = typeof p.inclusions === "string" ? JSON.parse(p.inclusions as string) : (p.inclusions as string[]) || []; } catch { inclusions = []; }
       return {
         id: p.id,
         title: p.title,
