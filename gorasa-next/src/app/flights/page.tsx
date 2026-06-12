@@ -88,6 +88,20 @@ export default function FlightsPage() {
     }
   };
 
+  const formatFlightTime = (iso: string) => {
+    const parts = iso.split("T");
+    if (parts.length < 2) return iso;
+    const time = parts[1].slice(0, 5);
+    return time;
+  };
+
+  const formatFlightDate = (iso: string) => {
+    const parts = iso.split("T");
+    if (parts.length < 2) return "";
+    const d = new Date(parts[0] + "T00:00:00");
+    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  };
+
   const getTierColor = (tier: string) => {
     switch (tier) {
       case "Business": return "bg-purple-100 text-purple-700";
@@ -230,19 +244,21 @@ export default function FlightsPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-8">
-                          <div className="text-center">
-                            <p className="text-lg font-bold text-slate-900">{flight.departureTime}</p>
-                            <p className="text-xs text-slate-500">{flight.origin}</p>
+                        <div className="flex items-center gap-10">
+                          <div className="text-center min-w-[72px]">
+                            <p className="text-lg font-bold text-slate-900">{formatFlightTime(flight.departureTime)}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{formatFlightDate(flight.departureTime)}</p>
+                            <p className="text-xs text-slate-500 font-semibold mt-0.5">{flight.origin}</p>
                           </div>
                           <div className="flex flex-col items-center">
-                            <p className="text-xs text-slate-400">{flight.duration}</p>
-                            <div className="w-20 h-px bg-slate-300 my-1" />
-                            <p className="text-xs text-slate-400">{flight.stops === 0 ? "Non-stop" : `${flight.stops} stop`}</p>
+                            <p className="text-xs font-medium text-slate-500">{flight.duration}</p>
+                            <div className="w-24 h-0.5 bg-slate-300 my-1.5 rounded-full" />
+                            <p className="text-xs font-medium text-slate-500">{flight.stops === 0 ? "Non-stop" : `${flight.stops} stop`}</p>
                           </div>
-                          <div className="text-center">
-                            <p className="text-lg font-bold text-slate-900">{flight.arrivalTime}</p>
-                            <p className="text-xs text-slate-500">{flight.destination}</p>
+                          <div className="text-center min-w-[72px]">
+                            <p className="text-lg font-bold text-slate-900">{formatFlightTime(flight.arrivalTime)}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{formatFlightDate(flight.arrivalTime)}</p>
+                            <p className="text-xs text-slate-500 font-semibold mt-0.5">{flight.destination}</p>
                           </div>
                         </div>
 
@@ -289,17 +305,19 @@ export default function FlightsPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-slate-900">{selectedFlight.departureTime}</p>
-                    <p className="text-sm text-slate-500">{selectedFlight.origin}</p>
+                    <p className="text-2xl font-bold text-slate-900">{formatFlightTime(selectedFlight.departureTime)}</p>
+                    <p className="text-xs text-slate-400">{formatFlightDate(selectedFlight.departureTime)}</p>
+                    <p className="text-sm text-slate-500 font-semibold mt-0.5">{selectedFlight.origin}</p>
                   </div>
                   <div className="flex flex-col items-center">
                     <Clock size={16} className="text-slate-400 mb-1" />
                     <p className="text-sm font-medium text-slate-700">{selectedFlight.duration}</p>
-                    <p className="text-xs text-slate-400">{selectedFlight.stops === 0 ? "Non-stop" : `${selectedFlight.stops} stop`}</p>
+                    <p className="text-xs font-medium text-slate-400">{selectedFlight.stops === 0 ? "Non-stop" : `${selectedFlight.stops} stop`}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-slate-900">{selectedFlight.arrivalTime}</p>
-                    <p className="text-sm text-slate-500">{selectedFlight.destination}</p>
+                    <p className="text-2xl font-bold text-slate-900">{formatFlightTime(selectedFlight.arrivalTime)}</p>
+                    <p className="text-xs text-slate-400">{formatFlightDate(selectedFlight.arrivalTime)}</p>
+                    <p className="text-sm text-slate-500 font-semibold mt-0.5">{selectedFlight.destination}</p>
                   </div>
                 </div>
 
