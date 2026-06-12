@@ -274,3 +274,33 @@ Work completed:
 - AI Leads: Reuses same PATCH pattern as regular leads for stage/assignment updates
 
 **Status:** All 12 admin pages now have full CRUD. TypeScript compiles, build succeeds, 15/15 post-task checks pass.
+
+### Session 2026-06-12 — Staging Environments Go-Live + Supabase Env Var Fix
+
+**Duration:** ~1 hour
+**Problem:** Dev and QA staging environments had stale/staging branch sync issues.
+
+**Changes:**
+1. Read all project docs (Sprint-1.md, CONFIG-REFERENCE.md, etc.) as per governance
+2. Updated all 4 doc files with real Vercel URLs (project-uul0v.vercel.app, project-sm6gc.vercel.app)
+3. Replaced wildcard URLs with actual Vercel deployment URLs
+4. Merged `main` into `dev` and `qa` branches (8-commit gap synced)
+5. Cherry-picked URL commit to both branches, pushed all 3 to `neworigin`
+6. Renewed Vercel token (old one expired) and updated GitHub environment secrets
+7. Re-ran failed GitHub Actions deployments — both succeeded
+8. Fixed **stale Supabase env vars** on Vercel dev/QA projects:
+   - `.env.local` had been updated with a **different Supabase project ref** (`isubgeemvhvhnhikxbjb`)
+   - Vercel project env vars still had old project ref keys (`isubgeemvhvhnikxhbjb`)
+   - Replaced all 3 Supabase env vars on both dev and QA Vercel projects with correct keys from `.env.local`
+9. Re-deployed both environments — all endpoints now working (demo users, cities, tickets)
+
+**Verification:** Both staging environments fully verified:
+- HTTP 200 ✓
+- 35 cities returned ✓
+- 3 tickets returned ✓
+- 6 demo users returned ✓
+
+**Deployment URLs:**
+- Production: https://gorasa-next.vercel.app
+- Development: https://project-uul0v.vercel.app
+- QA: https://project-sm6gc.vercel.app

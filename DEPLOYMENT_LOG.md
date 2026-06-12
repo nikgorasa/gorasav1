@@ -201,3 +201,19 @@ ADR reference: N/A
 
 ---
 
+## 2026-06-12 — Staging Environments Go-Live
+
+| Date | Commit | SHA | Project | Status | URL | Notes |
+|------|--------|-----|---------|--------|-----|-------|
+| 2026-06-12 | docs: update staging URLs from wildcards | b9df19c | dev-gorasa, qa-gorasa | ✅ Ready | project-uul0v, project-sm6gc | Wildcard → actual Vercel URLs |
+| 2026-06-12 | Staging URLs fix + Vercel token renewal | (cherry-picked) | dev-gorasa, qa-gorasa | ✅ Ready | project-uul0v, project-sm6gc | Ran on `vercel deploy --prod --yes` |
+| 2026-06-12 | Supabase env var fix (wrong project ref) | (same deploy) | dev-gorasa, qa-gorasa | ✅ Ready | project-uul0v, project-sm6gc | Fixed stale Supabase project ref in Vercel env vars |
+
+**Env Var Fix Detail:** Vercel dev/QA projects had Supabase keys from old project ref (`isubgeemvhvhnikxhbjb`) while `.env.local` pointed to a different Supabase project (`isubgeemvhvhnhikxbjb`). Replaced all 3 Supabase env vars on both projects via Vercel API.
+
+**Status:** ✅ All 3 environments active and fully verified (homepage, cities, tickets, demo users)
+
+---
+
+
+
