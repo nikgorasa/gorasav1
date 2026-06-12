@@ -9,8 +9,8 @@
 | Field | Value |
 |-------|-------|
 | **Production URL** | https://gorasa-next.vercel.app |
-| **Development URL** | https://dev-gorasa-*.vercel.app |
-| **QA URL** | https://qa-gorasa-*.vercel.app |
+| **Development URL** | https://project-uul0v.vercel.app |
+| **QA URL** | https://project-sm6gc.vercel.app |
 | **Vercel Project (Prod)** | gorasa-next (prj_WLoI80KaCmVZSudP17ohcPbzTpSe) |
 | **Vercel Project (Dev)** | dev-gorasa (prj_BWE4hfy72DwYF39XamAwGYi3qg63) |
 | **Vercel Project (QA)** | qa-gorasa (prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN) |
@@ -20,7 +20,7 @@
 | **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 30+ tables) |
 | **NEON Dev** | gorasa-dev (29 tables, 210 rows) |
 | **NEON QA** | gorasa-qa (28 tables, 210 rows) |
-| **Latest Commit** | 2e513a7 (support page ticket creation) |
+| **Latest Commit** | 4d5367b (admin CRUD + users API fix) |
 | **Auto-Deploy Status** | ✅ WORKING — All 3 environments active |
 
 ---
@@ -29,10 +29,11 @@
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
-| 2026-06-12 | Fix Vercel deploy path | 80f9033 | dev-gorasa, qa-gorasa | ✅ Ready | dev-gorasa-*, qa-gorasa-* | Run vercel from repo root, not subdirectory |
+| 2026-06-12 | Fix Vercel deploy path | 80f9033 | dev-gorasa, qa-gorasa | ✅ Ready | project-uul0v, project-sm6gc | Run vercel from repo root, not subdirectory |
 | 2026-06-12 | User-facing ticket creation on support page | 2e513a7 | gorasa-next | ✅ Pushed | gorasa-next.vercel.app | /support page: AI Chat + My Tabs tabs, ticket create form, user ticket list |
+| 2026-06-12 | Admin navigation full CRUD + Users API fix | 9b88eae,4d5367b | gorasa-next | ✅ Pushed | gorasa-next.vercel.app | Full CRUD on all 12 admin pages, service role key for Users API, user creation |
 | 2026-06-12 | Ticket system + AI planner + governance | b742e8d | gorasa-next | ✅ Pushed | gorasa-next.vercel.app | 45 files, tickets tables, /holidays AI planner, 15 compulsory checks |
-| 2026-06-12 | Staging env setup complete | 4b38848 | dev-gorasa, qa-gorasa | ✅ Ready | dev-gorasa-*, qa-gorasa-* | NEON databases, env vars, GitHub secrets |
+| 2026-06-12 | Staging env setup complete | 4b38848 | dev-gorasa, qa-gorasa | ✅ Ready | project-uul0v, project-sm6gc | NEON databases, env vars, GitHub secrets |
 | 2026-06-12 | Remove hardcoded credentials | d89d75a | All | ✅ Ready | all | Security fix: remove PostgreSQL URIs from scripts |
 | 2026-06-12 | Governance protocol update (operational modes) | df00f6a | gorasa-next | ✅ Ready | gorasa-next-... | Added plan/build modes to AGENTS.md |
 | 2026-06-12 | Fallback hotel names fix | b45ab07 | gorasa-next | ✅ Ready | gorasa-next-... | Fixed "Hotel in Unknown" → "Hotel in Ayodhya" |

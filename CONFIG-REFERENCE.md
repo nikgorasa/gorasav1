@@ -18,6 +18,8 @@
 | **Vercel Project ID** | `prj_WLoI80KaCmVZSudP17ohcPbzTpSe` | `.vercel/project.json` |
 | **Vercel Dev Project ID** | `prj_BWE4hfy72DwYF39XamAwGYi3qg63` | Vercel API |
 | **Vercel QA Project ID** | `prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN` | Vercel API |
+| **Vercel Dev URL** | `https://project-uul0v.vercel.app` | Verified HTTP 200 |
+| **Vercel QA URL** | `https://project-sm6gc.vercel.app` | Verified HTTP 200 |
 | **Vercel Team ID** | `team_0pR3Xnbjx12q8H8pZF9xgE5S` | `.vercel/project.json` |
 | **Vercel Root Directory** | **`gorasa-next/`** | Set via API (not vercel.json) |
 | **Vercel Env: TBO_FORCE_MOCK** | Removed (was `true`) | Vercel dashboard — removed Jun 11, 2026 |
@@ -947,8 +949,8 @@ QA:          qa-gorasa    → qa branch   → NEON (gorasa-qa)
 | Environment | URL | Status |
 |-------------|-----|--------|
 | Production | https://gorasa-next.vercel.app | ✅ Active |
-| Development | https://dev-gorasa-*.vercel.app | ✅ Active |
-| QA | https://qa-gorasa-*.vercel.app | ✅ Active |
+| Development | https://project-uul0v.vercel.app | ✅ Active |
+| QA | https://project-sm6gc.vercel.app | ✅ Active |
 
 ### NEON Databases
 
