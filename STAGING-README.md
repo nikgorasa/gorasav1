@@ -21,8 +21,8 @@ QA:          qa-gorasa    → qa branch   → NEON (gorasa-qa)
 | Environment | URL | Database | Status |
 |-------------|-----|----------|--------|
 | Production | https://gorasa-next.vercel.app | Supabase | ✅ Active |
-| Development | https://dev-gorasa-*.vercel.app | NEON gorasa-dev | ✅ Active |
-| QA | https://qa-gorasa-*.vercel.app | NEON gorasa-qa | ✅ Active |
+| Development | https://project-uul0v.vercel.app | NEON gorasa-dev | ✅ Active |
+| QA | https://project-sm6gc.vercel.app | NEON gorasa-qa | ✅ Active |
 
 ---
 
