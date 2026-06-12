@@ -196,8 +196,8 @@ QA:          qa-gorasa    → qa branch   → NEON gorasa-qa
 
 **Deployment URLs:**
 - Production: https://gorasa-next.vercel.app
-- Development: https://dev-gorasa-*.vercel.app
-- QA: https://qa-gorasa-*.vercel.app
+- Development: https://project-uul0v.vercel.app
+- QA: https://project-sm6gc.vercel.app
 
 **Status:** All 3 environments active and verified (HTTP 200, database connectivity confirmed)
 
