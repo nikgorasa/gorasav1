@@ -97,6 +97,11 @@ export default function FlightBookingModal({
 
   if (!isOpen) return null;
 
+  const formatTime = (iso: string) => {
+    const parts = iso.split("T");
+    return parts.length >= 2 ? parts[1].slice(0, 5) : iso;
+  };
+
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={handleClose} />
@@ -129,7 +134,7 @@ export default function FlightBookingModal({
                 <span className="flex items-center gap-1"><MapPin size={10} />{flight.destination}</span>
               </div>
               <div className="flex items-center gap-4 text-xs text-slate-500">
-                <span className="flex items-center gap-1"><Clock size={12} />{flight.departureTime} – {flight.arrivalTime}</span>
+                <span className="flex items-center gap-1"><Clock size={12} />{formatTime(flight.departureTime)} – {formatTime(flight.arrivalTime)}</span>
                 <span className="flex items-center gap-1"><Luggage size={12} />{flight.stops === 0 ? "Non-stop" : `${flight.stops} stop`}</span>
               </div>
               {date && (
