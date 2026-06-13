@@ -124,20 +124,20 @@ export default function HomePageClient({
 
       <main className="min-h-screen pt-16">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden min-h-[70vh] md:min-h-[75vh] lg:min-h-[82vh] flex items-center">
+        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden min-h-[40vh] md:min-h-[45vh] lg:min-h-[50vh] flex items-center">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-20 left-10 w-72 h-72 bg-brand-saffron rounded-full blur-3xl" />
             <div className="absolute bottom-10 right-20 w-96 h-96 bg-brand-gold rounded-full blur-3xl" />
           </div>
 
-          <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+          <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
             <motion.div
               initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               className="text-center"
             >
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-3 leading-tight">
                 Reserve luxury &{" "}
                 <span className="text-brand-saffron italic">Composure</span>
               </h1>
@@ -146,7 +146,7 @@ export default function HomePageClient({
               </p>
 
               {/* Quick action tiles */}
-              <div className="flex flex-wrap justify-center gap-3 mt-10">
+              <div className="flex flex-wrap justify-center gap-3 mt-6">
                 {SEARCH_TABS.map((tab) => {
                   const Icon = tab.icon;
                   return (
