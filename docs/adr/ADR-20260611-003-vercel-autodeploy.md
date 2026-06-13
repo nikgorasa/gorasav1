@@ -1,5 +1,7 @@
 # ADR-20260611-003: Vercel Auto-Deploy Fix
 
+> **Note (2026-06-13):** Repo moved from `nikgorasa/gorasav1` → `Gorasa-In-2026/gorasav1`. Vercel connected repos updated accordingly.
+
 ## Status
 Resolved (Auto-deploy working)
 
