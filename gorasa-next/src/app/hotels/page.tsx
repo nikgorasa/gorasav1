@@ -192,7 +192,7 @@ export default function HotelsPage() {
                 <Building2 size={28} className="text-white" />
               </div>
               <h1 className="text-3xl font-serif font-bold text-white mb-1">Search Hotels</h1>
-              <p className="text-white/70 text-sm">Powered by TBO • Global hotel inventory at best rates</p>
+              <p className="text-white/70 text-sm">Global hotel inventory at best rates</p>
             </motion.div>
 
             <motion.div
@@ -422,14 +422,14 @@ export default function HotelsPage() {
             {!searched ? (
               <div className="text-center py-16">
                 <Building2 size={48} className="mx-auto text-slate-300 mb-4" />
-                <h2 className="text-xl font-bold text-slate-900 mb-2">Search TBO Hotels</h2>
-                <p className="text-slate-500">Enter your destination and dates to find hotels from TBO's global inventory.</p>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Search Hotels</h2>
+                <p className="text-slate-500">Enter your destination and dates to find hotels from our global inventory.</p>
                 <p className="text-slate-400 text-xs mt-2">22% markup applied. Pricing hierarchy: Hotel &gt; Destination &gt; Global.</p>
               </div>
             ) : loading ? (
               <div className="text-center py-16">
                 <Loader2 size={40} className="mx-auto mb-4 animate-spin" style={{ color: "#D97706" }} />
-                <p className="text-slate-500">Searching TBO inventory for {selectedCity.name}...</p>
+                <p className="text-slate-500">Searching hotels in {selectedCity.name}...</p>
               </div>
             ) : error ? (
               <div className="text-center py-16">
@@ -447,7 +447,7 @@ export default function HotelsPage() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm text-slate-500">{results.length} hotels found in {selectedCity.name}</p>
-                  <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">TBO Inventory</span>
+                  <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Live Inventory</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {results.map((hotel, i) => (
@@ -477,13 +477,11 @@ export default function HotelsPage() {
                           </div>
                         )}
                         <div className="absolute top-3 left-3">
-                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                            hotel.source === "fallback"
-                              ? "bg-amber-500 text-white"
-                              : "bg-blue-600 text-white"
-                          }`}>
-                            {hotel.source === "fallback" ? "Fallback" : "TBO"}
-                          </span>
+                          {hotel.source === "fallback" && (
+                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500 text-white">
+                              Fallback
+                            </span>
+                          )}
                         </div>
                         <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[11px] px-2 py-1 rounded-lg">
                           {STAR_LABELS[hotel.rating] || "★★★"}
@@ -555,13 +553,11 @@ export default function HotelsPage() {
                   <X size={18} />
                 </button>
                 <div className="absolute bottom-4 left-4 flex gap-2">
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                    selectedHotel.source === "fallback"
-                      ? "bg-amber-500 text-white"
-                      : "bg-blue-600 text-white"
-                  }`}>
-                    {selectedHotel.source === "fallback" ? "Fallback" : "TBO"}
-                  </span>
+                  {selectedHotel.source === "fallback" && (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500 text-white">
+                      Fallback
+                    </span>
+                  )}
                   <span className={`text-xs font-bold px-3 py-1 rounded-full bg-black/60 text-white ${getStarColor(STAR_MAP[selectedHotel.rating] || 3)}`}>
                     {STAR_LABELS[selectedHotel.rating] || "★★★"}
                   </span>

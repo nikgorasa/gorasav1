@@ -99,15 +99,11 @@ export default function CitySearchDropdown({
           </span>
         )}
       </div>
-      <span
-        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
-          city.source === "tbo"
-            ? "bg-emerald-100 text-emerald-700"
-            : "bg-amber-100 text-amber-700"
-        }`}
-      >
-        {city.source === "tbo" ? "TBO" : "Fallback"}
-      </span>
+      {city.source === "fallback" && (
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 bg-amber-100 text-amber-700">
+          Fallback
+        </span>
+      )}
     </Command.Item>
   );
 
