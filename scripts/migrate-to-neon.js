@@ -11,8 +11,12 @@ const { PrismaClient } = require('@prisma/client');
 const { execSync } = require('child_process');
 const fs = require('fs');
 
-// Supabase connection (source)
-const SUPABASE_URL = process.env.SOURCE_DATABASE_URL || 'postgresql://postgres.isubgeemvhvhnhikxbjb:REDACTED_SUPABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
+// Supabase connection (source) — use env var SOURCE_DATABASE_URL
+const SUPABASE_URL = process.env.SOURCE_DATABASE_URL;
+if (!SUPABASE_URL) {
+  console.error('Set SOURCE_DATABASE_URL env var (Supabase connection string)');
+  process.exit(1);
+}
 
 // NEON connection (target) - pass as argument or env var
 const NEON_URL = process.env.TARGET_DATABASE_URL || process.argv[2];

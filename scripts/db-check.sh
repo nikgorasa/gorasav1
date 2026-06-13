@@ -15,9 +15,9 @@ echo "════════════════════════�
 echo "  DB Schema & Data Check — Target: $TARGET"
 echo "════════════════════════════════════════════════════"
 
-# Connection strings
-DEV_URL="postgresql://neondb_owner:REDACTED_NEON_DEV_PASSWORD@ep-quiet-tooth-aiehj2mq-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require"
-QA_URL="postgresql://neondb_owner:REDACTED_NEON_QA_PASSWORD@ep-wispy-thunder-adigjqv3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+# Connection strings — use env vars
+DEV_URL="${DEV_DATABASE_URL:-postgresql://neondb_owner:REDACTED_NEON_DEV_PASSWORD@ep-quiet-tooth-aiehj2mq-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require}"
+QA_URL="${QA_DATABASE_URL:-postgresql://neondb_owner:REDACTED_NEON_QA_PASSWORD@ep-wispy-thunder-adigjqv3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require}"
 
 if [ "$TARGET" = "qa" ]; then
   TARGET_URL="$QA_URL"

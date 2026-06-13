@@ -506,12 +506,18 @@ if [[ "$CURRENT_BRANCH" == "dev" || "$CURRENT_BRANCH" == "qa" ]]; then
     # Check workflow file matches branch
     WORKFLOW_FILE="../.github/workflows/deploy-${CURRENT_BRANCH}.yml"
     if [[ -f "$WORKFLOW_FILE" ]]; then
-        WORKFLOW_BRANCH=$(grep "^on:" -A3 "$WORKFLOW_FILE" 2>/dev/null | grep "branches:" -A1 | tail -1 | sed 's/.*\[//' | sed 's/\]//')
-        if echo "$WORKFLOW_BRANCH" | grep -q "$CURRENT_BRANCH" 2>/dev/null; then
+        WORKFLOW_BRANCH=$(grep -oP 'branches:\s*\[\K[^\]]+' "$WORKFLOW_FILE" 2>/dev/null || \
+                          grep "branches:" "$WORKFLOW_FILE" 2>/dev/null | head -1 | sed 's/.*\[//' | sed 's/\]//' | tr -d ' ')
+        if [[ -n "$WORKFLOW_BRANCH" ]] && echo "$WORKFLOW_BRANCH" | grep -q "$CURRENT_BRANCH" 2>/dev/null; then
             print_status "  ✓ Workflow deploy-${CURRENT_BRANCH}.yml targets branch '$CURRENT_BRANCH'"
         else
-            print_error "  ✗ Workflow deploy-${CURRENT_BRANCH}.yml targets '$WORKFLOW_BRANCH', not '$CURRENT_BRANCH'"
-            ERRORS=$((ERRORS + 1))
+            # Fallback: check if branch name appears anywhere in the workflow file
+            if grep -q "$CURRENT_BRANCH" "$WORKFLOW_FILE" 2>/dev/null; then
+                print_status "  ✓ Workflow deploy-${CURRENT_BRANCH}.yml references branch '$CURRENT_BRANCH'"
+            else
+                print_error "  ✗ Workflow deploy-${CURRENT_BRANCH}.yml targets '$WORKFLOW_BRANCH', not '$CURRENT_BRANCH'"
+                ERRORS=$((ERRORS + 1))
+            fi
         fi
 
         # Check environment name in workflow

@@ -12,11 +12,16 @@
 
 const { PrismaClient } = require('@prisma/client');
 
-// Source: Supabase (production)
+// Source: Supabase (production) — use env var SOURCE_DATABASE_URL
+const sourceUrl = process.env.SOURCE_DATABASE_URL;
+if (!sourceUrl) {
+  console.error('Set SOURCE_DATABASE_URL env var (Supabase connection string)');
+  process.exit(1);
+}
 const sourcePrisma = new PrismaClient({
   datasources: {
     db: {
-      url: 'postgresql://postgres.isubgeemvhvhnhikxbjb:REDACTED_SUPABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres'
+      url: sourceUrl
     }
   }
 });

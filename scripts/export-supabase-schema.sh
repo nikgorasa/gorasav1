@@ -4,14 +4,12 @@
 
 set -e
 
-# Supabase connection details (from .env.local)
-SUPABASE_URL="aws-0-ap-southeast-1.pooler.supabase.com"
-SUPABASE_DB="postgres"
-SUPABASE_USER="postgres.isubgeemvhvhnhikxbjb"
-SUPABASE_PASS="REDACTED_SUPABASE_PASSWORD"
-
-# Build connection string
-CONN_STR="postgresql://${SUPABASE_USER}:${SUPABASE_PASS}@${SUPABASE_URL}:6543/${SUPABASE_DB}"
+# Supabase connection details — use env var SOURCE_DATABASE_URL
+if [ -z "$SOURCE_DATABASE_URL" ]; then
+  echo "Set SOURCE_DATABASE_URL env var (Supabase connection string)"
+  exit 1
+fi
+CONN_STR="$SOURCE_DATABASE_URL"
 
 echo "========================================"
 echo "Exporting Supabase schema and data..."
