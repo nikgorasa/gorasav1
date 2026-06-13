@@ -31,6 +31,7 @@
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
+| 2026-06-13 | Remove TBO from UI + fix stale refs | 95195d5 | dev-gorasa | ✅ Live | project-uul0v.vercel.app | TBO removed from hotels page, city dropdown, booking modal. Stale nikgorasa refs fixed. |
 | 2026-06-13 | Hero redesign + nav cleanup + Home button | df493dc | dev-gorasa | ✅ Live | project-uul0v.vercel.app | Hero image (Taj Mahal), left-aligned layout, SVG icons, nav reorder, Home button, isactive filter |
 | 2026-06-13 | Flights/hotels UI redesign + brand colors | de94cf9 | dev-gorasa | ✅ Live | dev-gorasa-mcp899hcw-nikhil-gorasa-s-projects.vercel.app | Passenger/room config popovers, concierge gates, date ranges, #F5EFE0/#D97706 |
 | 2026-06-12 | Fix Vercel deploy path | 80f9033 | dev-gorasa, qa-gorasa | ✅ Ready | project-uul0v, project-sm6gc | Run vercel from repo root, not subdirectory |
