@@ -7,6 +7,15 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-13 | df493dc | feat: add Home button to navbar (desktop + mobile) |
+| 2026-06-13 | 179a50c | fix: swap hero image to Taj Mahal at golden hour |
+| 2026-06-13 | d6f270f | fix: replace emoji icons with lucide-react SVGs |
+| 2026-06-13 | e6f4f05 | fix: reorder navbar (Plan My Holiday > Hotels > Flights > My Bookings > Help Desk), add isactive filter |
+| 2026-06-13 | 8bcfb35 | feat: redesign hero — image background, left-aligned layout, refined copy |
+| 2026-06-13 | 9f7da9f | fix: reduce hero section height from 70-82vh to 40-50vh |
+| 2026-06-13 | 5ed4e23 | feat: hard-delete Explore nav item from both DBs |
+| 2026-06-13 | c264b47 | feat: remove hero badge, update nav items (DB: NEON+Supabase) |
+| 2026-06-13 | (pending) | chore: remove ~55 dead weight files — unused AI modules, components, hooks, orphan routes |
 | 2026-06-13 | (pending) | feat: verify DB isolation — all routes respect DATABASE_PROVIDER |
 | 2026-06-12 | 1a4de24 | ci: branch protection (main/qa) + Prod env approval gate + repo moved to org |
 | 2026-06-12 | 2e513a7 | feat: add user-facing ticket creation and listing to support page |
@@ -235,3 +244,48 @@ Description:
 - Only auth (intentional) and tickets (by design) remain on shared Supabase
 
 **Conclusion:** DB isolation is verified complete — no fix needed. Earlier diagnosis was inaccurate.
+
+---
+
+## 2026-06-13 — Dead Weight Cleanup
+
+**Problem:** ~55 files from previous sessions' self-contained modules were never integrated into the live codebase.
+
+**Investigation:** Grep-audited every module, component, hook, and lib file for external imports. Found 7 completely dead modules, 17 dead components, 4 dead hooks, 3 orphan API routes, and dead template copies in pricing/payment directories.
+
+**Deleted (complete modules — zero imports):**
+- `lib/ai/providers/` (5 files) — Gemini, OpenAI, MiMo providers
+- `lib/ai/session/` (3 files) — localStorage session manager
+- `lib/ai/filters/` (3 files) — search filter engine
+- `lib/ai/i18n/` (1 file) — Hindi translations
+- `lib/ai/unified/` (3 files) — unified intent classifier
+- `lib/ai/intent/` (5 files) — old intent classifier (types/router dead after consumers deleted)
+- `lib/analytics/` (1 file) — analytics events
+- `lib/support/` (6 files) — smart support system (API route was orphan)
+
+**Deleted (components — zero consumers):**
+- UnifiedChat, EscalationFlow, SupportDemo, IntentDemo, PlannerHandoff, FeatureFlag, ChatInterface, HandoffModal, ItineraryPreview, DayCard, TicketList, TicketDetail, CreateTicketModal, FilterPanel, QuickReplies, TypingIndicator, CheckoutButton (17 files)
+
+**Deleted (hooks — zero consumers):**
+- useSupport, useIntentClassifier, useFilters, useLanguage (4 files)
+
+**Deleted (orphan API routes — no frontend calls):**
+- `app/api/ai/holiday-plan-ai/`, `app/api/ai/classify-intent/`, `app/api/support/` (3 routes)
+
+**Deleted (template copies in lib/):**
+- `lib/pricing/api/`, `lib/pricing/admin/`, `lib/pricing/migration.sql`, `lib/pricing/README.md`, `lib/pricing/INTEGRATION.md`
+- `lib/payment/components/`, `lib/payment/api/`, `lib/payment/admin/`, `lib/payment/migration.sql`, `lib/payment/README.md`, `lib/payment/INTEGRATION.md`
+- `lib/db/tickets.ts`, `lib/ai/client.ts`, `lib/config/flags.ts`, `lib/ticket/ticketManager.ts`
+
+**Fixed:** HolidayPlanner.tsx rewritten to be self-contained (inlined ChatInterface, ItineraryPreview, HandoffModal). Ticket index.ts cleaned to remove dead ticketManager re-exports.
+
+**Kept (verified integrated):**
+- `lib/ticket/` — serverManager + types (8 consumers)
+- `lib/pricing/` — types + service (promo validate route)
+- `lib/payment/` — core service (checkout, webhooks, payment-status routes)
+- `lib/ai/holidayPlanner.ts` — types used by HolidayPlanner component
+- `lib/db/` — 13 files, 50+ imports across API routes
+- `app/admin/ai-leads/` — live admin route
+- All 16 components in `components/` — verified used by pages
+
+**Verification:** TypeScript compiles cleanly, Next.js build passes, all routes intact.

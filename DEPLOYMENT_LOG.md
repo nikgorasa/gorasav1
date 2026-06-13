@@ -20,7 +20,7 @@
 | **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 30+ tables) |
 | **NEON Dev** | gorasa-dev (29 tables, 210 rows) |
 | **NEON QA** | gorasa-qa (28 tables, 210 rows) |
-| **Latest Commit** | 4d5367b (admin CRUD + users API fix) |
+| **Latest Commit** | df493dc (hero redesign + nav cleanup + Home button) |
 | **Prod Deploy Method** | Manual `workflow_dispatch` + nikjp2021 approval (Vercel auto-deploy disconnected) |
 | **Branch Protection** | main: ✅ (PR+1), qa: ✅ (PR+1), dev: ❌ |
 | **Auto-Deploy Status** | ✅ Dev/QA auto, Prod manual only |
@@ -31,6 +31,8 @@
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
+| 2026-06-13 | Hero redesign + nav cleanup + Home button | df493dc | dev-gorasa | ✅ Live | project-uul0v.vercel.app | Hero image (Taj Mahal), left-aligned layout, SVG icons, nav reorder, Home button, isactive filter |
+| 2026-06-13 | Flights/hotels UI redesign + brand colors | de94cf9 | dev-gorasa | ✅ Live | dev-gorasa-mcp899hcw-nikhil-gorasa-s-projects.vercel.app | Passenger/room config popovers, concierge gates, date ranges, #F5EFE0/#D97706 |
 | 2026-06-12 | Fix Vercel deploy path | 80f9033 | dev-gorasa, qa-gorasa | ✅ Ready | project-uul0v, project-sm6gc | Run vercel from repo root, not subdirectory |
 | 2026-06-12 | User-facing ticket creation on support page | 2e513a7 | gorasa-next | ✅ Pushed | gorasa-next.vercel.app | /support page: AI Chat + My Tabs tabs, ticket create form, user ticket list |
 | 2026-06-12 | Admin navigation full CRUD + Users API fix | 9b88eae,4d5367b | gorasa-next | ✅ Pushed | gorasa-next.vercel.app | Full CRUD on all 12 admin pages, service role key for Users API, user creation |
