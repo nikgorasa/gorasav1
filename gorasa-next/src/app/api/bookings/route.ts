@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { type, itemName, providerOrAirline, price, originalPrice, discountApplied, couponCodeUsed, pnr, seatOrRoom, paxCount, travelDates, paymentMethod } = body;
+    const { type, itemName, providerOrAirline, price, originalPrice, discountApplied, couponCodeUsed, pnr, seatOrRoom, paxCount, travelDates, paymentMethod, leadGuestPan } = body;
 
     if (!type || !itemName || price === undefined) {
       return NextResponse.json(
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
       seatOrRoom,
       paxCount: paxCount || 1,
       travelDates,
+      leadGuestPan: leadGuestPan || null,
     });
 
     if (paymentMethod) {

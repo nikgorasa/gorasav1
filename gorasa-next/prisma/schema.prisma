@@ -147,6 +147,7 @@ model Booking {
   status            String               @default("CONFIRMED")
   pnr               String?
   seatOrRoom        String?
+  leadGuestPan      String?
   paxCount          Int                  @default(1)
   travelDates       String?
   bookedAt          DateTime             @default(now())

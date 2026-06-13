@@ -33,12 +33,14 @@ export default function HotelBookingModal({
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(user?.email || "");
+  const [pan, setPan] = useState("");
+  const [saveToProfile, setSaveToProfile] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [confirmation, setConfirmation] = useState<{
     bookingId: string; pnr: string; confirmationNo: string; status: string;
   } | null>(null);
 
-  const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim();
+  const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan.trim().toUpperCase());
 
   const resetForm = () => {
     setStep("form");
@@ -93,63 +95,33 @@ export default function HotelBookingModal({
       const clientRef = `GR-${Date.now()}`;
 
       const bookReqPayload = {
-        ClientReferenceNumber: clientRef,
-        GuestNationality: "IN",
-        Guests: {
-          Guest: [
-            {
-              Title: "Mr",
-              FirstName: firstName.trim(),
-              LastName: lastName.trim(),
-              Age: 30,
-              LeadGuest: true,
-              GuestType: "ADT",
-              GuestInRoom: 1,
-            },
-          ],
-        },
-        AddressInfo: {
-          AddressLine1: "N/A",
-          CountryCode: "IN",
-          AreaCode: "000000",
-          PhoneNo: phone.trim(),
-          Email: email.trim(),
-          City: location,
-          State: "N/A",
-          Country: "India",
-          ZipCode: "000000",
-        },
-        PaymentInfo: {
-          VoucherBooking: false,
-          PaymentModeType: "Credit",
-        },
-        SessionId: sessionId,
-        NoOfRooms: 1,
-        ResultIndex: hotel.resultIndex,
-        HotelCode: hotel.hotelCode,
-        HotelName: hotel.name,
-        HotelRooms: {
-          HotelRoom: [
-            {
-              RoomIndex: room.roomIndex,
-              RoomTypeName: room.name,
-              RoomTypeCode: room.typeCode,
-              RatePlanCode: room.ratePlanCode,
-              RoomRate: {
-                RoomFare: room.roomFare,
-                RoomTax: room.roomTax,
-                TotalFare: room.totalFare,
-                Currency: room.currency,
-              },
-            },
-          ],
-        },
+        action: "book",
+        bookingCode: blockData.bookingCode,
+        guestNationality: "IN",
+        netAmount: room.totalFare,
+        hotelRoomsDetails: [{
+          passengers: [{
+            title: "Mr",
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            paxType: 1,
+            leadPassenger: true,
+            age: 30,
+            email: email.trim(),
+            phone: phone.trim(),
+            pan: pan.trim().toUpperCase(),
+            addressLine1: "N/A",
+            city: location,
+            countryCode: "IN",
+            nationality: "IN",
+          }]
+        }]
       };
 
       const bookRes = await fetch("/api/tbo-hotels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "book", params: bookReqPayload }),
+        body: JSON.stringify(bookReqPayload),
       });
 
       const bookData = await bookRes.json();
@@ -177,6 +149,7 @@ export default function HotelBookingModal({
           paxCount: guestCount,
           travelDates: { checkIn, checkOut },
           status: "CONFIRMED",
+          leadGuestPan: pan.trim().toUpperCase(),
         }),
       });
 
@@ -187,6 +160,28 @@ export default function HotelBookingModal({
         status: bookData.status || "Confirmed",
       });
 
+      // Save PAN to profile if requested
+      if (saveToProfile && user) {
+        try {
+          const profileRes = await fetch("/api/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", "x-user-email": user.email },
+            body: JSON.stringify({
+              passengers: [{
+                id: Date.now().toString(),
+                name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+                relation: "Self",
+                gender: "Male",
+                passport: "",
+                pan: pan.trim().toUpperCase(),
+              }]
+            }),
+          });
+          if (!profileRes.ok) console.warn("Failed to save PAN to profile");
+        } catch (e) {
+          console.warn("Profile save failed:", e);
+        }
+      }
       setStep("done");
     } catch (err) {
       setErrorMessage("Something went wrong. Please try again.");
@@ -258,6 +253,37 @@ export default function HotelBookingModal({
               </div>
               <p className="text-[10px] text-slate-400 mt-1">Lead guest name for booking</p>
             </div>
+
+            {/* Identity - PAN */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">Identity (Required)</label>
+              <div className="relative">
+                <CreditCard size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={pan}
+                  onChange={(e) => setPan(e.target.value.toUpperCase())}
+                  placeholder="PAN Card Number *"
+                  maxLength={10}
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono uppercase"
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">Required for Indian hotel bookings (e.g. ABCDE1234F)</p>
+              {pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan.trim().toUpperCase()) && (
+                <p className="text-[10px] text-red-500 mt-1">Invalid PAN format. Expected: 5 letters + 4 digits + 1 letter</p>
+              )}
+            </div>
+
+            {user && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={saveToProfile}
+                  onChange={(e) => setSaveToProfile(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 rounded border-slate-300"
+                />
+                <span className="text-sm text-slate-600">Save PAN to my profile for future bookings</span>
+              </label>
+            )}
 
             {/* Contact Info */}
             <div>

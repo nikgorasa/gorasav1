@@ -26,6 +26,7 @@ interface Passenger {
   relation: string;
   gender: string;
   passport: string;
+  pan: string;
 }
 
 interface WishlistItem {
@@ -49,7 +50,7 @@ export default function ProfilePage() {
 
   // Passengers state
   const [passengers, setPassengers] = useState<Passenger[]>([]);
-  const [newPassenger, setNewPassenger] = useState({ name: "", relation: "", gender: "Male", passport: "" });
+  const [newPassenger, setNewPassenger] = useState({ name: "", relation: "", gender: "Male", passport: "", pan: "" });
   const [showAddPassenger, setShowAddPassenger] = useState(false);
 
   // Preferences state
@@ -138,7 +139,7 @@ export default function ProfilePage() {
       const updated = [...passengers, { ...newPassenger, id: Date.now().toString() }];
       setPassengers(updated);
       saveProfile({ passengers: updated });
-      setNewPassenger({ name: "", relation: "", gender: "Male", passport: "" });
+      setNewPassenger({ name: "", relation: "", gender: "Male", passport: "", pan: "" });
       setShowAddPassenger(false);
     }
   };
@@ -344,6 +345,13 @@ export default function ProfilePage() {
                           onChange={(e) => setNewPassenger({ ...newPassenger, passport: e.target.value })}
                           className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm"
                         />
+                        <input
+                          placeholder="PAN No."
+                          value={newPassenger.pan}
+                          onChange={(e) => setNewPassenger({ ...newPassenger, pan: e.target.value.toUpperCase() })}
+                          className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-mono uppercase"
+                          maxLength={10}
+                        />
                       </div>
                       <div className="flex gap-2">
                         <button onClick={addPassenger} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium cursor-pointer">Save</button>
@@ -357,7 +365,7 @@ export default function ProfilePage() {
                       <div key={p.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                         <div>
                           <p className="font-bold text-slate-900">{p.name}</p>
-                          <p className="text-sm text-slate-500">{p.relation} • {p.gender} • Passport: {p.passport || "N/A"}</p>
+                          <p className="text-sm text-slate-500">{p.relation} • {p.gender} • PAN: {p.pan || "N/A"} • Passport: {p.passport || "N/A"}</p>
                         </div>
                         <button onClick={() => removePassenger(p.id)} className="p-2 text-red-400 hover:text-red-600 cursor-pointer">
                           <Trash2 size={16} />
