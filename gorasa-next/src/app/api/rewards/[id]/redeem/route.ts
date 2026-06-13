@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as rewards from "@/lib/db/rewards";
+import * as users from "@/lib/db/users";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,46 +12,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
 
-    const { data: reward, error: rewardError } = await supabase
-      .from("LoyaltyReward")
-      .select("pointsCost")
-      .eq("id", rewardId)
-      .single();
-
-    if (rewardError || !reward) {
+    const reward = await rewards.findById(rewardId);
+    if (!reward) {
       return NextResponse.json({ error: "Reward not found" }, { status: 404 });
     }
 
-    const { data: user, error: userError } = await supabase
-      .from("User")
-      .select("loyaltyPoints")
-      .eq("id", userId)
-      .single();
-
-    if (userError || !user) {
+    const user = await users.findById(userId);
+    if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (user.loyaltyPoints < reward.pointsCost) {
+    if ((user as any).loyaltyPoints < (reward as any).pointsCost) {
       return NextResponse.json({ error: "Insufficient points" }, { status: 400 });
     }
 
-    const { data: redemption, error: redeemError } = await supabase
-      .from("Redemption")
-      .insert({ userId, rewardId, pointsCost: reward.pointsCost })
-      .select()
-      .single();
-
-    if (redeemError) {
-      console.error("Redemption create error:", redeemError);
-      return NextResponse.json({ error: "Failed to redeem reward" }, { status: 500 });
-    }
-
-    await supabase
-      .from("User")
-      .update({ loyaltyPoints: user.loyaltyPoints - reward.pointsCost })
-      .eq("id", userId);
-
+    const redemption = await rewards.redeem(userId, rewardId, (reward as any).pointsCost);
     return NextResponse.json(redemption, { status: 201 });
   } catch (error) {
     console.error("Redemption error:", error);

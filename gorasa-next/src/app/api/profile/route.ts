@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as users from "@/lib/db/users";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,18 +8,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: user, error } = await supabase
-      .from("User")
-      .select("id, name, email, role, avatar, loyaltyTier, loyaltyPoints, walletBalance, passengers, preferences, wishlist")
-      .eq("email", email)
-      .single();
+    const user = await users.findByEmail(email);
 
-    if (error || !user) {
-      console.error("Profile fetch error:", error);
+    if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    const { id, name, email: userEmail, role, avatar, loyaltyTier, loyaltyPoints, walletBalance, passengers, preferences, wishlist } = user as any;
+
+    return NextResponse.json({ id, name, email: userEmail, role, avatar, loyaltyTier, loyaltyPoints, walletBalance, passengers, preferences, wishlist });
   } catch (error) {
     console.error("Profile fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
@@ -33,6 +30,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const user = await users.findByEmail(email);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const { name, email: newEmail, passengers, preferences, wishlist } = body;
 
@@ -43,19 +45,11 @@ export async function PATCH(request: NextRequest) {
     if (preferences !== undefined) updateData.preferences = preferences;
     if (wishlist !== undefined) updateData.wishlist = wishlist;
 
-    const { data: user, error } = await supabase
-      .from("User")
-      .update(updateData)
-      .eq("email", email)
-      .select("id, name, email, role, avatar, loyaltyTier, loyaltyPoints, walletBalance, passengers, preferences, wishlist")
-      .single();
+    const updated = await users.update((user as any).id, updateData);
 
-    if (error) {
-      console.error("Profile update error:", error);
-      return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
-    }
+    const { id, name: n, email: e, role, avatar, loyaltyTier, loyaltyPoints, walletBalance, passengers: p, preferences: pr, wishlist: w } = updated as any;
 
-    return NextResponse.json(user);
+    return NextResponse.json({ id, name: n, email: e, role, avatar, loyaltyTier, loyaltyPoints, walletBalance, passengers: p, preferences: pr, wishlist: w });
   } catch (error) {
     console.error("Profile update error:", error);
     return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });

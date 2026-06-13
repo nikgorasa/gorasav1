@@ -1,17 +1,24 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { isPrisma, prisma, supabaseAdmin } from "@/lib/db";
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
-      .from("Role")
-      .select("*")
-      .eq("isactive", true);
-    if (error) return NextResponse.json({ error: "Failed" }, { status: 500 });
+    let data;
+    if (isPrisma()) {
+      data = await prisma.role.findMany({ where: { isactive: true } });
+    } else {
+      const { data: roles } = await supabaseAdmin
+        .from('Role')
+        .select('*')
+        .eq('isactive', true);
+      data = roles || [];
+    }
     const mapped = (data || []).map((row: Record<string, unknown>) => ({
       ...row,
       isActive: row.isactive,
     }));
     return NextResponse.json(mapped);
-  } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
+  } catch {
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
 }

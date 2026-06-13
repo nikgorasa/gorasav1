@@ -7,6 +7,8 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-13 | (pending) | feat: verify DB isolation — all routes respect DATABASE_PROVIDER |
+| 2026-06-12 | 1a4de24 | ci: branch protection (main/qa) + Prod env approval gate + repo moved to org |
 | 2026-06-12 | 2e513a7 | feat: add user-facing ticket creation and listing to support page |
 | 2026-06-12 | (pending) | feat: ticket system productionization + AI planner integration |
 | 2026-06-12 | 80f9033 | ci: fix Vercel deploy path in GitHub Actions |
@@ -219,3 +221,17 @@ Description:
 **Verification:**
 - Dev HTTP 200: home, cities (35), tickets (3), demo users (6)
 - QA HTTP 200: home, cities (35), tickets (3), demo users (6)
+
+---
+
+## 2026-06-13 — DB Isolation Verification
+
+**Problem:** Earlier assessment claimed several routes still used Supabase directly, breaking isolation.
+
+**Investigation:**
+- Grep-audited all 52 API routes for Supabase vs service layer imports
+- Discovered roles, corporate-rates, cancellations, bookings, dashboard, checkout, and loyalty/history routes all already have `isPrisma()` guards
+- Routes importing from `@/lib/db` (without trailing slash) were missed by initial grep — they still use the DB provider switch correctly
+- Only auth (intentional) and tickets (by design) remain on shared Supabase
+
+**Conclusion:** DB isolation is verified complete — no fix needed. Earlier diagnosis was inaccurate.

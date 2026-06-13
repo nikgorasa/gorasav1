@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as flights from "@/lib/db/flights";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,25 +7,8 @@ export async function GET(request: NextRequest) {
     const origin = searchParams.get("origin") || "";
     const destination = searchParams.get("destination") || "";
 
-    let query = supabase
-      .from("Flight")
-      .select("*")
-      .order("price", { ascending: true });
-
-    if (origin) {
-      query = query.ilike("origin", `%${origin}%`);
-    }
-    if (destination) {
-      query = query.ilike("destination", `%${destination}%`);
-    }
-
-    const { data: flights, error } = await query;
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to fetch flights" }, { status: 500 });
-    }
-
-    return NextResponse.json(flights || []);
+    const data = await flights.search(origin || undefined, destination || undefined);
+    return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch flights" }, { status: 500 });
   }

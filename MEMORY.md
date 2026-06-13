@@ -1,14 +1,14 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-12 08:20 IST
+> **Last updated:** 2026-06-13 06:00 IST
 
 ---
 
 ## Current Sprint Context
 
 **Sprint:** Sprint -1 — Full Stack Migration & Foundation (June 8–12)
-**Status:** Phase 6 — TBO Hotel and Flight APIs LIVE. Fallback hotels working. Searchable city dropdown deployed.
+**Status:** Phase 6 — TBO Hotel and Flight APIs LIVE. DB isolation verified (Prod↔Supabase, Dev/QA↔Neon).
 **Live URL:** https://gorasa-next.vercel.app
 
 ---
@@ -304,3 +304,55 @@ Work completed:
 - Production: https://gorasa-next.vercel.app
 - Development: https://project-uul0v.vercel.app
 - QA: https://project-sm6gc.vercel.app
+
+### Session 2026-06-12 — Branch Protection + Prod Approval Gate + README Update
+
+**Duration:** ~15 min
+**Problem:** main and qa branches had no protection rules; Production environment had no approval gate.
+
+**Changes:**
+1. Moved repo from `nikgorasa/gorasav1` → `Gorasa-In-2026/gorasav1`
+2. Updated git remote `neworigin` to new org URL
+3. Set branch protection on `main`: PR required, 1 approval, enforce admins
+4. Set branch protection on `qa`: PR required, 1 approval
+5. Set `nikjp2021` as required reviewer on Production environment
+6. Updated root `README.md` and `gorasa-next/README.md` with current project structure and deployment pipeline
+
+**Deployment pipeline now fully gated:**
+- Dev → auto-deploy on push to `dev`
+- QA → PR into `qa` → auto-deploy on merge
+- Prod → PR into `main` → merge → manual `workflow_dispatch` → nikjp2021 approval
+
+**Commit:** 1a4de24
+
+### Session 2026-06-13 — DB Isolation Verification
+
+**Duration:** ~30 min
+**Problem:** Earlier assessment claimed roles, corporate-rates, cancellations, and mixed routes still used Supabase directly — needed verification.
+
+**Changes:**
+1. Grep-audited all 52 API routes for Supabase vs service layer usage
+2. Discovered all "supabase-only" and "mixed" routes already have proper `isPrisma()` guards
+3. Only routes that DON'T switch: auth/me, auth/login (intentional — Supabase Auth), and tickets/* (by design — left as-is)
+4. Confirmed no isolation bugs exist — the earlier diagnosis was inaccurate
+5. Updated CHANGE-LOG.md, MEMORY.md with today's entries
+6. Fixed stale `nikgorasa` references in DEPLOYMENT_LOG.md
+
+**Key Lesson:** Don't assume a route is Supabase-only based on grep patterns — routes importing from `@/lib/db` (not `@/lib/db/`) still use `isPrisma()` guards and switch correctly.
+
+**Status:** DB isolation verified complete. Production ↔ Supabase, Dev/QA ↔ Neon. Auth and tickets shared by design.
+
+---
+
+## Progress
+
+- Verified all 52 API routes for DB provider switching behavior
+- Confirmed roles, corporate-rates, cancellations, bookings, dashboard, checkout, and loyalty/history all correctly use `isPrisma()` guards
+- Only routes NOT switching: auth/me, auth/login (intentional — shared Supabase Auth), and tickets/* (by choice — shared Supabase tickets)
+- DB isolation is effectively complete for all data routes
+
+## Next Steps
+
+- (none — isolation verification complete)
+- Monitor dev/qa deployments on push to verify they use Neon correctly
+- Consider migrating tickets to service layer if isolation becomes needed

@@ -1,52 +1,47 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import * as users from "@/lib/db/users";
+import * as packages from "@/lib/db/packages";
+import * as leads from "@/lib/db/leads";
+import * as bookings from "@/lib/db/bookings";
+import * as companies from "@/lib/db/companies";
+import { isPrisma, prisma, supabaseAdmin } from "@/lib/db";
 
 export async function GET() {
   try {
-    const [usersResult, packagesResult, leadsResult, bookingsResult, revenueResult, rolesResult, companiesResult] =
-      await Promise.all([
-        supabase.from("User").select("*", { count: "exact", head: true }),
-        supabase.from("Package").select("*", { count: "exact", head: true }).eq("isActive", true),
-        supabase.from("Lead").select("*", { count: "exact", head: true }),
-        supabase.from("Booking").select("*", { count: "exact", head: true }),
-        supabase.from("Booking").select("price").neq("status", "CANCELLED"),
-        supabase.from("User").select("role"),
-        supabase.from("User").select("company").not("company", "is", null).neq("company", ""),
-      ]);
+    const [usersResult, activePackages, allLeads, bookingsCount, totalRevenue, companiesCount] = await Promise.all([
+      users.findAll({ limit: 9999 }),
+      packages.countActive(),
+      leads.findAll().then((d: any[]) => d.length),
+      bookings.countAll(),
+      bookings.sumRevenue(),
+      companies.countAll(),
+    ]);
 
-    const totalRevenue = revenueResult.data?.reduce((sum, b) => sum + (b.price || 0), 0) || 0;
-
-    const uniqueCompanies = new Set(companiesResult.data?.map((u) => u.company).filter(Boolean));
-    const totalCompanies = uniqueCompanies.size;
-
-    const roleDistribution = rolesResult.data?.reduce((acc, u) => {
-      acc[u.role] = (acc[u.role] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    let roleDistribution: { role: string; count: number }[] = [];
+    if (isPrisma()) {
+      const roles = await prisma.user.findMany({ select: { role: true } });
+      const map: Record<string, number> = {};
+      roles.forEach((r) => { map[r.role] = (map[r.role] || 0) + 1; });
+      roleDistribution = Object.entries(map).map(([role, count]) => ({ role, count }));
+    } else {
+      const { data } = await supabaseAdmin.from('User').select('role');
+      const map: Record<string, number> = {};
+      (data || []).forEach((r: any) => { map[r.role] = (map[r.role] || 0) + 1; });
+      roleDistribution = Object.entries(map).map(([role, count]) => ({ role, count }));
+    }
 
     return NextResponse.json({
-      totalCompanies,
-      totalUsers: usersResult.count || 0,
-      activePackages: packagesResult.count || 0,
-      totalLeads: leadsResult.count || 0,
-      totalBookings: bookingsResult.count || 0,
+      totalCompanies: companiesCount,
+      totalUsers: usersResult.total,
+      activePackages,
+      totalLeads: allLeads,
+      totalBookings: bookingsCount,
       pendingLeads: 0,
       totalRevenue,
-      roleDistribution: Object.entries(roleDistribution || {}).map(([role, count]) => ({
-        role,
-        count,
-      })),
+      roleDistribution,
     });
   } catch (error) {
     console.error("Dashboard stats error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch dashboard stats" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch dashboard stats" }, { status: 500 });
   }
 }
