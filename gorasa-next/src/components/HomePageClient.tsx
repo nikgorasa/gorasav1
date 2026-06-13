@@ -137,9 +137,6 @@ export default function HomePageClient({
               transition={{ duration: 0.8 }}
               className="text-center"
             >
-              <span className="inline-block px-4 py-1.5 bg-brand-saffron/20 text-brand-saffron rounded-full text-xs font-bold uppercase tracking-widest mb-6">
-                Experience The Finest
-              </span>
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
                 Reserve luxury &{" "}
                 <span className="text-brand-saffron italic">Composure</span>
