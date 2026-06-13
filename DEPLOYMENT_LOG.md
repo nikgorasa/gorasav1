@@ -227,5 +227,10 @@ ADR reference: N/A
 
 ---
 
+## 2026-06-13 — DB Isolation Verification
 
+| Date | Commit | SHA | Project | Status | URL | Notes |
+|------|--------|-----|---------|--------|-----|-------|
+| 2026-06-13 | (pending) | — | All | ✅ Verified | gorasa-next.vercel.app | Verified all 52 routes respect `DATABASE_PROVIDER`; only auth + tickets share |
 
+---
