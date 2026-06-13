@@ -448,6 +448,11 @@ export async function bookHotel(params: {
     title: string; firstName: string; lastName: string;
     paxType: number; leadPassenger: boolean; age: number;
     email: string; phone: string;
+    pan?: string;
+    addressLine1?: string;
+    city?: string;
+    countryCode?: string;
+    nationality?: string;
   }[] }[];
   EndUserIp?: string;
 }): Promise<TBOHotelBookOutput> {
@@ -468,6 +473,11 @@ export async function bookHotel(params: {
             Age: p.age,
             Email: p.email,
             Phoneno: p.phone,
+            PAN: p.pan || undefined,
+            AddressLine1: p.addressLine1 || undefined,
+            City: p.city || undefined,
+            CountryCode: p.countryCode || undefined,
+            Nationality: p.nationality || undefined,
           })),
         })),
       };
@@ -503,6 +513,11 @@ export async function bookHotel(params: {
         Age: p.age,
         Email: p.email,
         Phoneno: p.phone,
+        PAN: p.pan || undefined,
+        AddressLine1: p.addressLine1 || undefined,
+        City: p.city || undefined,
+        CountryCode: p.countryCode || undefined,
+        Nationality: p.nationality || undefined,
       })),
     })),
   };
