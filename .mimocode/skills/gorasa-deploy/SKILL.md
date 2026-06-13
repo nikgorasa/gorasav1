@@ -55,7 +55,7 @@ git push neworigin main
 
 **Critical:** The project has two git remotes:
 - `origin` = fork (nikjp2021) — does NOT trigger Vercel deploy
-- `neworigin` = production (nikgorasa) — triggers Vercel auto-deploy
+- `neworigin` = production (Gorasa-In-2026) — triggers Vercel deploy
 
 If you push to `origin`, nothing deploys. Always use `neworigin`.
 
@@ -104,7 +104,7 @@ If `rasa-zero-app-main-*.vercel.app` instead of `gorasa-next-*.vercel.app`:
 | Production URL | https://gorasa-next.vercel.app |
 | Vercel Project | gorasa-next |
 | Root Directory | gorasa-next/ |
-| GitHub Repo | nikgorasa/gorasav1 |
+| GitHub Repo | Gorasa-In-2026/gorasav1 |
 | Deploy Remote | neworigin → main |
 | Supabase | isubgeemvhvhnhikxbjb |
 | Auto-Deploy | Git push triggers Vercel build |

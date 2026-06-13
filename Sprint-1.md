@@ -8,7 +8,7 @@
 >
 > **Live URL:** https://gorasa-next.vercel.app
 >
-> **GitHub:** https://github.com/nikgorasa/gorasav1
+> **GitHub:** https://github.com/Gorasa-In-2026/gorasav1
 
 ---
 
@@ -33,7 +33,7 @@
 | Supabase project created (`isubgeemvhvhnhikxbjb`) | ✅ | PostgreSQL + Auth + Storage |
 | Database schema — 11 Prisma models | ✅ | User, Company, Lead, Activity, Package, PricingRule, Booking, Payment, Invoice, CancellationRequest |
 | Database seeded with test data | ✅ | 6 users, 2 companies, 12 packages, 10 leads, 3 activities, 17 bookings, 5 pricing rules |
-| GitHub repo created | ✅ | [github.com/nikgorasa/gorasav1](https://github.com/nikgorasa/gorasav1) |
+| GitHub repo created | ✅ | [github.com/Gorasa-In-2026/gorasav1](https://github.com/Gorasa-In-2026/gorasav1) |
 | Vercel project deployed | ✅ | [gorasa-next.vercel.app](https://gorasa-next.vercel.app) |
 | Environment variables on Vercel | ✅ | DATABASE_URL, DIRECT_URL, SUPABASE_URL, SUPABASE_ANON_KEY |
 
@@ -168,7 +168,7 @@ gorasa-next/
 
 | Task | Status | Notes |
 |------|--------|-------|
-| GitHub repo `nikgorasa/gorasav1` | ✅ | Connected |
+| GitHub repo `Gorasa-In-2026/gorasav1` | ✅ | Connected |
 | Vercel deployment | ✅ | [gorasa-next.vercel.app](https://gorasa-next.vercel.app) |
 | Environment variables | ✅ | All set in production |
 

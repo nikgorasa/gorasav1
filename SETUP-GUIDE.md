@@ -112,7 +112,7 @@ When prompted:
 In the Vercel Dashboard:
 1. Go to your `gorasa-dev` project
 2. Settings → Git
-3. Connect to `nikgorasa/gorasav1`
+3. Connect to `Gorasa-In-2026/gorasav1`
 4. Production Branch: `dev`
 
 ### 3.3 Set Root Directory

@@ -4,7 +4,7 @@
 > **Date:** June 11, 2026  
 > **Status:** Internal Beta  
 > **Live URL:** https://gorasa-next.vercel.app  
-> **Repository:** github.com/nikgorasa/gorasav1
+> **Repository:** github.com/Gorasa-In-2026/gorasav1
 
 ---
 
