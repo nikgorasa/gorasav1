@@ -367,6 +367,24 @@ Work completed:
 
 **Status:** Both scripts updated and consistent. Commit maps auto-generated on every pre-flight/post-task run.
 
+### Session 2026-06-13 — Hero Redesign + Nav Cleanup + DB Sync
+
+**Duration:** ~2 hours
+**Goal:** Complete batch 1-3 UI/DB changes, redesign hero section with impeccable brand register.
+
+**Changes:**
+1. **DB updates (both NEON + Supabase):** Hard-deleted Explore nav item, renamed Reservation Desk → My Bookings, AI Support Desk → Help Desk, reordered all nav items (Plan My Holiday > Hotels > Flights > My Bookings > Help Desk)
+2. **Hero redesign:** Replaced dark gradient + decorative blurs with real Unsplash hero image (Taj Mahal at golden hour), left-aligned text layout, refined copy for corporate travel desk users, staggered motion with exponential ease-out
+3. **Hero badge removed:** Removed "Experience The Finest" badge text
+4. **Emoji → SVG icons:** Replaced 💬⭐✅🎯🏆 with lucide-react icons (MessageCircle, Star, CircleCheck, Palmtree, Award)
+5. **Home button:** Added hardcoded Home link to Navbar (desktop + mobile) with Home icon from lucide-react
+6. **Navbar isactive filter:** Added `isActive !== false` filter to both main and admin nav items
+7. **PRODUCT.md created:** Brand register, users (corporate travel desk), anti-references (not MakeMyTrip/Cleartrip), 5 design principles
+
+**Commits:** c264b47, 5ed4e23, 9f7da9f, 8bcfb35, e6f4f05, d6f270f, 179a50c, df493dc
+
+**Status:** All deployed to dev. Hero has real imagery, left-aligned layout, proper SVG icons, and Home button in nav.
+
 ---
 
 ## Next Steps
