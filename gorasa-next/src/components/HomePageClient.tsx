@@ -25,6 +25,9 @@ import {
   CreditCard,
   Map,
   Plane,
+  MessageCircle,
+  CircleCheck,
+  Palmtree,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -252,22 +255,22 @@ export default function HomePageClient({
                     {cat === "GORASA_SELECT" && (
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-12">
                         {[
-                          { icon: "💬", label: "WhatsApp Support" },
-                          { icon: "⭐", label: "RASA Rewards" },
-                          { icon: "✅", label: "Verified Stays" },
-                          { icon: "🎯", label: "All inclusive vacation" },
-                          { icon: "🏆", label: "19+ years of combined industry experience" },
-                        ].map((feature) => (
-                          <div
-                            key={feature.label}
-                            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center gap-2"
-                          >
-                            <span className="text-2xl">{feature.icon}</span>
-                            <span className="text-xs font-semibold text-slate-700 leading-tight">
-                              {feature.label}
-                            </span>
-                          </div>
-                        ))}
+                           { icon: <MessageCircle size={22} className="text-emerald-600" />, label: "WhatsApp Support" },
+                           { icon: <Star size={22} className="text-amber-500" />, label: "RASA Rewards" },
+                           { icon: <CircleCheck size={22} className="text-blue-600" />, label: "Verified Stays" },
+                           { icon: <Palmtree size={22} className="text-orange-600" />, label: "All inclusive vacation" },
+                           { icon: <Award size={22} className="text-violet-600" />, label: "19+ years of combined industry experience" },
+                         ].map((feature) => (
+                           <div
+                             key={feature.label}
+                             className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center gap-2"
+                           >
+                             {feature.icon}
+                             <span className="text-xs font-semibold text-slate-700 leading-tight">
+                               {feature.label}
+                             </span>
+                           </div>
+                         ))}
                       </div>
                     )}
                   </React.Fragment>
