@@ -44,8 +44,8 @@ export default function Navbar({
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) {
-          setNavItems(data.filter((i: { section: string }) => i.section === "main"));
-          setAdminItems(data.filter((i: { section: string }) => i.section === "admin"));
+          setNavItems(data.filter((i: { section: string; isActive: boolean }) => i.section === "main" && i.isActive !== false));
+          setAdminItems(data.filter((i: { section: string; isActive: boolean }) => i.section === "admin" && i.isActive !== false));
         }
       })
       .catch(() => {});
