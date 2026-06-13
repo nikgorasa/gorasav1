@@ -170,7 +170,7 @@ export default function HotelBookingModal({
         body: JSON.stringify({
           type: "HOTEL",
           itemName: hotel.name,
-          providerOrAirline: "TBO Holidays",
+          providerOrAirline: "GoRASA",
           price: room.totalFare,
           pnr: pnrCode,
           seatOrRoom: room.name,
