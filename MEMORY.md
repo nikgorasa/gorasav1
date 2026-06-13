@@ -394,3 +394,26 @@ Work completed:
 - Rotate Supabase DB password and service role key via Supabase dashboard (exposed in git history)
 - Test all API endpoints on Dev and QA to ensure they hit Neon correctly
 - Consider migrating tickets to service layer if isolation becomes needed
+
+## 2026-06-14 — PAN Card Compliance for Hotel Bookings
+
+### Changes Made:
+- Added `leadGuestPan` column to Booking table (Neon DB)
+- HotelBookingModal: mandatory PAN field, format validation, save-to-profile checkbox
+- Fixed TBO book payload format (was using wrong structure — bookingCode always undefined)
+- Extended bookHotel() to accept and send PAN/address/nationality to TBO API
+- Added PAN to Profile Saved Travellers form
+- Created comprehensive compliance research doc
+
+### Key Learnings:
+- TBO types already had PAN/PassportNo fields defined but never populated
+- Modal's book payload used XML-style format (Guests.Guest) but API route expected hotelRoomsDetails format — critical bug
+- preBook() returns ValidationInfo with PanMandatory flag but was never called before booking
+- Neon DB migration via `prisma db push` works for adding columns
+
+### Files Changed:
+- prisma/schema.prisma, HotelBookingModal.tsx, tbo-hotel-client.ts, bookings/route.ts, profile/page.tsx
+
+### Commits:
+- 7db0627: feat: PAN card compliance for hotel bookings
+- c32592a: docs: update CHANGE-LOG for PAN compliance
