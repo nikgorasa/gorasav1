@@ -6,3 +6,5 @@ dist
 .mcp.json
 .vercel
 .env*
+# Example files — should never contain real credentials
+scripts/*.example
