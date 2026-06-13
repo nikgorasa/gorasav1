@@ -26,6 +26,7 @@ import {
   Map,
   Plane,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 interface PackageItem {
@@ -124,44 +125,72 @@ export default function HomePageClient({
 
       <main className="min-h-screen pt-16">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden min-h-[40vh] md:min-h-[45vh] lg:min-h-[50vh] flex items-center">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-20 left-10 w-72 h-72 bg-brand-saffron rounded-full blur-3xl" />
-            <div className="absolute bottom-10 right-20 w-96 h-96 bg-brand-gold rounded-full blur-3xl" />
+        <section className="relative min-h-[50vh] md:min-h-[58vh] lg:min-h-[65vh] flex items-center overflow-hidden">
+          {/* Hero image */}
+          <div className="absolute inset-0">
+            <Image
+              src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1600&q=80"
+              alt="Heritage stone facade of a Rajasthani palace hotel at golden hour"
+              fill
+              className="object-cover object-center"
+              priority
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/75 to-slate-900/40" />
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#F5EFE0] to-transparent" />
           </div>
 
-          <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+          {/* Content — left-aligned */}
+          <div className="relative w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12 md:py-16">
             <motion.div
-              initial={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center"
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-xl"
             >
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-3 leading-tight">
-                Reserve luxury &{" "}
-                <span className="text-brand-saffron italic">Composure</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight tracking-tight">
+                Reserve luxury
+                <span className="block text-brand-saffron italic">&amp; Composure</span>
               </h1>
-              <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-                Boutique stays, customer wellness packages, finest vacation experiences
+              <p className="mt-3 text-slate-300 text-base md:text-lg max-w-md leading-relaxed">
+                Curated stays, flights, and packages with a dedicated concierge.
               </p>
 
               {/* Quick action tiles */}
-              <div className="flex flex-wrap justify-center gap-3 mt-6">
-                {SEARCH_TABS.map((tab) => {
+              <div className="flex flex-wrap gap-2.5 mt-6">
+                {SEARCH_TABS.map((tab, i) => {
                   const Icon = tab.icon;
                   return (
-                    <Link
+                    <motion.div
                       key={tab.id}
-                      href={tab.href}
-                      style={{ backgroundColor: "rgba(217,119,6,0.12)", borderColor: "rgba(217,119,6,0.25)", color: tab.color }}
-                      className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl border font-medium text-sm backdrop-blur-sm hover:bg-brand-saffron/20 transition-all"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.25 + i * 0.07, ease: [0.16, 1, 0.3, 1] }}
                     >
-                      <Icon size={18} />
-                      {tab.label}
-                    </Link>
+                      <Link
+                        href={tab.href}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-sm font-medium hover:bg-brand-saffron hover:border-brand-saffron transition-colors duration-200"
+                      >
+                        <Icon size={16} />
+                        {tab.label}
+                      </Link>
+                    </motion.div>
                   );
                 })}
               </div>
+
+              {/* Corporate travel CTA */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                className="mt-4 text-xs text-slate-400"
+              >
+                Managing corporate travel?{" "}
+                <Link href="/admin" className="text-brand-saffron hover:underline font-medium">
+                  Access dashboard
+                </Link>
+              </motion.p>
             </motion.div>
           </div>
         </section>
