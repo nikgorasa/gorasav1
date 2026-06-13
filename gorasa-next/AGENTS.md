@@ -173,6 +173,7 @@ Each `CHANGE-LOG.md` entry MUST include a checklist showing whether each of the 
 - [ ] CONTEXT-BRIEF-*.md — No new issue
 - [x] CONFIG-REFERENCE.md — Updated repo URL + deploy pipeline
 - [x] DEPLOYMENT-COMMIT-MAP.md — Updated by post-task Check 25
+- [x] DB-CHANGES.md — Updated if any schema/data changes (Check 26)
 ```
 
 1. `CHANGE-LOG.md` — Always
@@ -183,6 +184,7 @@ Each `CHANGE-LOG.md` entry MUST include a checklist showing whether each of the 
 6. `../CONTEXT-BRIEF-*.md` — For new issues
 7. `../CONFIG-REFERENCE.md` — If config/keys/remotes/deploy-pipeline changed
 8. `../docs/DEPLOYMENT-COMMIT-MAP.md` — Updated automatically by pre-flight Check 15 / post-task Check 25
+9. `../DB-CHANGES.md` — If any DB schema or data changes
 
 ### Change-Type → Doc Map
 
@@ -192,7 +194,8 @@ Each `CHANGE-LOG.md` entry MUST include a checklist showing whether each of the 
 | Deploy pipeline (trigger, env, approval) | CONFIG-REFERENCE, DEPLOYMENT_LOG, MEMORY | §3, §23, History |
 | Environment variable | CONFIG-REFERENCE | §6 (Source Map), §7 (Keys) |
 | Supabase project / keys | CONFIG-REFERENCE, DEPLOYMENT_LOG | §12, §7 (Keys) |
-| Database schema / tables | CONFIG-REFERENCE, MEMORY | §13, ADR if breaking |
+| Database schema / tables | CONFIG-REFERENCE, MEMORY, DB-CHANGES | §13, ADR if breaking |
+| Database data (nav, categories, config) | DB-CHANGES, DB-MIGRATION-PROD | Always log before + after |
 | API route | CONFIG-REFERENCE | §15 (API Routes) |
 | TBO credentials / endpoints | CONFIG-REFERENCE | §16 (TBO) |
 | Architecture decision | ADR, MEMORY, CONFIG-REFERENCE | docs/adr/ |

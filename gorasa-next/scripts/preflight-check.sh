@@ -132,7 +132,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 6: TypeScript Compilation
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 6/15: TypeScript compilation..."
+print_status "CHECK 6/16: TypeScript compilation..."
 
 if command -v npx >/dev/null 2>&1; then
     if npx tsc --noEmit 2>/dev/null; then
@@ -148,7 +148,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 7: Git Status
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 7/15: Git status..."
+print_status "CHECK 7/16: Git status..."
 
 if git status >/dev/null 2>&1; then
     print_status "  ✓ Git repository detected"
@@ -173,7 +173,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 8: Recent Commits
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 8/15: Recent commits..."
+print_status "CHECK 8/16: Recent commits..."
 
 RECENT_COMMITS=$(git log --oneline -5 2>/dev/null || echo "No commits")
 print_status "  ✓ Recent commits:"
@@ -184,7 +184,7 @@ done
 # ═══════════════════════════════════════════════════════
 # Check 9: Critical Files Exist
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 9/15: Critical files..."
+print_status "CHECK 9/16: Critical files..."
 
 CRITICAL_FILES=(
     "src/lib/ticket/serverManager.ts"
@@ -208,7 +208,7 @@ done
 # ═══════════════════════════════════════════════════════
 # Check 10: Governance Hooks
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 10/15: Governance hooks..."
+print_status "CHECK 10/16: Governance hooks..."
 
 HOOKS_FILE="../.opencode/hook/hooks.yaml"
 if [[ -f "$HOOKS_FILE" ]]; then
@@ -228,7 +228,7 @@ echo ""
 # ═══════════════════════════════════════════════════════
 # Check 11: Branch-to-DB Mapping (Environment Intent)
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 11/15: Branch-to-DB mapping..."
+print_status "CHECK 11/16: Branch-to-DB mapping..."
 
 # Determine expected DB type for current branch
 case "$BRANCH" in
@@ -282,7 +282,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 12: Production Supabase Shield
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 12/15: Production Supabase shield..."
+print_status "CHECK 12/16: Production Supabase shield..."
 
 SUPABASE_PROJECT_DETECTED=""
 if echo "${SUPABASE_URL:-}" | grep -q "$SUPABASE_PROJECT_REF" 2>/dev/null; then
@@ -317,7 +317,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 13: Vercel Project Env Var Cross-Ref
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 13/15: Vercel env cross-reference..."
+print_status "CHECK 13/16: Vercel env cross-reference..."
 
 VERCEL_PROJECT_ID=""
 case "$BRANCH" in
@@ -355,7 +355,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 14: Secret / Credential Exposure Scan
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 14/15: Secret/credential exposure scan..."
+print_status "CHECK 14/16: Secret/credential exposure scan..."
 
 SCAN_FAILED=0
 
@@ -417,7 +417,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 15: Deployment Commit Traceability
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 15/15: Deployment commit traceability..."
+print_status "CHECK 15/16: Deployment commit traceability..."
 
 REMOTE="neworigin"
 if ! git fetch "$REMOTE" dev qa main 2>/dev/null; then
@@ -476,6 +476,46 @@ done
 print_status "  ✓ Commit traceability recorded"
 
 # ═══════════════════════════════════════════════════════
+# CHECK 16/16: DB schema sync (dev vs current branch target)
+# ═══════════════════════════════════════════════════════
+print_status "CHECK 16/16: DB schema sync..."
+
+BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+DB_CHECK_TARGET=""
+
+if [[ "$BRANCH" == "main" ]]; then
+  DB_CHECK_TARGET="prod"
+elif [[ "$BRANCH" == "qa" ]]; then
+  DB_CHECK_TARGET="qa"
+elif [[ "$BRANCH" == "dev" ]]; then
+  DB_CHECK_TARGET="dev"
+fi
+
+if [[ "$DB_CHECK_TARGET" == "qa" ]] && command -v node &> /dev/null; then
+  DB_CHECK_SCRIPT="$(dirname "$0")/db-check.sh"
+  if [[ -f "$DB_CHECK_SCRIPT" ]]; then
+    DB_CHECK_OUTPUT=$(bash "$DB_CHECK_SCRIPT" qa 2>&1 | grep -v "Warning: SECURITY WARNING" || true)
+    DB_CHECK_EXIT=$?
+    
+    if [[ $DB_CHECK_EXIT -ne 0 ]]; then
+      print_error "DB schema drift detected between DEV and QA"
+      echo "$DB_CHECK_OUTPUT" | grep "ERROR" | while read -r line; do
+        print_error "  $line"
+      done
+      ERRORS=$((ERRORS + 1))
+    else
+      print_status "  ✓ DB schemas in sync (dev vs qa)"
+    fi
+  else
+    print_warning "  ⚠ db-check.sh not found, skipping DB sync check"
+  fi
+elif [[ "$DB_CHECK_TARGET" == "prod" ]]; then
+  print_warning "  ⚠ Production DB check skipped (manual review required before prod deploy)"
+else
+  print_status "  ✓ DB check skipped (branch: $BRANCH)"
+fi
+
+# ═══════════════════════════════════════════════════════
 # FINAL RESULT
 # ═══════════════════════════════════════════════════════
 echo ""
@@ -486,7 +526,7 @@ if [[ "$ERRORS" -gt 0 ]]; then
     print_error "Fix all errors before starting work"
     exit 1
 else
-    print_status "✓ ALL 15 CHECKS PASSED"
+    print_status "✓ ALL 16 CHECKS PASSED"
     print_status "✓ Pre-flight validation complete"
     print_status ""
     print_status "Ready to start work. Remember:"

@@ -43,10 +43,23 @@
 
 ## Pending Sync
 
-| Change | Dev Status | QA Status | Prod Status |
-|--------|------------|-----------|-------------|
-| NavigationItem cleanup | ✅ Done | ✅ Done | ✅ Done |
-| Booking.leadGuestPan | ✅ Done | ✅ Done | ❌ Not needed (Supabase schema separate) |
+| Change | Dev Status | QA Status | Prod Status | Migration SQL |
+|--------|------------|-----------|-------------|---------------|
+| NavigationItem cleanup | ✅ Done | ✅ Done | ⏳ Pending | See DB-MIGRATION-PROD.md Step 2-3 |
+| Booking.leadGuestPan | ✅ Done | ✅ Done | ⏳ Pending | See DB-MIGRATION-PROD.md Step 1 |
+| PackageCategory reorder | ✅ Done | ✅ Done | ⏳ Pending | See DB-MIGRATION-PROD.md Step 4 |
+
+**Production migration:** See `DB-MIGRATION-PROD.md` for exact SQL and verification queries.
+
+---
+
+## DB Check Script
+
+Run `bash scripts/db-check.sh [dev|qa]` to compare schemas and data between dev and target environment.
+
+- Integrated into pre-flight check (Check 16/16)
+- Integrated into post-task check (Check 26/26)
+- Auto-runs on `dev` and `qa` branches
 
 ---
 

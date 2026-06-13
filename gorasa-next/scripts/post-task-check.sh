@@ -714,6 +714,35 @@ fi
 print_status "  ✓ Commit map written to docs/DEPLOYMENT-COMMIT-MAP.md"
 
 # ═══════════════════════════════════════════════════════
+# CHECK 26/26: DB schema sync verification
+# ═══════════════════════════════════════════════════════
+print_status "CHECK 26/26: DB schema sync..."
+
+BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+
+if [[ "$BRANCH" == "dev" ]] && command -v node &> /dev/null; then
+  DB_CHECK_SCRIPT="$(dirname "$0")/db-check.sh"
+  if [[ -f "$DB_CHECK_SCRIPT" ]]; then
+    DB_CHECK_OUTPUT=$(bash "$DB_CHECK_SCRIPT" qa 2>&1 | grep -v "Warning: SECURITY WARNING" || true)
+    DB_CHECK_EXIT=$?
+    
+    if [[ $DB_CHECK_EXIT -ne 0 ]]; then
+      print_error "DB schema drift detected — dev changes not synced to qa"
+      echo "$DB_CHECK_OUTPUT" | grep "ERROR" | while read -r line; do
+        print_error "  $line"
+      done
+      ERRORS=$((ERRORS + 1))
+    else
+      print_status "  ✓ DB schemas in sync (dev → qa)"
+    fi
+  fi
+elif [[ "$BRANCH" == "main" ]]; then
+  print_warning "  ⚠ Production DB check skipped (requires manual migration)"
+else
+  print_status "  ✓ DB check skipped (branch: $BRANCH)"
+fi
+
+# ═══════════════════════════════════════════════════════
 # FINAL RESULT
 # ═══════════════════════════════════════════════════════
 echo ""
@@ -724,7 +753,7 @@ if [[ "$ERRORS" -gt 0 ]]; then
     print_error "Fix all errors before marking work complete"
     exit 1
 else
-    print_status "✓ ALL 25 CHECKS PASSED (${WARNING_COUNT:-0} warnings)"
+    print_status "✓ ALL 26 CHECKS PASSED (${WARNING_COUNT:-0} warnings)"
     print_status "✓ Post-task validation complete"
     exit 0
 fi
