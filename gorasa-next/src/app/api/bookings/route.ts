@@ -1,23 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import * as bookings from "@/lib/db/bookings";
+import * as users from "@/lib/db/users";
+import { isPrisma, prisma, supabaseAdmin } from "@/lib/db";
 
 async function getUserFromRequest(request: Request) {
-  // Get user email from header (sent by frontend after login)
   const userEmail = request.headers.get("x-user-email");
   if (!userEmail) return null;
-
-  const { data: dbUser } = await supabase
-    .from("User")
-    .select("*")
-    .eq("email", userEmail)
-    .single();
-
-  return dbUser;
+  return users.findByEmail(userEmail);
 }
 
 export async function GET(request: Request) {
@@ -27,27 +16,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: bookings, error } = await supabase
-      .from("Booking")
-      .select("*")
-      .eq("userId", user.id)
-      .order("bookedAt", { ascending: false });
-
-    if (error) {
-      console.error("Bookings error:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch bookings" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(bookings);
+    const data = await bookings.findByUser((user as any).id);
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Bookings error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch bookings" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
   }
 }
 
@@ -71,49 +44,45 @@ export async function POST(request: Request) {
     const bookingId = crypto.randomUUID();
     const pnrCode = pnr || `GR${Date.now().toString(36).toUpperCase()}`;
 
-    const { data: booking, error } = await supabase
-      .from("Booking")
-      .insert({
-        id: bookingId,
-        userId: user.id,
-        type,
-        itemName,
-        providerOrAirline,
-        price: Number(price),
-        originalPrice: originalPrice ? Number(originalPrice) : null,
-        discountApplied: discountApplied ? Number(discountApplied) : 0,
-        couponCodeUsed,
-        pnr: pnrCode,
-        seatOrRoom,
-        paxCount: paxCount || 1,
-        travelDates,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Booking create error:", error);
-      return NextResponse.json(
-        { error: "Failed to create booking" },
-        { status: 500 }
-      );
-    }
+    const booking = await bookings.create({
+      id: bookingId,
+      userId: (user as any).id,
+      type,
+      itemName,
+      providerOrAirline,
+      price: Number(price),
+      originalPrice: originalPrice ? Number(originalPrice) : null,
+      discountApplied: discountApplied ? Number(discountApplied) : 0,
+      couponCodeUsed,
+      pnr: pnrCode,
+      seatOrRoom,
+      paxCount: paxCount || 1,
+      travelDates,
+    });
 
     if (paymentMethod) {
-      await supabase.from("Payment").insert({
-        bookingId: booking.id,
-        amount: Number(price),
-        method: paymentMethod,
-        status: "PENDING",
-      });
+      if (isPrisma()) {
+        await prisma.payment.create({
+          data: {
+            bookingId: (booking as any).id,
+            amount: Number(price),
+            method: paymentMethod,
+            status: "PENDING",
+          },
+        });
+      } else {
+        await supabaseAdmin.from("Payment").insert({
+          bookingId: (booking as any).id,
+          amount: Number(price),
+          method: paymentMethod,
+          status: "PENDING",
+        });
+      }
     }
 
     return NextResponse.json(booking, { status: 201 });
   } catch (error) {
     console.error("Booking create error:", error);
-    return NextResponse.json(
-      { error: "Failed to create booking" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
   }
 }

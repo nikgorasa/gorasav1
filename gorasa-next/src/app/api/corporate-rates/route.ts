@@ -1,25 +1,28 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { NextResponse } from "next/server";
+import { isPrisma, prisma, supabaseAdmin } from "@/lib/db";
 
 export async function GET() {
-  const { data: rates, error } = await supabase
-    .from("CorporateRate")
-    .select("*, company:Company(name)")
-    .order("createdAt", { ascending: false });
-
-  if (error) {
+  try {
+    let rates;
+    if (isPrisma()) {
+      rates = await prisma.corporateRate.findMany({
+        include: { company: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
+    } else {
+      const { data } = await supabaseAdmin
+        .from('CorporateRate')
+        .select('*, company:Company(name)')
+        .order('createdAt', { ascending: false })
+      rates = data || [];
+    }
+    return NextResponse.json(rates);
+  } catch (error) {
     return NextResponse.json({ error: "Failed to fetch corporate rates" }, { status: 500 });
   }
-
-  return NextResponse.json(rates);
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { companyId, category, destination, discountType, discountValue, maxDiscount, isActive } = body;
@@ -31,22 +34,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: rate, error } = await supabase
-      .from("CorporateRate")
-      .insert({
-        companyId,
-        category: category || "ALL",
-        destination: destination || null,
-        discountType,
-        discountValue,
-        maxDiscount: maxDiscount || null,
-        isActive: isActive !== false,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to create corporate rate" }, { status: 500 });
+    let rate;
+    if (isPrisma()) {
+      rate = await prisma.corporateRate.create({
+        data: {
+          companyId,
+          category: category || "ALL",
+          destination: destination || null,
+          discountType,
+          discountValue,
+          maxDiscount: maxDiscount || null,
+          isActive: isActive !== false,
+        },
+      });
+    } else {
+      const { data } = await supabaseAdmin
+        .from('CorporateRate')
+        .insert({
+          companyId,
+          category: category || "ALL",
+          destination: destination || null,
+          discountType,
+          discountValue,
+          maxDiscount: maxDiscount || null,
+          isActive: isActive !== false,
+        })
+        .select()
+        .single();
+      rate = data;
     }
 
     return NextResponse.json(rate, { status: 201 });

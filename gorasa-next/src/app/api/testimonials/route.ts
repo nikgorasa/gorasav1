@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as content from "@/lib/db/content";
 
 export async function GET() {
   try {
-    const { data: testimonials, error } = await supabase
-      .from("Testimonial")
-      .select("*")
-      .eq("isActive", true)
-      .order("createdAt", { ascending: false });
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to fetch testimonials" }, { status: 500 });
-    }
-
-    return NextResponse.json(testimonials || []);
+    const data = await content.findTestimonials();
+    return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch testimonials" }, { status: 500 });
   }

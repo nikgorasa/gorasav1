@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as promos from "@/lib/db/promo-codes";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,17 +11,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "isActive is required" }, { status: 400 });
     }
 
-    const { data: promo, error } = await supabase
-      .from("PromoCode")
-      .update({ isActive, updatedAt: new Date().toISOString() })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Promo update error:", error);
-      return NextResponse.json({ error: "Failed to update promo" }, { status: 500 });
-    }
+    const promo = await promos.update(id, {
+      isActive,
+      updatedAt: new Date().toISOString(),
+    });
 
     return NextResponse.json(promo);
   } catch (error) {
@@ -33,17 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-
-    const { error } = await supabase
-      .from("PromoCode")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("Promo delete error:", error);
-      return NextResponse.json({ error: "Failed to delete promo" }, { status: 500 });
-    }
-
+    await promos.remove(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Promo delete error:", error);

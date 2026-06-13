@@ -1,24 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as cities from "@/lib/db/cities";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
+    const search = searchParams.get("search") || "";
 
-    let query = supabase.from("City").select("id, name, country, type, iata_code").eq("isactive", true).order("name", { ascending: true });
+    let data;
+    if (search) {
+      data = await cities.search(search);
+    } else {
+      data = await cities.findAll();
+    }
 
     if (type === "domestic" || type === "international") {
-      query = query.eq("type", type);
+      data = data.filter((c: any) => c.type === type);
     }
 
-    const { data, error } = await query;
+    const projected = data.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      country: c.country,
+      type: c.type,
+      iata_code: c.iata_code,
+    }));
 
-    if (error) {
-      return NextResponse.json({ error: "Failed to fetch cities" }, { status: 500 });
-    }
-
-    return NextResponse.json(data || []);
+    return NextResponse.json(projected);
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

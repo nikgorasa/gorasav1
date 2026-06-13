@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import * as companies from "@/lib/db/companies";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -13,18 +13,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.walletBalance !== undefined) updateData.walletBalance = body.walletBalance;
     if (body.isActive !== undefined) updateData.isActive = body.isActive;
 
-    const { data: company, error } = await supabase
-      .from("Company")
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Company update error:", error);
-      return NextResponse.json({ error: "Failed to update company" }, { status: 500 });
-    }
-
+    const company = await companies.update(id, updateData);
     return NextResponse.json(company);
   } catch (error) {
     console.error("Company update error:", error);
@@ -38,15 +27,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const { error } = await supabase
-      .from("Company")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to delete company" }, { status: 500 });
-    }
-
+    await companies.remove(id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
