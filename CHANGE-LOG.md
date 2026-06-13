@@ -291,3 +291,31 @@ Description:
 - All 16 components in `components/` — verified used by pages
 
 **Verification:** TypeScript compiles cleanly, Next.js build passes, all routes intact.
+
+## 2026-06-14 — PAN Card Compliance for Hotel Bookings
+
+### Commit: 7db0627
+
+Project: GoRASA (dev branch)
+Status: Ready
+ADR reference: N/A
+
+### Changes Made:
+- **Database:** Added `leadGuestPan` column to Booking table (Neon DB migration via `prisma db push`)
+- **HotelBookingModal:** Added mandatory PAN field with format validation (`^[A-Z]{5}[0-9]{4}[A-Z]$`), "Save PAN to profile" checkbox, auto-fill from saved profile
+- **TBO Integration:** Fixed broken book payload format (was using wrong structure), added PAN/address/nationality fields to `bookHotel()` passenger type and TBO request mapping
+- **Bookings API:** Accepts and stores `leadGuestPan` field
+- **Profile:** Added PAN field to Saved Travellers interface and form
+- **Research:** Comprehensive compliance doc covering Indian regulations (PAN Act, Foreigners Act, GST), TBO API specs, and industry best practices
+
+### Files Changed:
+- `gorasa-next/prisma/schema.prisma` — Added leadGuestPan column
+- `gorasa-next/src/components/HotelBookingModal.tsx` — PAN field, payload fix, save-to-profile
+- `gorasa-next/src/lib/tbo-hotel-client.ts` — Extended passenger type with PAN/address
+- `gorasa-next/src/app/api/bookings/route.ts` — Accept leadGuestPan
+- `gorasa-next/src/app/profile/page.tsx` — PAN in traveller form
+
+### Verification:
+- TypeScript compiles cleanly
+- Next.js build passes
+- Neon DB migration applied
