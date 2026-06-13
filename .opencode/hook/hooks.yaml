@@ -22,6 +22,18 @@ hooks:
           timeout: 30000
 
   # ═══════════════════════════════════════════════════════
+  # FILE CHANGED — Example file secret scan
+  # ═══════════════════════════════════════════════════════
+  - event: file.changed
+    scope: all
+    conditions:
+      - glob: "**/*.example"
+    actions:
+      - bash:
+          command: "echo '═══ GoRASA EXAMPLE FILE CHANGE — Secret Scan ═══' && bash /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/gorasa-next/scripts/preflight-check.sh"
+          timeout: 60000
+
+  # ═══════════════════════════════════════════════════════
   # FILE CHANGED — Documentation Check (Strict)
   # ═══════════════════════════════════════════════════════
   - event: file.changed
