@@ -584,6 +584,136 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════
+# Check 25: Deployment Commit Traceability
+# ═══════════════════════════════════════════════════════
+print_status "CHECK 25/25: Deployment commit traceability..."
+echo ""
+
+# Fetch latest remote state for all deployment branches
+REMOTE="neworigin"
+if ! git fetch "$REMOTE" dev qa main 2>/dev/null; then
+    REMOTE="origin"
+    git fetch "$REMOTE" dev qa main 2>/dev/null || true
+fi
+
+print_status "  Remote: $REMOTE"
+
+# Get current SHAs for each branch (remote + local)
+BRANCHES=("dev" "qa" "main")
+declare -A REMOTE_SHA LOCAL_SHA REMOTE_MSG LOCAL_MSG
+
+for branch in "${BRANCHES[@]}"; do
+    # Remote commit
+    REMOTE_SHA["$branch"]=$(git rev-parse --short "$REMOTE/$branch" 2>/dev/null || echo "N/A")
+    LOCAL_SHA["$branch"]=$(git rev-parse --short "$branch" 2>/dev/null || echo "N/A")
+
+    if [[ "${REMOTE_SHA["$branch"]}" != "N/A" ]]; then
+        REMOTE_MSG["$branch"]=$(git log --oneline -1 "$REMOTE/$branch" 2>/dev/null | sed 's/^[^ ]* //' || echo "N/A")
+    fi
+    if [[ "${LOCAL_SHA["$branch"]}" != "N/A" ]]; then
+        LOCAL_MSG["$branch"]=$(git log --oneline -1 "$branch" 2>/dev/null | sed 's/^[^ ]* //' || echo "N/A")
+    fi
+done
+
+# Display branch state table
+print_status ""
+print_status "  ┌──────────┬──────────────┬──────────────────────────────┐"
+print_status "  │ Branch   │ Remote SHA   │ Last Commit                  │"
+print_status "  ├──────────┼──────────────┼──────────────────────────────┤"
+for branch in "${BRANCHES[@]}"; do
+    sha="${REMOTE_SHA["$branch"]}"
+    msg="${REMOTE_MSG["$branch"]}"
+    printf -v line "  │ %-8s │ %-12s │ %-28s │" "$branch" "$sha" "$msg"
+    print_status "$line"
+done
+print_status "  └──────────┴──────────────┴──────────────────────────────┘"
+
+# Show ahead/behind for each branch vs remote
+print_status ""
+for branch in "${BRANCHES[@]}"; do
+    AHEAD=$(git rev-list --count "$REMOTE/$branch..$branch" 2>/dev/null || echo "0")
+    BEHIND=$(git rev-list --count "$branch..$REMOTE/$branch" 2>/dev/null || echo "0")
+    if [[ "$AHEAD" -gt 0 || "$BEHIND" -gt 0 ]]; then
+        print_warning "  ⚠ $branch: $AHEAD ahead, $BEHIND behind $REMOTE/$branch"
+        if [[ "$AHEAD" -gt 0 ]]; then
+            git log --oneline "$REMOTE/$branch..$branch" 2>/dev/null | while read -r commit; do
+                print_warning "       ↑ $commit"
+            done
+        fi
+        if [[ "$BEHIND" -gt 0 ]]; then
+            git log --oneline "$branch..$REMOTE/$branch" 2>/dev/null | while read -r commit; do
+                print_warning "       ↓ $commit"
+            done
+        fi
+    else
+        print_status "  ✓ $branch: synced with $REMOTE/$branch"
+    fi
+done
+
+# Show promotion pipeline: what's in lower env but not next env
+print_status ""
+print_status "  Promotion pipeline (what's new in each stage):"
+PROMO_PAIRS=("dev→qa:neworigin/dev..neworigin/qa" "qa→prod:neworigin/qa..neworigin/main")
+for pair in "${PROMO_PAIRS[@]}"; do
+    label="${pair%%:*}"
+    range="${pair#*:}"
+    rev_range="${range%..*}".."${range#*..}"
+    rev_range_reversed="${range#*..}".."${range%..*}"
+
+    INCOMING=$(git log --oneline "$range" 2>/dev/null | wc -l)
+    if [[ "$INCOMING" -gt 0 ]]; then
+        print_warning "  ⚠ $label: $INCOMING commit(s) waiting to be promoted:"
+        git log --oneline "$range" 2>/dev/null | while read -r commit; do
+            print_warning "       → $commit"
+        done
+        WARNING_COUNT=$((WARNING_COUNT + 1))
+    else
+        print_status "  ✓ $label: up to date"
+    fi
+done
+
+# Record commit map for traceability
+COMMIT_MAP_FILE="../docs/DEPLOYMENT-COMMIT-MAP.md"
+COMMIT_MAP_DATE=$(date "+%Y-%m-%d %H:%M UTC")
+cat > "$COMMIT_MAP_FILE" << EOFMAP
+# Deployment Commit Map
+
+*Last updated: $COMMIT_MAP_DATE by post-task check*
+
+| Branch | Remote SHA | Commit Message |
+|--------|-----------|----------------|
+EOFMAP
+
+for branch in "${BRANCHES[@]}"; do
+    echo "| **$branch** | \`${REMOTE_SHA["$branch"]}\` | ${REMOTE_MSG["$branch"]} |" >> "$COMMIT_MAP_FILE"
+done
+
+echo "" >> "$COMMIT_MAP_FILE"
+echo "### Promotion Gaps" >> "$COMMIT_MAP_FILE"
+echo "" >> "$COMMIT_MAP_FILE"
+
+DEV_QA_GAP=$(git log --oneline "$REMOTE/dev..$REMOTE/qa" 2>/dev/null | wc -l)
+QA_MAIN_GAP=$(git log --oneline "$REMOTE/qa..$REMOTE/main" 2>/dev/null | wc -l)
+DEV_NOT_QA=$(git log --oneline "$REMOTE/dev..$REMOTE/qa" 2>/dev/null | head -1)
+QA_NOT_MAIN=$(git log --oneline "$REMOTE/qa..$REMOTE/main" 2>/dev/null | head -1)
+
+if [[ "$DEV_QA_GAP" -eq 0 ]]; then
+    echo "- **dev → qa:** Up to date — no commits to promote" >> "$COMMIT_MAP_FILE"
+else
+    echo "- **dev → qa:** $DEV_QA_GAP commit(s) behind:" >> "$COMMIT_MAP_FILE"
+    git log --oneline "$REMOTE/dev..$REMOTE/qa" 2>/dev/null | sed 's/^/  - /' >> "$COMMIT_MAP_FILE"
+fi
+
+if [[ "$QA_MAIN_GAP" -eq 0 ]]; then
+    echo "- **qa → prod:** Up to date — no commits to promote" >> "$COMMIT_MAP_FILE"
+else
+    echo "- **qa → prod:** $QA_MAIN_GAP commit(s) behind:" >> "$COMMIT_MAP_FILE"
+    git log --oneline "$REMOTE/qa..$REMOTE/main" 2>/dev/null | sed 's/^/  - /' >> "$COMMIT_MAP_FILE"
+fi
+
+print_status "  ✓ Commit map written to docs/DEPLOYMENT-COMMIT-MAP.md"
+
+# ═══════════════════════════════════════════════════════
 # FINAL RESULT
 # ═══════════════════════════════════════════════════════
 echo ""
@@ -594,7 +724,7 @@ if [[ "$ERRORS" -gt 0 ]]; then
     print_error "Fix all errors before marking work complete"
     exit 1
 else
-    print_status "✓ ALL 24 CHECKS PASSED (${WARNING_COUNT:-0} warnings)"
+    print_status "✓ ALL 25 CHECKS PASSED (${WARNING_COUNT:-0} warnings)"
     print_status "✓ Post-task validation complete"
     exit 0
 fi

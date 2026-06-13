@@ -31,13 +31,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-brand-saffron to-brand-burnt rounded-lg flex items-center justify-center">
-                <span className="text-white font-display font-bold text-sm">G</span>
-              </div>
-              <span className="font-display font-bold text-xl text-slate-900">
-                Go<span className="text-brand-saffron">RASA</span>
-              </span>
+            <div className="mb-4">
+              <img src="/logo.svg" alt="GoRASA" className="h-9 w-auto" />
             </div>
             <p className="text-slate-600 text-sm leading-relaxed mb-4">
               Premium travel experiences crafted for the discerning traveler.
