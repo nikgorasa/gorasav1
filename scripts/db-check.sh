@@ -35,6 +35,7 @@ if ! command -v node &> /dev/null; then
 fi
 
 node -e "
+const TARGET = '$TARGET';
 const { Pool } = require('pg');
 const devPool = new Pool({ connectionString: '$DEV_URL' });
 const targetPool = new Pool({ connectionString: '$TARGET_URL' });
