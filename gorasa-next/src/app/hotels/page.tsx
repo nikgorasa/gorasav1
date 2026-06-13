@@ -1,17 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/lib";
-import { Building2, Search, MapPin, X, Star, Wifi, Coffee, Car, Loader2, ChevronDown, ChevronUp, Bed, Users } from "lucide-react";
+import { Building2, Search, MapPin, X, Star, Wifi, Coffee, Car, Loader2, ChevronDown, Bed, Users, Minus, Plus, User } from "lucide-react";
 import HotelBookingModal from "@/components/HotelBookingModal";
 import CitySearchDropdown from "@/components/CitySearchDropdown";
 import type { City } from "@/components/CitySearchDropdown";
 import type { TBODisplayHotel, TBODisplayRoom } from "@/lib/tbo-hotel-types";
+import Link from "next/link";
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 const STAR_LABELS: Record<string, string> = {
   OneStar: "★",
@@ -25,23 +30,60 @@ const STAR_MAP: Record<string, number> = {
   OneStar: 1, TwoStar: 2, ThreeStar: 3, FourStar: 4, FiveStar: 5,
 };
 
+interface RoomConfig {
+  adults: number;
+  children: number;
+  childAges: number[];
+}
+
+function makeRoom(adults = 2, children = 0): RoomConfig {
+  return { adults, children, childAges: Array(children).fill(5) };
+}
+
 export default function HotelsPage() {
   const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [selectedCity, setSelectedCity] = useState<City>({ code: "15648", name: "Goa", state: "Goa", source: "fallback" });
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState("2");
+  const [roomCount, setRoomCount] = useState(1);
+  const [roomConfigs, setRoomConfigs] = useState<RoomConfig[]>([makeRoom()]);
+  const [showRoomPopover, setShowRoomPopover] = useState(false);
+  const roomRef = useRef<HTMLDivElement>(null);
   const [results, setResults] = useState<TBODisplayHotel[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedHotel, setSelectedHotel] = useState<TBODisplayHotel | null>(null);
-  const [rooms, setRooms] = useState<TBODisplayRoom[]>([]);
-  const [roomsLoading, setRoomsLoading] = useState(false);
+  const [hotelRooms, setHotelRooms] = useState<TBODisplayRoom[]>([]);
+  const [hotelRoomsLoading, setHotelRoomsLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<TBODisplayRoom | null>(null);
   const [sessionId, setSessionId] = useState("");
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [error, setError] = useState("");
+
+  const showConcierge = roomCount > 9;
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (roomRef.current && !roomRef.current.contains(e.target as Node)) {
+        setShowRoomPopover(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setRoomConfigs((prev) => {
+      if (roomCount > prev.length) {
+        const added = Array.from({ length: roomCount - prev.length }, () => makeRoom());
+        return [...prev, ...added];
+      }
+      return prev.slice(0, roomCount);
+    });
+  }, [roomCount]);
+
+  const totalGuests = roomConfigs.reduce((s, r) => s + r.adults + r.children, 0);
 
   const handleSearch = async () => {
     if (!selectedCity.name) return;
@@ -50,6 +92,12 @@ export default function HotelsPage() {
     setError("");
 
     try {
+      const RoomGuests = roomConfigs.map((r) => ({
+        AdultCount: r.adults,
+        ChildCount: r.children,
+        ChildAge: r.childAges,
+      }));
+
       const res = await fetch("/api/tbo-hotels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,9 +110,9 @@ export default function HotelsPage() {
             CityName: selectedCity.name,
             CityCode: selectedCity.code,
             IsNearBySearchAllowed: false,
-            NoOfRooms: 1,
+            NoOfRooms: roomCount,
             GuestNationality: "IN",
-            RoomGuests: [{ AdultCount: parseInt(guests), ChildCount: 0 }],
+            RoomGuests,
             PreferredCurrencyCode: "INR",
             ResultCount: 0,
             Filters: { StarRating: "All", OrderBy: "PriceAsc" },
@@ -92,7 +140,7 @@ export default function HotelsPage() {
   const handleHotelClick = async (hotel: TBODisplayHotel) => {
     setSelectedHotel(hotel);
     setSelectedRoom(null);
-    setRoomsLoading(true);
+    setHotelRoomsLoading(true);
 
     try {
       const res = await fetch("/api/tbo-hotels", {
@@ -108,15 +156,15 @@ export default function HotelsPage() {
 
       const data = await res.json();
       if (data.rooms) {
-        setRooms(data.rooms);
+        setHotelRooms(data.rooms);
         if (data.rooms.length > 0) setSelectedRoom(data.rooms[0]);
       } else {
-        setRooms([]);
+        setHotelRooms([]);
       }
     } catch {
-      setRooms([]);
+      setHotelRooms([]);
     } finally {
-      setRoomsLoading(false);
+      setHotelRoomsLoading(false);
     }
   };
 
@@ -131,9 +179,9 @@ export default function HotelsPage() {
       <Navbar onLoginClick={() => setShowLogin(true)} />
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
 
-      <main className="min-h-screen pt-16 bg-slate-50">
+      <main className="min-h-screen pt-16" style={{ backgroundColor: "#F5EFE0" }}>
         {/* Hero */}
-        <section className="bg-gradient-to-br from-emerald-600 to-emerald-800 py-12">
+        <section className="py-12" style={{ backgroundColor: "#D97706" }}>
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -144,7 +192,7 @@ export default function HotelsPage() {
                 <Building2 size={28} className="text-white" />
               </div>
               <h1 className="text-3xl font-serif font-bold text-white mb-1">Search Hotels</h1>
-              <p className="text-emerald-100 text-sm">Powered by TBO • Global hotel inventory at best rates</p>
+              <p className="text-white/70 text-sm">Powered by TBO • Global hotel inventory at best rates</p>
             </motion.div>
 
             <motion.div
@@ -165,8 +213,9 @@ export default function HotelsPage() {
                   <input
                     type="date"
                     value={checkIn}
+                    min={todayStr()}
                     onChange={(e) => setCheckIn(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full px-3 py-2.5 bg-[#F5EFE0] border border-slate-200 rounded-xl text-sm focus:ring-2 outline-none"
                   />
                 </div>
                 <div>
@@ -174,27 +223,191 @@ export default function HotelsPage() {
                   <input
                     type="date"
                     value={checkOut}
+                    min={checkIn || todayStr()}
                     onChange={(e) => setCheckOut(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full px-3 py-2.5 bg-[#F5EFE0] border border-slate-200 rounded-xl text-sm focus:ring-2 outline-none"
                   />
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Guests</label>
-                  <select
-                    value={guests}
-                    onChange={(e) => setGuests(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+
+                {/* Rooms Configuration */}
+                <div ref={roomRef} className="relative">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">
+                    Rooms & Guests
+                  </label>
+                  <button
+                    onClick={() => setShowRoomPopover(!showRoomPopover)}
+                    className="w-full px-3 py-2.5 bg-[#F5EFE0] border border-slate-200 rounded-xl text-sm flex items-center justify-between gap-2 cursor-pointer hover:border-[#D97706]/30 transition-colors"
                   >
-                    {[1, 2, 3, 4, 5, 6].map((n) => (
-                      <option key={n} value={n}>{n} {n === 1 ? "Guest" : "Guests"}</option>
-                    ))}
-                  </select>
+                    <span className="flex items-center gap-2">
+                      <Users size={14} className="text-slate-400" />
+                      <span className="text-slate-900 font-medium">{roomCount}</span>
+                      <span className="text-slate-500">{roomCount === 1 ? "Room" : "Rooms"}</span>
+                      <span className="text-slate-300 mx-1">·</span>
+                      <span className="text-slate-500">{totalGuests} {totalGuests === 1 ? "Guest" : "Guests"}</span>
+                    </span>
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${showRoomPopover ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {showRoomPopover && (
+                    <div className="absolute right-0 top-full mt-1 z-50 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4">
+                      {showConcierge ? (
+                        <div className="text-center py-6">
+                          <User size={32} className="mx-auto text-[#D97706] mb-3" />
+                          <p className="font-bold text-slate-900 mb-1">Large Group Booking</p>
+                          <p className="text-xs text-slate-500 mb-3">
+                            For more than 9 rooms, please contact our concierge.
+                          </p>
+                          <Link
+                            href="/support"
+                            style={{ backgroundColor: "#D97706" }}
+                            className="inline-block px-6 py-2.5 text-white rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
+                          >
+                            Submit query to Concierge
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {/* Room Count */}
+                          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <p className="text-sm font-semibold text-slate-900">Rooms</p>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => setRoomCount(Math.max(1, roomCount - 1))}
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                disabled={roomCount <= 1}
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="w-6 text-center font-bold text-slate-900">{roomCount}</span>
+                              <button
+                                onClick={() => setRoomCount(Math.min(10, roomCount + 1))}
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                disabled={roomCount >= 10}
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Per Room Configuration */}
+                          {roomConfigs.map((r, i) => (
+                            <div key={i} className="pb-3 border-b border-slate-100 last:border-0">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+                                Room {i + 1}
+                              </p>
+
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-slate-600">Adults</span>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => {
+                                      const next = [...roomConfigs];
+                                      next[i] = { ...next[i], adults: Math.max(1, next[i].adults - 1) };
+                                      setRoomConfigs(next);
+                                    }}
+                                    className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                    disabled={r.adults <= 1}
+                                  >
+                                    <Minus size={12} />
+                                  </button>
+                                  <span className="w-5 text-center font-bold text-sm text-slate-900">{r.adults}</span>
+                                  <button
+                                    onClick={() => {
+                                      const next = [...roomConfigs];
+                                      next[i] = { ...next[i], adults: Math.min(9, next[i].adults + 1) };
+                                      setRoomConfigs(next);
+                                    }}
+                                    className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                    disabled={r.adults >= 9}
+                                  >
+                                    <Plus size={12} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-slate-600">Children (0-17)</span>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => {
+                                      const next = [...roomConfigs];
+                                      const newChildren = Math.max(0, next[i].children - 1);
+                                      next[i] = {
+                                        ...next[i],
+                                        children: newChildren,
+                                        childAges: next[i].childAges.slice(0, newChildren),
+                                      };
+                                      setRoomConfigs(next);
+                                    }}
+                                    className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                    disabled={r.children <= 0}
+                                  >
+                                    <Minus size={12} />
+                                  </button>
+                                  <span className="w-5 text-center font-bold text-sm text-slate-900">{r.children}</span>
+                                  <button
+                                    onClick={() => {
+                                      const next = [...roomConfigs];
+                                      next[i] = {
+                                        ...next[i],
+                                        children: Math.min(9, next[i].children + 1),
+                                        childAges: [...next[i].childAges, 5],
+                                      };
+                                      setRoomConfigs(next);
+                                    }}
+                                    className="w-7 h-7 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                    disabled={r.children >= 9}
+                                  >
+                                    <Plus size={12} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Child Age Selectors */}
+                              {r.childAges.map((age, ci) => (
+                                <div key={ci} className="flex items-center gap-2 mt-1.5 pl-4">
+                                  <span className="text-[10px] text-slate-400">Child {ci + 1} age</span>
+                                  <select
+                                    value={age}
+                                    onChange={(e) => {
+                                      const next = [...roomConfigs];
+                                      const ages = [...next[i].childAges];
+                                      ages[ci] = parseInt(e.target.value);
+                                      next[i] = { ...next[i], childAges: ages };
+                                      setRoomConfigs(next);
+                                    }}
+                                    className="flex-1 px-2 py-1 bg-[#F5EFE0] border border-slate-200 rounded-lg text-xs outline-none"
+                                  >
+                                    {Array.from({ length: 18 }, (_, i) => i).map((a) => (
+                                      <option key={a} value={a}>{a} {a === 0 || a === 1 ? "year" : "years"}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {!showConcierge && (
+                        <button
+                          onClick={() => setShowRoomPopover(false)}
+                          style={{ backgroundColor: "#D97706" }}
+                          className="w-full mt-4 py-2.5 text-white rounded-xl font-bold text-sm hover:opacity-90 transition-opacity cursor-pointer"
+                        >
+                          Apply
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
+
               <button
                 onClick={handleSearch}
                 disabled={loading}
-                className="mt-4 w-full md:w-auto px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                style={{ backgroundColor: "#D97706" }}
+                className="mt-4 w-full md:w-auto px-8 py-3 text-white rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
                 {loading ? "Searching..." : "Search Hotels"}
@@ -215,7 +428,7 @@ export default function HotelsPage() {
               </div>
             ) : loading ? (
               <div className="text-center py-16">
-                <Loader2 size={40} className="mx-auto text-emerald-600 mb-4 animate-spin" />
+                <Loader2 size={40} className="mx-auto mb-4 animate-spin" style={{ color: "#D97706" }} />
                 <p className="text-slate-500">Searching TBO inventory for {selectedCity.name}...</p>
               </div>
             ) : error ? (
@@ -277,7 +490,7 @@ export default function HotelsPage() {
                         </div>
                       </div>
                       <div className="p-4">
-                        <h3 className="font-bold text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-1">
+                        <h3 className="font-bold text-slate-900 line-clamp-1">
                           {hotel.name}
                         </h3>
                         <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
@@ -296,7 +509,7 @@ export default function HotelsPage() {
                             <p className="text-xl font-black font-mono text-slate-900">{formatCurrency(hotel.price)}</p>
                             <p className="text-[10px] text-slate-400">per night</p>
                           </div>
-                          <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 cursor-pointer">
+                          <button style={{ backgroundColor: "#D97706" }} className="px-4 py-2 text-white rounded-xl text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer">
                             View Rooms
                           </button>
                         </div>
@@ -386,26 +599,27 @@ export default function HotelsPage() {
                     Available Rooms
                   </h3>
 
-                  {roomsLoading ? (
+                  {hotelRoomsLoading ? (
                     <div className="flex items-center justify-center py-6">
-                      <Loader2 size={20} className="animate-spin text-emerald-600" />
+                      <Loader2 size={20} className="animate-spin" style={{ color: "#D97706" }} />
                       <span className="ml-2 text-sm text-slate-500">Loading rooms...</span>
                     </div>
-                  ) : rooms.length === 0 ? (
+                  ) : hotelRooms.length === 0 ? (
                     <div className="text-center py-4">
                       <p className="text-sm text-slate-400">No room data available for this hotel.</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {rooms.map((room) => (
+                      {hotelRooms.map((room) => (
                         <div
                           key={room.roomIndex}
                           onClick={() => setSelectedRoom(room)}
                           className={`p-3 rounded-xl border cursor-pointer transition-all ${
                             selectedRoom?.roomIndex === room.roomIndex
-                              ? "border-emerald-500 bg-emerald-50"
-                              : "border-slate-200 hover:border-emerald-300"
+                              ? "border-[#D97706]"
+                              : "border-slate-200"
                           }`}
+                          style={selectedRoom?.roomIndex === room.roomIndex ? { backgroundColor: "#F5EFE0" } : undefined}
                         >
                           <div className="flex justify-between items-start">
                             <div>
@@ -433,7 +647,7 @@ export default function HotelsPage() {
                 {/* Booking Section */}
                 {selectedRoom && (
                   <div className="mt-4 pt-4 border-t border-slate-200">
-                    <div className="bg-emerald-50 rounded-xl p-4 mb-4">
+                    <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#F5EFE0" }}>
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm text-slate-600">Room Fare</span>
                         <span className="font-mono font-bold">{formatCurrency(selectedRoom.roomFare)}</span>
@@ -442,9 +656,9 @@ export default function HotelsPage() {
                         <span className="text-sm text-slate-600">Taxes & Fees</span>
                         <span className="font-mono font-bold">{formatCurrency(selectedRoom.roomTax)}</span>
                       </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-emerald-200">
+                      <div className="flex justify-between items-center pt-2 border-t" style={{ borderColor: "#D4C9B0" }}>
                         <span className="font-bold text-slate-900">Total per night</span>
-                        <span className="font-mono font-black text-xl text-emerald-700">{formatCurrency(selectedRoom.totalFare)}</span>
+                        <span className="font-mono font-black text-xl" style={{ color: "#D97706" }}>{formatCurrency(selectedRoom.totalFare)}</span>
                       </div>
                     </div>
                     <button
@@ -455,7 +669,8 @@ export default function HotelsPage() {
                           setShowBookingModal(true);
                         }
                       }}
-                      className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors cursor-pointer"
+                      style={{ backgroundColor: "#D97706" }}
+                      className="w-full py-3 text-white rounded-xl font-bold hover:opacity-90 transition-opacity cursor-pointer"
                     >
                       {user ? "Book Now" : "Sign in to Book"}
                     </button>
@@ -478,7 +693,7 @@ export default function HotelsPage() {
         location={selectedCity.name}
         checkIn={checkIn}
         checkOut={checkOut}
-        guestCount={parseInt(guests)}
+        guestCount={totalGuests}
       />
 
       <Footer />

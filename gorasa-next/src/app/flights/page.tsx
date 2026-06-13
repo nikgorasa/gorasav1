@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/lib";
-import { Plane, Search, Calendar, Users, ArrowRight, Star, Clock, Luggage, X, Loader2 } from "lucide-react";
+import { Plane, Search, Calendar, Users, ArrowRight, Star, Clock, Luggage, X, Loader2, ChevronDown, Minus, Plus, User } from "lucide-react";
 import FlightBookingModal from "@/components/FlightBookingModal";
 import CitySearchDropdown from "@/components/CitySearchDropdown";
 import type { City } from "@/components/CitySearchDropdown";
+import Link from "next/link";
 
 interface Flight {
   id: string;
@@ -26,26 +27,61 @@ interface Flight {
   tier: string;
 }
 
+const CABIN_OPTIONS = ["Economy", "Premium Economy", "Business", "First"] as const;
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function FlightsPage() {
   const { user } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [originCity, setOriginCity] = useState<City>({ code: "13484", name: "Mumbai", state: "Maharashtra", source: "fallback", iata_code: "BOM" });
   const [destinationCity, setDestinationCity] = useState<City>({ code: "13482", name: "Delhi", state: "Delhi", source: "fallback", iata_code: "DEL" });
-  const [date, setDate] = useState("");
-  const [passengers, setPassengers] = useState("1");
-  const [tripType, setTripType] = useState<"one-way" | "return">("one-way");
+  const [tripType, setTripType] = useState<"one-way" | "return" | "multi-city">("one-way");
+  const [departDate, setDepartDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [multiCityDates, setMultiCityDates] = useState<string[]>(["", ""]);
+  const [cabinClass, setCabinClass] = useState<string>("Economy");
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [infants, setInfants] = useState(0);
+  const [childAges, setChildAges] = useState<number[]>([]);
+  const [showPassengerPopover, setShowPassengerPopover] = useState(false);
+  const passengerRef = useRef<HTMLDivElement>(null);
   const [results, setResults] = useState<Flight[]>([]);
   const [searched, setSearched] = useState(false);
   const [searching, setSearching] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
 
+  const totalPassengers = adults + children + infants;
+  const showConcierge = totalPassengers > 10;
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (passengerRef.current && !passengerRef.current.contains(e.target as Node)) {
+        setShowPassengerPopover(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const newCount = children;
+    setChildAges((prev) => {
+      if (newCount > prev.length) return [...prev, ...Array(newCount - prev.length).fill(5)];
+      return prev.slice(0, newCount);
+    });
+  }, [children]);
+
   const handleSearch = async () => {
     setSearching(true);
     try {
-      // Use IATA codes if available, otherwise fall back to city names
       const originCode = originCity.iata_code || originCity.name;
       const destCode = destinationCity.iata_code || destinationCity.name;
+      const departureDate = tripType === "multi-city" ? multiCityDates[0] : departDate;
       const res = await fetch(`/api/tbo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,17 +90,16 @@ export default function FlightsPage() {
           params: {
             origin: originCode,
             destination: destCode,
-            departureDate: date,
-            adults: parseInt(passengers),
-            children: 0,
-            infants: 0,
-            cabinClass: "Economy",
+            departureDate,
+            adults,
+            children,
+            infants,
+            cabinClass,
             tripType: tripType === "return" ? "Return" : "OneWay",
           },
         }),
       });
       const data = await res.json();
-      // Transform TBO response to match Flight interface
       const flights = (data.flights || []).map((f: any) => ({
         id: f.resultIndex || `${f.airline}-${f.flightNumber}`,
         airline: f.airline,
@@ -116,9 +151,9 @@ export default function FlightsPage() {
       <Navbar onLoginClick={() => setShowLogin(true)} />
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
 
-      <main className="min-h-screen pt-16 bg-slate-50">
+      <main className="min-h-screen pt-16" style={{ backgroundColor: "#F5EFE0" }}>
         {/* Hero */}
-        <section className="bg-gradient-to-br from-blue-600 to-blue-800 py-12">
+        <section className="py-12" style={{ backgroundColor: "#D97706" }}>
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -129,7 +164,7 @@ export default function FlightsPage() {
                 <Plane size={28} className="text-white" />
               </div>
               <h1 className="text-3xl font-serif font-bold text-white mb-1">Search Flights</h1>
-              <p className="text-blue-100 text-sm">Find the best airfares across India</p>
+              <p className="text-white/70 text-sm">Find the best airfares across India</p>
             </motion.div>
 
             <motion.div
@@ -138,17 +173,16 @@ export default function FlightsPage() {
               transition={{ delay: 0.1 }}
               className="bg-white rounded-2xl p-5 shadow-xl"
             >
-              {/* Trip Type Toggle */}
-              <div className="flex gap-2 mb-4">
-                {(["one-way", "return"] as const).map((t) => (
+              {/* Trip Type Tabs */}
+              <div className="flex gap-1 mb-4 bg-slate-100 rounded-xl p-1 w-fit">
+                {(["one-way", "return", "multi-city"] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setTripType(t)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-colors ${
-                      tripType === t ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
+                    style={{ backgroundColor: tripType === t ? "#D97706" : "transparent", color: tripType === t ? "#fff" : "#64748b" }}
+                    className="px-4 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-all"
                   >
-                    {t === "one-way" ? "One Way" : "Return"}
+                    {t === "one-way" ? "One Way" : t === "return" ? "Return" : "Multi-city"}
                   </button>
                 ))}
               </div>
@@ -166,31 +200,248 @@ export default function FlightsPage() {
                   placeholder="Search cities..."
                   label="To"
                 />
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Date</label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Passengers</label>
-                  <select
-                    value={passengers}
-                    onChange={(e) => setPassengers(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map((n) => (
-                      <option key={n} value={n}>{n} {n === 1 ? "Passenger" : "Passengers"}</option>
+                {tripType === "one-way" ? (
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Departure</label>
+                    <input
+                      type="date"
+                      value={departDate}
+                      min={todayStr()}
+                      onChange={(e) => setDepartDate(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-[#F5EFE0] border border-slate-200 rounded-xl text-sm focus:ring-2 outline-none"
+                    />
+                  </div>
+                ) : tripType === "return" ? (
+                  <>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Departure</label>
+                      <input
+                        type="date"
+                        value={departDate}
+                        min={todayStr()}
+                        onChange={(e) => setDepartDate(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-[#F5EFE0] border border-slate-200 rounded-xl text-sm focus:ring-2 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Return</label>
+                      <input
+                        type="date"
+                        value={returnDate}
+                        min={departDate || todayStr()}
+                        onChange={(e) => setReturnDate(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-[#F5EFE0] border border-slate-200 rounded-xl text-sm focus:ring-2 outline-none"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="md:col-span-2 space-y-2">
+                    {multiCityDates.map((d, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">
+                            Leg {i + 1}
+                          </label>
+                          <input
+                            type="date"
+                            value={d}
+                            min={i > 0 && multiCityDates[i - 1] ? multiCityDates[i - 1] : todayStr()}
+                            onChange={(e) => {
+                              const next = [...multiCityDates];
+                              next[i] = e.target.value;
+                              setMultiCityDates(next);
+                            }}
+                            className="w-full px-3 py-2.5 bg-[#F5EFE0] border border-slate-200 rounded-xl text-sm focus:ring-2 outline-none"
+                          />
+                        </div>
+                        {i === multiCityDates.length - 1 && (
+                          <button
+                            onClick={() => setMultiCityDates([...multiCityDates, ""])}
+                            className="mt-5 p-2 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:text-[#D97706] hover:border-[#D97706] transition-colors cursor-pointer"
+                            title="Add leg"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        )}
+                      </div>
                     ))}
-                  </select>
+                  </div>
+                )}
+
+                {/* Passenger + Cabin Popover */}
+                <div ref={passengerRef} className="relative">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">
+                    Passengers & Cabin
+                  </label>
+                  <button
+                    onClick={() => setShowPassengerPopover(!showPassengerPopover)}
+                    className="w-full px-3 py-2.5 bg-[#F5EFE0] border border-slate-200 rounded-xl text-sm flex items-center justify-between gap-2 cursor-pointer hover:border-[#D97706]/30 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users size={14} className="text-slate-400" />
+                      <span className="text-slate-900 font-medium">{totalPassengers}</span>
+                      <span className="text-slate-500">{totalPassengers === 1 ? "Passenger" : "Passengers"}</span>
+                      <span className="text-slate-300 mx-1">·</span>
+                      <span className="text-slate-500">{cabinClass}</span>
+                    </span>
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${showPassengerPopover ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {showPassengerPopover && (
+                    <div className="absolute right-0 top-full mt-1 z-50 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4">
+                      {showConcierge ? (
+                        <div className="text-center py-6">
+                          <User size={32} className="mx-auto text-[#D97706] mb-3" />
+                          <p className="font-bold text-slate-900 mb-1">Large Group Booking</p>
+                          <p className="text-xs text-slate-500 mb-3">
+                            For groups larger than 10 passengers, please contact our concierge.
+                          </p>
+                          <Link
+                            href="/support"
+                            style={{ backgroundColor: "#D97706" }}
+                            className="inline-block px-6 py-2.5 text-white rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
+                          >
+                            Submit to Concierge
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {/* Cabin Class */}
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Cabin Class</p>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {CABIN_OPTIONS.map((c) => (
+                                <button
+                                  key={c}
+                                  onClick={() => setCabinClass(c)}
+                                  style={{
+                                    backgroundColor: cabinClass === c ? "#D97706" : "transparent",
+                                    color: cabinClass === c ? "#fff" : "#64748b",
+                                    borderColor: cabinClass === c ? "#D97706" : "#e2e8f0",
+                                  }}
+                                  className="px-3 py-2 rounded-lg text-xs font-medium border cursor-pointer transition-all"
+                                >
+                                  {c}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Adults */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">Adults</p>
+                              <p className="text-[10px] text-slate-400">12+ years</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => setAdults(Math.max(1, adults - 1))}
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                disabled={adults <= 1}
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="w-6 text-center font-bold text-slate-900">{adults}</span>
+                              <button
+                                onClick={() => setAdults(Math.min(9, adults + 1))}
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                disabled={adults >= 9}
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Children */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">Children</p>
+                              <p className="text-[10px] text-slate-400">2-17 years</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => setChildren(Math.max(0, children - 1))}
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                disabled={children <= 0}
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="w-6 text-center font-bold text-slate-900">{children}</span>
+                              <button
+                                onClick={() => setChildren(Math.min(9, children + 1))}
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                disabled={children >= 9}
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Child Ages */}
+                          {childAges.map((age, i) => (
+                            <div key={i} className="flex items-center gap-2 pl-4">
+                              <span className="text-[10px] text-slate-400 w-16">Child {i + 1} age</span>
+                              <select
+                                value={age}
+                                onChange={(e) => {
+                                  const next = [...childAges];
+                                  next[i] = parseInt(e.target.value);
+                                  setChildAges(next);
+                                }}
+                                className="flex-1 px-2 py-1.5 bg-[#F5EFE0] border border-slate-200 rounded-lg text-xs outline-none"
+                              >
+                                {Array.from({ length: 16 }, (_, i) => i + 2).map((a) => (
+                                  <option key={a} value={a}>{a} years</option>
+                                ))}
+                              </select>
+                            </div>
+                          ))}
+
+                          {/* Infants */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">Infants (lap)</p>
+                              <p className="text-[10px] text-slate-400">0-2 years</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => setInfants(Math.max(0, infants - 1))}
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                disabled={infants <= 0}
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="w-6 text-center font-bold text-slate-900">{infants}</span>
+                              <button
+                                onClick={() => setInfants(Math.min(9, infants + 1))}
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-30"
+                                disabled={infants >= 9}
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {!showConcierge && (
+                        <button
+                          onClick={() => setShowPassengerPopover(false)}
+                          style={{ backgroundColor: "#D97706" }}
+                          className="w-full mt-4 py-2 text-white rounded-xl font-bold text-sm hover:opacity-90 transition-opacity cursor-pointer"
+                        >
+                          Done
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
+
               <button
                 onClick={handleSearch}
-                className="mt-4 w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                style={{ backgroundColor: "#D97706" }}
+                className="mt-4 w-full md:w-auto px-8 py-3 text-white rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Search size={18} />
                 Search Flights
@@ -366,8 +617,8 @@ export default function FlightsPage() {
         onClose={() => setShowBookingModal(false)}
         flight={selectedFlight!}
         user={user}
-        date={date}
-        passengerCount={parseInt(passengers)}
+        date={departDate}
+        passengerCount={totalPassengers}
       />
 
       <Footer />

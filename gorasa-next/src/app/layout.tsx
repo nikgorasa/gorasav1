@@ -36,6 +36,7 @@ export const metadata: Metadata = {
       "Premium travel booking platform for luxury flights, hotels, and curated holiday packages.",
     type: "website",
     locale: "en_IN",
+    images: [{ url: "/og-image.png", width: 1200, height: 627 }],
   },
 };
 
@@ -48,10 +49,11 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <head>
         <meta name="theme-color" content="#F97316" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.svg" type="image/svg+xml" />
       </head>
       <body
-        className={`${inter.variable} ${playfair.variable} ${outfit.variable} font-sans bg-slate-50 text-slate-900 antialiased`}
+        className={`${inter.variable} ${playfair.variable} ${outfit.variable} font-sans bg-[#F5EFE0] text-slate-900 antialiased`}
       >
         <AuthProvider>{children}</AuthProvider>
       </body>

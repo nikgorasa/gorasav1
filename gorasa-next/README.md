@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GoRASA — Next.js App
 
-## Getting Started
+This is the active GoRASA codebase — a Next.js 15 luxury travel platform with Supabase auth, TBO API flight/hotel search, and multi-environment CI/CD.
 
-First, run the development server:
+## Quick Start
 
 ```bash
+npm install
+cp .env.local.example .env.local   # Fill in env vars
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environments
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Env | Branch | URL |
+|---|---|---|
+| Dev | `dev` | https://project-uul0v.vercel.app |
+| QA | `qa` | https://project-sm6gc.vercel.app |
+| Prod | `main` | https://gorasa-next.vercel.app |
 
-## Learn More
+## Key Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Next.js 15** (App Router)
+- **Supabase** (auth + database)
+- **TBO API** (flights + hotels)
+- **Tailwind CSS** + **shadcn/ui**
+- **Vercel** hosting
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Push to `dev` or merge PR to `qa` triggers auto-deploy. Production deploys manually via GitHub Actions `deploy-prod.yml` with reviewer approval.
