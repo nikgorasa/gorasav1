@@ -132,8 +132,8 @@ export default function HomePageClient({
           {/* Hero image */}
           <div className="absolute inset-0">
             <Image
-              src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1600&q=80"
-              alt="Heritage stone facade of a Rajasthani palace hotel at golden hour"
+              src="https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1600&q=80"
+              alt="Taj Mahal at golden hour, Agra, India"
               fill
               className="object-cover object-center"
               priority
