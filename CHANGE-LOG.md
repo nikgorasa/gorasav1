@@ -7,6 +7,8 @@
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-13 | 95195d5 | fix: remove TBO from user-facing UI — hotels, city dropdown, booking modal |
+| 2026-06-13 | a19ebd5 | docs: fix stale nikgorasa references across 5 files |
 | 2026-06-13 | df493dc | feat: add Home button to navbar (desktop + mobile) |
 | 2026-06-13 | 179a50c | fix: swap hero image to Taj Mahal at golden hour |
 | 2026-06-13 | d6f270f | fix: replace emoji icons with lucide-react SVGs |

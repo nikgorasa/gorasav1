@@ -380,8 +380,10 @@ Work completed:
 5. **Home button:** Added hardcoded Home link to Navbar (desktop + mobile) with Home icon from lucide-react
 6. **Navbar isactive filter:** Added `isActive !== false` filter to both main and admin nav items
 7. **PRODUCT.md created:** Brand register, users (corporate travel desk), anti-references (not MakeMyTrip/Cleartrip), 5 design principles
+8. **Stale references fixed:** Updated `nikgorasa` → `Gorasa-In-2026` across SETUP-GUIDE, PRD, skill file, ADR, Sprint-1
+9. **TBO removed from UI:** Replaced all user-facing "TBO" text in hotels page, city dropdown, and booking modal with generic/brand text. Backend TBO references preserved.
 
-**Commits:** c264b47, 5ed4e23, 9f7da9f, 8bcfb35, e6f4f05, d6f270f, 179a50c, df493dc
+**Commits:** c264b47, 5ed4e23, 9f7da9f, 8bcfb35, e6f4f05, d6f270f, 179a50c, df493dc, a19ebd5, 95195d5
 
 **Status:** All deployed to dev. Hero has real imagery, left-aligned layout, proper SVG icons, and Home button in nav.
 
