@@ -1,8 +1,7 @@
 name: Deploy to QA (qa-gorasa)
 
 on:
-  push:
-    branches: [qa]
+  workflow_dispatch:
 
 concurrency:
   group: qa-deploy
