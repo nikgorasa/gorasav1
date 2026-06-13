@@ -97,25 +97,25 @@ npx tsc --noEmit
 
 | Environment | Project ID | Region | Connection String |
 |-------------|------------|--------|-------------------|
-| **Dev** | `small-haze-12127097` | us-east-1 | `postgresql://neondb_owner:npg_Ydfi2Oyu3Vmx@ep-quiet-tooth-aiehj2mq-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require` |
-| **QA** | `patient-violet-81222905` | us-east-1 | `postgresql://neondb_owner:npg_znvfB4pRqD8U@ep-wispy-thunder-adigjqv3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require` |
+| **Dev** | `small-haze-12127097` | us-east-1 | `postgresql://neondb_owner:<password>@<host>/neondb?sslmode=require` |
+| **QA** | `patient-violet-81222905` | us-east-1 | `postgresql://neondb_owner:<password>@<host>/neondb?sslmode=require` |
 
 ## Vercel Environment Setup
 
 ### Dev Project
 ```
 DATABASE_PROVIDER=prisma
-DATABASE_URL=postgresql://neondb_owner:npg_Ydfi2Oyu3Vmx@ep-quiet-tooth-aiehj2mq-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
-DIRECT_URL=postgresql://neondb_owner:npg_Ydfi2Oyu3Vmx@ep-quiet-tooth-aiehj2mq.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://neondb_owner:<password>@<dev-host>/neondb?sslmode=require
+DIRECT_URL=postgresql://neondb_owner:<password>@<dev-direct-host>/neondb?sslmode=require
 NEXT_PUBLIC_SUPABASE_URL=https://isubgeemvhvhnhikxbjb.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 ```
 
 ### QA Project
 ```
 DATABASE_PROVIDER=prisma
-DATABASE_URL=postgresql://neondb_owner:npg_znvfB4pRqD8U@ep-wispy-thunder-adigjqv3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
-DIRECT_URL=postgresql://neondb_owner:npg_znvfB4pRqD8U@ep-wispy-thunder-adigjqv3.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://neondb_owner:<password>@<qa-host>/neondb?sslmode=require
+DIRECT_URL=postgresql://neondb_owner:<password>@<qa-direct-host>/neondb?sslmode=require
 NEXT_PUBLIC_SUPABASE_URL=https://isubgeemvhvhnhikxbjb.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```

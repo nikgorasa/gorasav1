@@ -150,21 +150,64 @@ If making significant architectural decisions, create an ADR in `../docs/adr/`:
 ## Quick Reference
 
 ### Files to Read Before Starting
-1. `../Sprint-1.md` - Sprint planning
-2. `../LEARNING-FROM-MISTAKES.md` - Known issues
-3. `../CONFIG-REFERENCE.md` - Configuration
-4. `../DEPLOYMENT_LOG.md` - Deployment history
-5. `../MEMORY.md` - Project memory (cross-session context)
-6. `CHANGE-LOG.md` - Change log
+1. `../Sprint-1.md` — Sprint planning
+2. `../LEARNING-FROM-MISTAKES.md` — Known issues
+3. `../CONFIG-REFERENCE.md` — Configuration
+4. `../DEPLOYMENT_LOG.md` — Deployment history
+5. `../MEMORY.md` — Project memory (cross-session context)
+6. `CHANGE-LOG.md` — Change log
 
-### Files to Update After Work
-1. `CHANGE-LOG.md` - Always update with changes made
-2. `../MEMORY.md` - Update session context summary
-3. `../LEARNING-FROM-MISTAKES.md` - If debugging >30 min
-4. `../DEPLOYMENT_LOG.md` - If deployment changed
-5. `../docs/adr/` - If architectural decision
-6. `../CONTEXT-BRIEF-*.md` - For new issues
-7. `../CONFIG-REFERENCE.md` - If config/keys changed (auto-detected)
+### Files to Update After Work (7 Targets)
+
+Each `CHANGE-LOG.md` entry MUST include a checklist showing whether each of the 7 targets was updated:
+
+```markdown
+### 2026-06-12 — Description
+
+**7-Target Checklist:**
+- [x] CHANGE-LOG.md — Updated with this entry
+- [x] MEMORY.md — Added session entry
+- [ ] LEARNING-FROM-MISTAKES.md — No debugging >30min
+- [x] DEPLOYMENT_LOG.md — Added deployment record
+- [ ] docs/adr/ — No architectural decision
+- [ ] CONTEXT-BRIEF-*.md — No new issue
+- [x] CONFIG-REFERENCE.md — Updated repo URL + deploy pipeline
+```
+
+1. `CHANGE-LOG.md` — Always
+2. `../MEMORY.md` — Always
+3. `../LEARNING-FROM-MISTAKES.md` — If debugging >30 min
+4. `../DEPLOYMENT_LOG.md` — If deployment / pipeline changed
+5. `../docs/adr/` — If architectural decision
+6. `../CONTEXT-BRIEF-*.md` — For new issues
+7. `../CONFIG-REFERENCE.md` — If config/keys/remotes/deploy-pipeline changed
+
+### Change-Type → Doc Map
+
+| Change Type | Docs to Update | Sections |
+|---|---|---|
+| Git remote / repo URL | CONFIG-REFERENCE, DEPLOYMENT_LOG | §11 (Git), §3 (Pipeline), Baseline |
+| Deploy pipeline (trigger, env, approval) | CONFIG-REFERENCE, DEPLOYMENT_LOG, MEMORY | §3, §23, History |
+| Environment variable | CONFIG-REFERENCE | §6 (Source Map), §7 (Keys) |
+| Supabase project / keys | CONFIG-REFERENCE, DEPLOYMENT_LOG | §12, §7 (Keys) |
+| Database schema / tables | CONFIG-REFERENCE, MEMORY | §13, ADR if breaking |
+| API route | CONFIG-REFERENCE | §15 (API Routes) |
+| TBO credentials / endpoints | CONFIG-REFERENCE | §16 (TBO) |
+| Architecture decision | ADR, MEMORY, CONFIG-REFERENCE | docs/adr/ |
+| >30min debugging | LEARNING-FROM-MISTAKES | — |
+| Any deployment | DEPLOYMENT_LOG | History |
+
+### Pre-Flight Baseline Snapshot
+
+Before starting work, record the current state of key doc values so post-task can detect drift:
+
+```bash
+echo "=== BASELINE $(date +%Y-%m-%d_%H:%M) ==="
+echo "REMOTE: $(git remote get-url neworigin 2>/dev/null || echo 'N/A')"
+echo "BRANCH: $(git branch --show-current)"
+echo "COMMIT: $(git rev-parse --short HEAD)"
+# Record these for post-task comparison
+```
 
 ### Commands to Run
 ```bash
@@ -174,9 +217,7 @@ git log --oneline -5
 npx tsc --noEmit
 
 # After completing:
-git add .
-git commit -m "description"
-git push neworigin main
+bash ../scripts/post-task-check.sh  # 20 checks — MUST pass
 ```
 
 ---
