@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
 import GoRasaLogo from "./GoRasaLogo";
 import {
+  Home,
   Compass,
   Ticket,
   MessageSquare,
@@ -64,6 +65,19 @@ export default function Navbar({
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-6">
+            <Link
+              href="/"
+              className="flex items-center space-x-1.3 py-2 text-sm font-medium text-slate-600 hover:text-orange-600 transition-colors"
+            >
+              <motion.span
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-1"
+              >
+                <Home size={18} />
+                <span>Home</span>
+              </motion.span>
+            </Link>
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -175,6 +189,14 @@ export default function Navbar({
             className="md:hidden bg-white border-b border-slate-200 overflow-hidden"
           >
             <div className="px-4 py-3 space-y-1">
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100"
+              >
+                <Home size={18} />
+                Home
+              </Link>
               {navItems.map((item) => (
                 <Link
                   key={item.href}
