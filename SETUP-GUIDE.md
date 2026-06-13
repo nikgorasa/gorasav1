@@ -74,12 +74,12 @@ DATABASE_URL=<neon-qa-database-url> npx prisma migrate deploy
 If you have PostgreSQL client tools installed locally:
 
 ```bash
-# Export Supabase schema
-pg_dump "postgresql://postgres.isubgeemvhvhnhikxbjb:REDACTED_SUPABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres" \
+# Export Supabase schema (set SOURCE_DATABASE_URL env var first)
+pg_dump "$SOURCE_DATABASE_URL" \
   --schema-only > gorasa_schema.sql
 
 # Export Supabase data
-pg_dump "postgresql://postgres.isubgeemvhvhnhikxbjb:REDACTED_SUPABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres" \
+pg_dump "$SOURCE_DATABASE_URL" \
   --data-only > gorasa_data.sql
 
 # Import to NEON

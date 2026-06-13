@@ -647,8 +647,8 @@ dist
 
 | Parameter | Value |
 |-----------|-------|
-| Pooled URL | `postgresql://postgres.isubgeemvhvhnhikxbjb:REDACTED_SUPABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres` |
-| Direct URL | `postgresql://postgres:REDACTED_SUPABASE_PASSWORD@db.isubgeemvhvhnhikxbjb.supabase.co:5432/postgres` |
+| Pooled URL | `postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres` |
+| Direct URL | `postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres` |
 
 ### API Keys
 
