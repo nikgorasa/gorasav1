@@ -9,9 +9,7 @@ import PackageCarousel from "@/components/PackageCarousel";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "motion/react";
 import {
-  Plane,
   Building2,
-  Palmtree,
   ArrowRight,
   Shield,
   Clock,
@@ -25,6 +23,8 @@ import {
   Award,
   User,
   CreditCard,
+  Map,
+  Plane,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -72,10 +72,16 @@ interface HomePageClientProps {
   error?: string | null;
 }
 
-const SEARCH_TABS = [
-  { id: "flights", label: "Flights", icon: Plane, href: "/flights", color: "from-blue-500 to-blue-600" },
-  { id: "hotels", label: "Hotels", icon: Building2, href: "/hotels", color: "from-emerald-500 to-emerald-600" },
-  { id: "holidays", label: "Plan My Holiday", icon: Palmtree, href: "/holidays", color: "from-brand-saffron to-brand-burnt" },
+const SEARCH_TABS: {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  href: string;
+  color: string;
+}[] = [
+  { id: "holidays", label: "Plan My Holiday", icon: Map, href: "/holidays", color: "#D97706" },
+  { id: "hotels", label: "Hotels", icon: Building2, href: "/hotels", color: "#D97706" },
+  { id: "flights", label: "Flights", icon: Plane, href: "/flights", color: "#D97706" },
 ];
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -118,57 +124,47 @@ export default function HomePageClient({
 
       <main className="min-h-screen pt-16">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden min-h-[70vh] md:min-h-[75vh] lg:min-h-[82vh] flex items-center">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-20 left-10 w-72 h-72 bg-brand-saffron rounded-full blur-3xl" />
             <div className="absolute bottom-10 right-20 w-96 h-96 bg-brand-gold rounded-full blur-3xl" />
           </div>
 
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+          <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
             <motion.div
               initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-center mb-12"
+              className="text-center"
             >
               <span className="inline-block px-4 py-1.5 bg-brand-saffron/20 text-brand-saffron rounded-full text-xs font-bold uppercase tracking-widest mb-6">
                 Experience The Finest
               </span>
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
-                Your Journey,{" "}
-                <span className="text-brand-saffron italic">Elevated</span>
+                Reserve luxury &{" "}
+                <span className="text-brand-saffron italic">Composure</span>
               </h1>
               <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-                Premium flights, luxury hotels, and curated holiday experiences
-                across India and the world.
+                Boutique stays, customer wellness packages, finest vacation experiences
               </p>
-            </motion.div>
 
-            <motion.div
-              initial={{ opacity: 1, y: 0 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto"
-            >
-              {SEARCH_TABS.map((tab) => (
-                <Link
-                  key={tab.id}
-                  href={tab.href}
-                  className="group relative bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-2xl p-6 text-center transition-all hover:bg-white/15"
-                >
-                  <div
-                    className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br ${tab.color} flex items-center justify-center shadow-lg`}
-                  >
-                    <tab.icon size={24} className="text-white" />
-                  </div>
-                  <h3 className="text-white font-bold text-lg mb-1">{tab.label}</h3>
-                  <p className="text-slate-400 text-sm">Search & Book</p>
-                  <ArrowRight
-                    size={18}
-                    className="absolute top-6 right-6 text-slate-500 group-hover:text-white transition-colors"
-                  />
-                </Link>
-              ))}
+              {/* Quick action tiles */}
+              <div className="flex flex-wrap justify-center gap-3 mt-10">
+                {SEARCH_TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <Link
+                      key={tab.id}
+                      href={tab.href}
+                      style={{ backgroundColor: "rgba(217,119,6,0.12)", borderColor: "rgba(217,119,6,0.25)", color: tab.color }}
+                      className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl border font-medium text-sm backdrop-blur-sm hover:bg-brand-saffron/20 transition-all"
+                    >
+                      <Icon size={18} />
+                      {tab.label}
+                    </Link>
+                  );
+                })}
+              </div>
             </motion.div>
           </div>
         </section>
@@ -217,16 +213,38 @@ export default function HomePageClient({
                 const meta = categories[cat];
                 if (!meta) return null;
                 return (
-                  <PackageCarousel
-                    key={cat}
-                    title={meta.title}
-                    subtitle={meta.subtitle}
-                    icon={ICON_MAP[meta.icon]}
-                    items={items}
-                    badgeColor={meta.badgeColor}
-                    badgeText={meta.badgeText}
-                    onInterested={setInquiryPackage}
-                  />
+                  <React.Fragment key={cat}>
+                    <PackageCarousel
+                      title={meta.title}
+                      subtitle={meta.subtitle}
+                      icon={ICON_MAP[meta.icon]}
+                      items={items}
+                      badgeColor={meta.badgeColor}
+                      badgeText={meta.badgeText}
+                      onInterested={setInquiryPackage}
+                    />
+                    {cat === "GORASA_SELECT" && (
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-12">
+                        {[
+                          { icon: "💬", label: "WhatsApp Support" },
+                          { icon: "⭐", label: "RASA Rewards" },
+                          { icon: "✅", label: "Verified Stays" },
+                          { icon: "🎯", label: "All inclusive vacation" },
+                          { icon: "🏆", label: "19+ years of combined industry experience" },
+                        ].map((feature) => (
+                          <div
+                            key={feature.label}
+                            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center gap-2"
+                          >
+                            <span className="text-2xl">{feature.icon}</span>
+                            <span className="text-xs font-semibold text-slate-700 leading-tight">
+                              {feature.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </React.Fragment>
                 );
               })
             )}

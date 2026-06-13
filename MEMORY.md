@@ -1,7 +1,7 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-13 06:00 IST
+> **Last updated:** 2026-06-13 06:45 IST
 
 ---
 
@@ -49,9 +49,9 @@
 | AI Holiday Planner | Integrated to /holidays route (was at /planner) | 2026-06-12 |
 | Governance hooks | session.start + session.idle + session.end enforce preflight + post-task | 2026-06-12 |
 | Admin CRUD | Full CRUD on all 12 admin pages (corporate, B2B, loyalty, tickets, AI leads) | 2026-06-12 |
-| Post-task checks | 15 compulsory checks (docs, env, TSC, build, DB, RLS, API, components, hooks) | 2026-06-12 |
+| Post-task checks | 25 compulsory checks (docs, env, TSC, build, DB, RLS, API, components, hooks, secrets, commit traceability) | 2026-06-12 |
 | Support page tickets | Tabbed UI (AI Chat + My Tickets), auth-gated form, POST /api/tickets | 2026-06-12 |
-| Pre-flight checks | 10 compulsory checks (docs, env, TSC, git, critical files, hooks) | 2026-06-12 |
+| Pre-flight checks | 15 compulsory checks (docs, env, TSC, git, critical files, hooks, secrets, commit traceability) | 2026-06-12 |
 
 ---
 
@@ -113,6 +113,7 @@
 | `gorasa-next/src/lib/ai/holidayPlannerAI.ts` | AI-powered holiday planner (requires API key) |
 | `gorasa-next/src/lib/support/smartRouter.ts` | Support FAQ + intent routing |
 | `gorasa-next/src/components/HolidayPlanner.tsx` | AI Holiday Planner chat UI |
+| `docs/DEPLOYMENT-COMMIT-MAP.md` | Deployment commit traceability — auto-updated by Check 15/25 |
 
 ---
 
@@ -273,7 +274,7 @@ Work completed:
 - Rewards: Admin mode toggle keeps customer-facing catalog clean while enabling management
 - AI Leads: Reuses same PATCH pattern as regular leads for stage/assignment updates
 
-**Status:** All 12 admin pages now have full CRUD. TypeScript compiles, build succeeds, 15/15 post-task checks pass.
+**Status:** All 12 admin pages now have full CRUD. TypeScript compiles, build succeeds, 25/25 post-task checks pass.
 
 ### Session 2026-06-12 — Staging Environments Go-Live + Supabase Env Var Fix
 
@@ -351,8 +352,25 @@ Work completed:
 - Only routes NOT switching: auth/me, auth/login (intentional — shared Supabase Auth), and tickets/* (by choice — shared Supabase tickets)
 - DB isolation is effectively complete for all data routes
 
+### Session 2026-06-13 — Deployment Commit Traceability (Check 15 + Check 25)
+
+**Duration:** ~15 min
+**Problem:** No way to track which commits are on each deployment branch (dev, qa, main) — risk of messy merges when promoting.
+
+**Changes:**
+1. Added **Check 25** to post-task script: `scripts/post-task-check.sh` — fetches remote state for all 3 deployment branches, shows SHA + commit message table, ahead/behind counts, and promotion pipeline gaps (dev→qa, qa→prod)
+2. Added **Check 15** to pre-flight script: `scripts/preflight-check.sh` — same deployment commit traceability at session start
+3. Creates `docs/DEPLOYMENT-COMMIT-MAP.md` — auto-generated traceability file with current SHAs and promotion gaps
+4. Updated AGENTS.md: pre-flight (14→15 checks), post-task (24→25 checks), added 8th target to file checklist (`DEPLOYMENT-COMMIT-MAP.md`), added "Deployment commit traceability" to Change-Type map
+5. Fixed pre-flight check numbering: was inconsistently labeled (1/10…10/10, 11/13…14/14) — now consistently 1/15…15/15
+6. Updated MEMORY.md with current check counts (15 pre-flight, 25 post-task)
+
+**Status:** Both scripts updated and consistent. Commit maps auto-generated on every pre-flight/post-task run.
+
+---
+
 ## Next Steps
 
-- (none — isolation verification complete)
-- Monitor dev/qa deployments on push to verify they use Neon correctly
+- Rotate Supabase DB password and service role key via Supabase dashboard (exposed in git history)
+- Test all API endpoints on Dev and QA to ensure they hit Neon correctly
 - Consider migrating tickets to service layer if isolation becomes needed
