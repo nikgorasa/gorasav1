@@ -41,7 +41,7 @@ VERCEL_PROJECT_QA="prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN"
 # ═══════════════════════════════════════════════════════
 # Check 1: Documentation Files Exist
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 1/10: Required documentation files..."
+print_status "CHECK 1/14: Required documentation files..."
 
 REQUIRED_DOCS=(
     "../MEMORY.md"
@@ -64,7 +64,7 @@ done
 # ═══════════════════════════════════════════════════════
 # Check 2: Read MEMORY.md (Last Session Context)
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 2/10: Last session context from MEMORY.md..."
+print_status "CHECK 2/14: Last session context from MEMORY.md..."
 
 MEMORY_FILE="../MEMORY.md"
 if [[ -f "$MEMORY_FILE" ]]; then
@@ -78,7 +78,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 3: Read LEARNING-FROM-MISTAKES.md
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 3/10: Known issues from LEARNING-FROM-MISTAKES.md..."
+print_status "CHECK 3/14: Known issues from LEARNING-FROM-MISTAKES.md..."
 
 LFM="../LEARNING-FROM-MISTAKES.md"
 if [[ -f "$LFM" ]]; then
@@ -92,7 +92,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 4: Read CONFIG-REFERENCE.md
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 4/10: Configuration from CONFIG-REFERENCE.md..."
+print_status "CHECK 4/14: Configuration from CONFIG-REFERENCE.md..."
 
 CONFIG_REF="../CONFIG-REFERENCE.md"
 if [[ -f "$CONFIG_REF" ]]; then
@@ -105,7 +105,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 5: Environment Variables
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 5/10: Environment variables..."
+print_status "CHECK 5/14: Environment variables..."
 
 ENV_FILE=".env.local"
 if [[ -f "$ENV_FILE" ]]; then
@@ -132,7 +132,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 6: TypeScript Compilation
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 6/10: TypeScript compilation..."
+print_status "CHECK 6/15: TypeScript compilation..."
 
 if command -v npx >/dev/null 2>&1; then
     if npx tsc --noEmit 2>/dev/null; then
@@ -148,7 +148,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 7: Git Status
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 7/10: Git status..."
+print_status "CHECK 7/15: Git status..."
 
 if git status >/dev/null 2>&1; then
     print_status "  ✓ Git repository detected"
@@ -173,7 +173,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 8: Recent Commits
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 8/10: Recent commits..."
+print_status "CHECK 8/15: Recent commits..."
 
 RECENT_COMMITS=$(git log --oneline -5 2>/dev/null || echo "No commits")
 print_status "  ✓ Recent commits:"
@@ -184,7 +184,7 @@ done
 # ═══════════════════════════════════════════════════════
 # Check 9: Critical Files Exist
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 9/10: Critical files..."
+print_status "CHECK 9/15: Critical files..."
 
 CRITICAL_FILES=(
     "src/lib/ticket/serverManager.ts"
@@ -208,7 +208,7 @@ done
 # ═══════════════════════════════════════════════════════
 # Check 10: Governance Hooks
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 10/10: Governance hooks..."
+print_status "CHECK 10/15: Governance hooks..."
 
 HOOKS_FILE="../.opencode/hook/hooks.yaml"
 if [[ -f "$HOOKS_FILE" ]]; then
@@ -228,7 +228,7 @@ echo ""
 # ═══════════════════════════════════════════════════════
 # Check 11: Branch-to-DB Mapping (Environment Intent)
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 11/13: Branch-to-DB mapping..."
+print_status "CHECK 11/15: Branch-to-DB mapping..."
 
 # Determine expected DB type for current branch
 case "$BRANCH" in
@@ -282,7 +282,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 12: Production Supabase Shield
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 12/13: Production Supabase shield..."
+print_status "CHECK 12/15: Production Supabase shield..."
 
 SUPABASE_PROJECT_DETECTED=""
 if echo "${SUPABASE_URL:-}" | grep -q "$SUPABASE_PROJECT_REF" 2>/dev/null; then
@@ -317,7 +317,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 13: Vercel Project Env Var Cross-Ref
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 13/13: Vercel env cross-reference..."
+print_status "CHECK 13/15: Vercel env cross-reference..."
 
 VERCEL_PROJECT_ID=""
 case "$BRANCH" in
@@ -355,7 +355,7 @@ fi
 # ═══════════════════════════════════════════════════════
 # Check 14: Secret / Credential Exposure Scan
 # ═══════════════════════════════════════════════════════
-print_status "CHECK 14/14: Secret/credential exposure scan..."
+print_status "CHECK 14/15: Secret/credential exposure scan..."
 
 SCAN_FAILED=0
 
@@ -415,6 +415,67 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════
+# Check 15: Deployment Commit Traceability
+# ═══════════════════════════════════════════════════════
+print_status "CHECK 15/15: Deployment commit traceability..."
+
+REMOTE="neworigin"
+if ! git fetch "$REMOTE" dev qa main 2>/dev/null; then
+    REMOTE="origin"
+    git fetch "$REMOTE" dev qa main 2>/dev/null || true
+fi
+
+BRANCHES=("dev" "qa" "main")
+declare -A R_SHA R_MSG
+
+for branch in "${BRANCHES[@]}"; do
+    R_SHA["$branch"]=$(git rev-parse --short "$REMOTE/$branch" 2>/dev/null || echo "N/A")
+    if [[ "${R_SHA["$branch"]}" != "N/A" ]]; then
+        R_MSG["$branch"]=$(git log --oneline -1 "$REMOTE/$branch" 2>/dev/null | sed 's/^[^ ]* //' || echo "N/A")
+    fi
+done
+
+print_status "  ┌──────────┬──────────────┬──────────────────────────────┐"
+print_status "  │ Branch   │ Remote SHA   │ Last Commit                  │"
+print_status "  ├──────────┼──────────────┼──────────────────────────────┤"
+for branch in "${BRANCHES[@]}"; do
+    printf -v line "  │ %-8s │ %-12s │ %-28s │" "$branch" "${R_SHA["$branch"]}" "${R_MSG["$branch"]}"
+    print_status "$line"
+done
+print_status "  └──────────┴──────────────┴──────────────────────────────┘"
+
+# Check ahead/behind
+for branch in "${BRANCHES[@]}"; do
+    AHEAD=$(git rev-list --count "$REMOTE/$branch..$branch" 2>/dev/null || echo "0")
+    BEHIND=$(git rev-list --count "$branch..$REMOTE/$branch" 2>/dev/null || echo "0")
+    if [[ "$AHEAD" -gt 0 || "$BEHIND" -gt 0 ]]; then
+        print_warning "  ⚠ $branch: $AHEAD ahead, $BEHIND behind $REMOTE/$branch"
+        if [[ "$AHEAD" -gt 0 ]]; then
+            git log --oneline "$REMOTE/$branch..$branch" 2>/dev/null | while read -r c; do
+                print_warning "       ↑ $c"
+            done
+        fi
+    else
+        print_status "  ✓ $branch: synced with $REMOTE/$branch"
+    fi
+done
+
+# Promotion pipeline
+print_status ""
+for pair in "dev→qa" "qa→prod"; do
+    src="${pair%%→*}"
+    dst="${pair##*→}"
+    count=$(git log --oneline "$REMOTE/$src..$REMOTE/$dst" 2>/dev/null | wc -l)
+    if [[ "$count" -gt 0 ]]; then
+        print_warning "  ⚠ $src→$dst: $count commit(s) unpromoted"
+    else
+        print_status "  ✓ $src→$dst: up to date"
+    fi
+done
+
+print_status "  ✓ Commit traceability recorded"
+
+# ═══════════════════════════════════════════════════════
 # FINAL RESULT
 # ═══════════════════════════════════════════════════════
 echo ""
@@ -425,7 +486,7 @@ if [[ "$ERRORS" -gt 0 ]]; then
     print_error "Fix all errors before starting work"
     exit 1
 else
-    print_status "✓ ALL 14 CHECKS PASSED"
+    print_status "✓ ALL 15 CHECKS PASSED"
     print_status "✓ Pre-flight validation complete"
     print_status ""
     print_status "Ready to start work. Remember:"

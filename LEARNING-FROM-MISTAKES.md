@@ -2,7 +2,7 @@
 
 > **Purpose:** Document every significant issue encountered, root cause analysis, resolution steps, and lessons learned to prevent recurrence.
 
-> **Last updated:** June 11, 2026
+> **Last updated:** June 12, 2026
 
 ---
 
@@ -468,3 +468,45 @@
 2. Add a health check endpoint that verifies Supabase keys are valid
 3. Compare Vercel project env vars against `.env.local` during staging deployment validation
 4. Test both anon-key and service-role-key API routes after env var changes
+
+---
+
+## Issue #11: Post-Task Docs Not Fully Updated (Governance Gap)
+
+**Date:** June 12, 2026
+**Duration:** ~5 min (caught by user review, not by automation)
+**Severity:** Medium — documentation drift
+
+### Symptoms
+- User asked to "run post flight check"
+- Post-task script passed 15/15
+- But CONFIG-REFERENCE.md still had old repo URL (`nikgorasa/gorasav1` → should be `Gorasa-In-2026/gorasav1`)
+- DEPLOYMENT_LOG.md also had the stale repo URL
+- Deploy instructions still referenced Vercel auto-deploy (was disconnected this session)
+
+### Root Cause
+The `post-task-check.sh` only verifies that files **exist** and CHANGE-LOG.md/MEMORY.md have **today's date** — it does NOT validate that the actual **content** of CONFIG-REFERENCE.md, DEPLOYMENT_LOG.md, or other docs is accurate for the work done.
+
+In this session:
+- The `post-task.md` said "7 targets" but in practice I only updated 2 (CHANGE-LOG + MEMORY)
+- The governance rule auto-detects config changes (`CONFIG-REFERENCE.md (if keys/config changed - auto-detected)`) but there's no mechanism that runs the detection
+- Repo URL change + deploy pipeline change are config changes that should have triggered CONFIG-REFERENCE.md update
+- Branch protection + approval gate are deploy pipeline changes that should have triggered DEPLOYMENT_LOG.md update
+
+### Resolution Steps
+1. Updated CONFIG-REFERENCE.md: repo URL, deploy targets, branch protection table, approval gate section
+2. Updated DEPLOYMENT_LOG.md: repo URL, baseline snapshot fix, added entry for 1a4de24
+3. Re-ran post-task check → 15/15 passes
+
+### Lessons Learned
+1. **"Passes CI" ≠ "fully documented"** — The post-task script checks file existence + date, not content accuracy
+2. **Config changes are easy to miss** — A repo URL change is "just a remote update" but it's a config change that must be reflected in the docs
+3. **Manual review is the only safety net today** — The post-task script cannot detect which docs need content updates
+
+### Prevention Measures
+1. When updating git remotes, always check CONFIG-REFERENCE.md Section 11 (Git Setup) + Section 3 (Deploy Pipeline)
+2. When changing deployment workflows, always update:
+   - CONFIG-REFERENCE.md Sections 3, 23 (deploy instructions)
+   - DEPLOYMENT_LOG.md baseline + add entry
+3. Add a `post-task-content-check.sh` that greps CONFIG-REFERENCE.md and DEPLOYMENT_LOG.md for stale patterns (e.g., `nikgorasa/gorasav1`, `auto-deploy`, `git push main` → Vercel) and warns
+4. **Self-review rule:** Before declaring work done, explicitly check each of the 7 doc targets against what actually changed — not just whether the file exists

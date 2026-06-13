@@ -88,7 +88,7 @@ export default function TripsPage() {
             animate={{ opacity: 1, y: 0 }}
           >
             <h1 className="text-3xl font-serif font-bold text-slate-900 mb-2">
-              Reservation Desk
+              My Bookings
             </h1>
             <p className="text-slate-500 mb-8">
               {user ? `Welcome back, ${user.name}` : "Sign in to view your bookings"}

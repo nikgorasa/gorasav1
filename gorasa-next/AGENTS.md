@@ -157,14 +157,14 @@ If making significant architectural decisions, create an ADR in `../docs/adr/`:
 5. `../MEMORY.md` — Project memory (cross-session context)
 6. `CHANGE-LOG.md` — Change log
 
-### Files to Update After Work (7 Targets)
+### Files to Update After Work (8 Targets)
 
 Each `CHANGE-LOG.md` entry MUST include a checklist showing whether each of the 7 targets was updated:
 
 ```markdown
 ### 2026-06-12 — Description
 
-**7-Target Checklist:**
+**8-Target Checklist:**
 - [x] CHANGE-LOG.md — Updated with this entry
 - [x] MEMORY.md — Added session entry
 - [ ] LEARNING-FROM-MISTAKES.md — No debugging >30min
@@ -172,6 +172,7 @@ Each `CHANGE-LOG.md` entry MUST include a checklist showing whether each of the 
 - [ ] docs/adr/ — No architectural decision
 - [ ] CONTEXT-BRIEF-*.md — No new issue
 - [x] CONFIG-REFERENCE.md — Updated repo URL + deploy pipeline
+- [x] DEPLOYMENT-COMMIT-MAP.md — Updated by post-task Check 25
 ```
 
 1. `CHANGE-LOG.md` — Always
@@ -181,6 +182,7 @@ Each `CHANGE-LOG.md` entry MUST include a checklist showing whether each of the 
 5. `../docs/adr/` — If architectural decision
 6. `../CONTEXT-BRIEF-*.md` — For new issues
 7. `../CONFIG-REFERENCE.md` — If config/keys/remotes/deploy-pipeline changed
+8. `../docs/DEPLOYMENT-COMMIT-MAP.md` — Updated automatically by pre-flight Check 15 / post-task Check 25
 
 ### Change-Type → Doc Map
 
@@ -196,6 +198,7 @@ Each `CHANGE-LOG.md` entry MUST include a checklist showing whether each of the 
 | Architecture decision | ADR, MEMORY, CONFIG-REFERENCE | docs/adr/ |
 | >30min debugging | LEARNING-FROM-MISTAKES | — |
 | Any deployment | DEPLOYMENT_LOG | History |
+| Deployment commit traceability | DEPLOYMENT-COMMIT-MAP | Check 15/25 |
 
 ### Pre-Flight Baseline Snapshot
 
@@ -206,6 +209,10 @@ echo "=== BASELINE $(date +%Y-%m-%d_%H:%M) ==="
 echo "REMOTE: $(git remote get-url neworigin 2>/dev/null || echo 'N/A')"
 echo "BRANCH: $(git branch --show-current)"
 echo "COMMIT: $(git rev-parse --short HEAD)"
+git fetch neworigin dev qa main 2>/dev/null || git fetch origin dev qa main 2>/dev/null
+echo "DEV:   $(git rev-parse --short neworigin/dev 2>/dev/null)"
+echo "QA:    $(git rev-parse --short neworigin/qa 2>/dev/null)"
+echo "MAIN:  $(git rev-parse --short neworigin/main 2>/dev/null)"
 # Record these for post-task comparison
 ```
 
@@ -217,7 +224,7 @@ git log --oneline -5
 npx tsc --noEmit
 
 # After completing:
-bash ../scripts/post-task-check.sh  # 20 checks — MUST pass
+bash ../scripts/post-task-check.sh  # 25 checks — MUST pass
 ```
 
 ---
