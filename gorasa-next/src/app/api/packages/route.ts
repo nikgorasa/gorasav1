@@ -14,7 +14,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, duration, price, originalPrice, rating, provider, overview, itinerary, inclusions, exclusions, importantNotes, images, status } = body;
+    const { title, duration, price, originalPrice, rating, provider, overview, itinerary, inclusions, exclusions, importantNotes, images, status, category } = body;
 
     if (!title || !duration || price === undefined) {
       return NextResponse.json(
@@ -37,6 +37,7 @@ export async function POST(request: Request) {
       importantNotes: importantNotes || "{}",
       images: images || "[]",
       status: status || "DRAFT",
+      category: category || "TOP_DEALS",
     });
 
     return NextResponse.json(pkg, { status: 201 });

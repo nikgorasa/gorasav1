@@ -145,6 +145,25 @@ If making significant architectural decisions, create an ADR in `../docs/adr/`:
 - Documentation must be updated
 - Deployment must be verified
 
+### Rule 6: NEVER Remove Branch Protection
+**NEVER** remove branch protection from `main` or `qa` branches. This is a hard ban with zero exceptions.
+
+- **NEVER** run `gh api .../branches/main/protection --method DELETE`
+- **NEVER** run `gh api .../branches/qa/protection --method DELETE`
+- **NEVER** use `--force` push to protected branches
+- **NEVER** disable required reviews, even temporarily
+
+**If you need to merge to a protected branch:** Create a PR and merge it normally.
+
+**If protection is accidentally removed:** Run `bash scripts/restore-protection.sh` immediately.
+
+**Enforced by:**
+- `scripts/branch-protection-guard.sh` — runs on every session start and idle
+- `hooks.yaml` — branch-protection-guard hook
+- This rule (Rule 6)
+
+**Why:** Force-pushing to protected branches rewrites history, breaks CI/CD, and can cause data loss. PRs ensure code review and audit trails.
+
 ---
 
 ## Quick Reference

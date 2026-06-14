@@ -74,6 +74,7 @@ export async function findAll(options: UserFindOptions = {}) {
 }
 
 export async function create(data: {
+  id?: string
   email: string
   name: string
   role?: string

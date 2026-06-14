@@ -1,15 +1,16 @@
 # GoRASA Project Memory
 
 > **Purpose:** Persistent cross-session context. Updated at the end of every significant work session.
-> **Last updated:** 2026-06-13 06:45 IST
+> **Last updated:** 2026-06-15
 
 ---
 
 ## Current Sprint Context
 
 **Sprint:** Sprint -1 — Full Stack Migration & Foundation (June 8–12)
-**Status:** Phase 6 — TBO Hotel and Flight APIs LIVE. DB isolation verified (Prod↔Supabase, Dev/QA↔Neon).
-**Live URL:** https://gorasa-next.vercel.app
+**Status:** Phase 6 — TBO Hotel and Flight APIs LIVE. DB isolation verified (Prod↔Supabase, Dev/QA↔Neon). CockroachDB standalone deployment active.
+**Live URL (Main Pipeline):** https://gorasa-next.vercel.app
+**Live URL (CockroachDB Standalone):** https://project-10o7w.vercel.app
 
 ---
 
@@ -23,7 +24,9 @@
 6. Hotel search with real TBO images — **DONE**
 7. Dynamic city code resolution (no hardcoded mapping) — **DONE**
 8. User-facing ticket creation on /support page — **DONE**
-9. Internal beta readiness — **IN PROGRESS**
+9. Internal beta readiness — **DONE**
+10. CockroachDB standalone deployment — **DONE** (separate repo, Vercel project, parallel governance)
+11. Governance docs for CockroachDB standalone — **IN PROGRESS**
 
 ---
 
@@ -48,6 +51,11 @@
 | Ticket user_id type | TEXT (not UUID) — app uses string IDs from own User table, not Supabase Auth | 2026-06-12 |
 | AI Holiday Planner | Integrated to /holidays route (was at /planner) | 2026-06-12 |
 | Governance hooks | session.start + session.idle + session.end enforce preflight + post-task | 2026-06-12 |
+| CockroachDB standalone | Separate repo `Gorasa-In-2026/Gorasa-Cockroach`, Vercel `project-10o7w`, manual push deploy | 2026-06-15 |
+| CockroachDB migration | 31 tables, 249 rows exported from Supabase → imported to CockroachDB `aqua-pony-27730` | 2026-06-15 |
+| FK handling | Dropped all 14 FK constraints before import, re-added after all data loaded | 2026-06-15 |
+| Prisma-only mode | 9 files rewritten to use Prisma directly (no `createClient` from `@supabase/supabase-js`) | 2026-06-15 |
+| Parallel governance | `cockroach-standalone/` with 11 docs + scripts, adapted for single-branch/DB/deploy | 2026-06-15 |
 | Admin CRUD | Full CRUD on all 12 admin pages (corporate, B2B, loyalty, tickets, AI leads) | 2026-06-12 |
 | Post-task checks | 25 compulsory checks (docs, env, TSC, build, DB, RLS, API, components, hooks, secrets, commit traceability) | 2026-06-12 |
 | Support page tickets | Tabbed UI (AI Chat + My Tickets), auth-gated form, POST /api/tickets | 2026-06-12 |
@@ -64,7 +72,7 @@
 | User.id is `text` with NO default | Random UUIDs assigned at creation time |
 | Vercel root dir must be `gorasa-next/` | Deploy from repo root or git push only (CLI from subdir fails) |
 | JWT secret may rotate | Service role key must be kept in sync with Supabase dashboard |
-| Git remotes: `neworigin` = prod, `origin` = fork | Push to `neworigin main` to deploy |
+| Git remotes: `neworigin` = prod, `origin` = fork, `old-pipeline` = original pipeline | Push to `neworigin main` to deploy main pipeline; `origin main` for CockroachDB standalone |
 | CI/CD via GitHub Actions | `deploy-dev.yml` and `deploy-qa.yml` for staging environments |
 | Hotel API uses Basic Auth (not TokenId) | `Authorization: Basic base64(TBO_HOTEL_USERNAME:TBO_HOTEL_PASSWORD)` |
 | Hotel test creds have no balance | PreBook returns "Insufficient Balance" — expected with `TBOStaticAPITest` |
@@ -417,3 +425,36 @@ Work completed:
 ### Commits:
 - 7db0627: feat: PAN card compliance for hotel bookings
 - c32592a: docs: update CHANGE-LOG for PAN compliance
+
+## Rules
+
+- **Plan file naming**: NEVER use random names like "gentle-star.md" or "hidden-mountain.md". Plan files MUST be named descriptively based on current context. Examples: `PAN-COMPLIANCE-HOTEL-BOOKINGS.md`, `ADMIN-PANEL-IMPROVEMENT-PLAN.md`, `DEAD-WEIGHT-CLEANUP.md`. The name should immediately tell what the plan is about.
+
+## 2026-06-15 — Admin Panel Enhancements + Sales Register
+
+### Changes Made:
+- Sales/Booking Register at /admin/reports with Cost/Selling/Net Earnings breakdown
+- Ticket assignment (assign to SALES/ADMIN/SUPER_ADMIN users)
+- Lead source tracking (AI Planner, Package Interest, Manual, Website)
+- Create Lead form with source selection
+- Lost stage with 7 preset reasons
+- User creation via Supabase Auth (auto-generates temp password)
+- Package category dropdown linking to 6 homepage carousels
+- Edit/View for Promos and Pricing Rules
+- Fixed type grouping in reports (Hotel/HOTEL → HOTEL)
+
+### Pricing Model (COT Analysis):
+- Cost Price (TBO) = Selling Price / 1.15 (default 15% markup)
+- Selling Price = Cost Price + Markup (from PricingRule table)
+- Customer Pays = Selling Price - Promo Discount
+- Net Earnings = Selling Price - Cost Price - Discounts
+- originalPrice in DB = strikethrough display (sellingPrice * 1.25), NOT cost price
+
+### Key Learnings:
+- Phase 1 commit message claimed features not actually in diff — must verify each file
+- Remotes keep changing (origin/neworigin/old-pipeline) — check before push
+- Supabase Auth createUser requires service role key
+- NavigationItem table controls admin sidebar — add entries via SQL
+
+### Commits (dev branch):
+- 936ae7c, 5c6ad9e, 88a4323, cdb98e8, e45baa6, 99269d9

@@ -38,10 +38,11 @@ export async function create(data: {
   inclusions?: string
   specificDemands?: string
   notes?: string
+  source?: string
 }) {
   if (isPrisma()) {
     return prisma.lead.create({
-      data: { ...data, stage: 'NEW', inclusions: data.inclusions || '[]' },
+      data: { ...data, stage: 'NEW', inclusions: data.inclusions || '[]', source: data.source || 'manual' },
     })
   }
   const { data: lead } = await supabaseAdmin
@@ -51,6 +52,7 @@ export async function create(data: {
       ...data,
       stage: 'NEW',
       inclusions: data.inclusions || '[]',
+      source: data.source || 'manual',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
