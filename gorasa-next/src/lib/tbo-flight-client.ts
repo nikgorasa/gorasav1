@@ -57,6 +57,7 @@ async function toDisplay(
     leg,
     isLCC: r.IsLCC,
     isRefundable: r.IsRefundable,
+    isDomestic: r.Segments[0]?.TripIndicator === 1,
     source: r.Source,
     airline: r.Segments[0]?.Airline ?? "",
     airlineCode: r.Segments[0]?.AirlineCode ?? "",
@@ -75,7 +76,12 @@ async function toDisplay(
     offeredFare: r.Fare.OfferedFare,
     baseFare: r.Fare.BaseFare,
     tax: r.Fare.Tax,
+    yqTax: r.Fare.YQTax,
+    discount: r.Fare.Discount,
     commissionEarned: r.Fare.CommissionEarned,
+    penalty: r.Penalty,
+    lastTicketDate: r.LastTicketDate,
+    fareRules: r.FareRules,
     segments: r.Segments,
     fareBreakdown: r.FareBreakdown,
   };
@@ -322,7 +328,26 @@ export async function ticketFlight(params: {
   resultIndex?: string;
   PNR?: string;
   BookingId?: string;
-  passengers: { PaxId: number; Title: string; FirstName: string; LastName: string }[];
+  passengers: {
+    PaxId: number;
+    Title: string;
+    FirstName: string;
+    LastName: string;
+    DateOfBirth?: string;
+    Gender?: number;
+    PassportNo?: string;
+    PassportExpiry?: string;
+    AddressLine1?: string;
+    City?: string;
+    CountryCode?: string;
+    CountryName?: string;
+    ContactNo?: string;
+    Email?: string;
+    IsLeadPax?: boolean;
+    Nationality?: string;
+    PaxType?: number;
+    Fare?: any;
+  }[];
   segments: any[];
   fare: any;
   fareBreakdown: any[];
@@ -340,18 +365,18 @@ export async function ticketFlight(params: {
           ResultIndex: params.resultIndex || "",
           Passengers: params.passengers.map(p => ({
             ...p,
-            PaxType: 1,
-            DateOfBirth: "",
-            Gender: 1,
-            AddressLine1: "",
-            City: "",
-            CountryCode: "IN",
-            CountryName: "India",
-            ContactNo: "",
-            Email: "",
-            IsLeadPax: false,
-            Nationality: "IN",
-            Fare: { BaseFare: 0, Tax: 0, TransactionFee: 0, YQTax: 0, AdditionalTxnFeeOfrd: 0, AdditionalTxnFeePub: 0, AirTransFee: 0 },
+            PaxType: p.PaxType ?? 1,
+            DateOfBirth: p.DateOfBirth ?? "",
+            Gender: p.Gender ?? 1,
+            AddressLine1: p.AddressLine1 ?? "",
+            City: p.City ?? "",
+            CountryCode: p.CountryCode ?? "IN",
+            CountryName: p.CountryName ?? "India",
+            ContactNo: p.ContactNo ?? "",
+            Email: p.Email ?? "",
+            IsLeadPax: p.IsLeadPax ?? false,
+            Nationality: p.Nationality ?? "IN",
+            Fare: p.Fare ?? { BaseFare: 0, Tax: 0, TransactionFee: 0, YQTax: 0, AdditionalTxnFeeOfrd: 0, AdditionalTxnFeePub: 0, AirTransFee: 0 },
           })),
         };
         const res = await api.ticketFlight(req);
@@ -368,9 +393,9 @@ export async function ticketFlight(params: {
           BookingId: params.BookingId,
           Passport: params.passengers.map(p => ({
             PaxId: p.PaxId,
-            PassportNo: "P1234567",
-            PassportExpiry: "2030-12-31",
-            DateOfBirth: "1990-01-15",
+            PassportNo: p.PassportNo ?? "",
+            PassportExpiry: p.PassportExpiry ?? "",
+            DateOfBirth: p.DateOfBirth ?? "",
           })),
         };
         const res = await api.ticketFlight(req);

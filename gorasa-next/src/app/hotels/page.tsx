@@ -579,14 +579,34 @@ export default function HotelsPage() {
                       <span className="text-[10px] text-slate-400">TripAdvisor</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-1 text-slate-400">
-                    <Wifi size={14} />
-                    <Coffee size={14} />
-                    <Car size={14} />
-                  </div>
+                  {hotelRooms.some(r => r.isRefundable) && (
+                    <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-green-100 text-green-700">
+                      Free Cancellation Available
+                    </span>
+                  )}
                 </div>
 
+                {/* Room Amenities Summary */}
+                {hotelRooms.length > 0 && hotelRooms.some(r => r.amenities && r.amenities.length > 0) && (
+                  <div className="flex items-center gap-2 mb-4 flex-wrap">
+                    {Array.from(new Set(hotelRooms.flatMap(r => r.amenities || []).slice(0, 6))).map((a) => (
+                      <span key={a} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg flex items-center gap-1">
+                        {a === "Free WiFi" && <Wifi size={12} />}
+                        {a === "Parking" && <Car size={12} />}
+                        {a === "Restaurant" && <Coffee size={12} />}
+                        {a}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 <p className="text-slate-600 text-sm mb-4">{selectedHotel.description}</p>
+
+                {/* Check-in/out Info */}
+                <div className="bg-slate-50 rounded-xl p-3 mb-4 flex items-center gap-4 text-xs text-slate-600">
+                  <span>Check-in: <strong>2:00 PM</strong></span>
+                  <span>Check-out: <strong>12:00 PM</strong></span>
+                </div>
 
                 {/* Rooms Section */}
                 <div className="border-t border-slate-200 pt-4">
@@ -618,8 +638,23 @@ export default function HotelsPage() {
                           style={selectedRoom?.roomIndex === room.roomIndex ? { backgroundColor: "#F5EFE0" } : undefined}
                         >
                           <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-bold text-sm text-slate-900">{room.name}</p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-sm text-slate-900">{room.name}</p>
+                                {room.isRefundable ? (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700">Refundable</span>
+                                ) : (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">Non-Refundable</span>
+                                )}
+                              </div>
+                              {room.mealType && room.mealType !== "Room_Only" && (
+                                <p className="text-[10px] text-emerald-600 font-medium mt-1">
+                                  ✓ {room.mealType.replace("_", " ")} included
+                                </p>
+                              )}
+                              {room.inclusion && (
+                                <p className="text-[10px] text-slate-500 mt-1">{room.inclusion}</p>
+                              )}
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {(room.amenities || []).slice(0, 4).map((a) => (
                                   <span key={a} className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{a}</span>
@@ -628,6 +663,11 @@ export default function HotelsPage() {
                                   <span className="text-[10px] text-slate-400">+{room.amenities.length - 4}</span>
                                 )}
                               </div>
+                              {room.cancelPolicy && (
+                                <p className="text-[10px] text-slate-400 mt-1">
+                                  Cancellation: {room.cancelPolicy}
+                                </p>
+                              )}
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-black font-mono text-slate-900">{formatCurrency(room.totalFare)}</p>

@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase-server";
+import { prisma } from "@/lib/prisma";
 import HomePageClient from "@/components/HomePageClient";
 
-export const revalidate = 300; // ISR: cache for 5 minutes
+export const revalidate = 300;
 
 interface PackageItem {
   id: string;
@@ -79,69 +79,74 @@ function mapCategories(rows: Record<string, unknown>[]): {
 }
 
 export default async function HomePage() {
-  const supabase = await createClient();
   try {
-    const [packagesResult, testimonialsResult, categoriesResult, valuePropsResult, dashboardResult] =
-      await Promise.all([
-        supabase
-          .from("Package")
-          .select("id, title, duration, price, originalPrice, rating, provider, inclusions, images, category")
-          .eq("isActive", true)
-          .order("createdAt", { ascending: false }),
-        supabase
-          .from("Testimonial")
-          .select("id, name, role, text, rating")
-          .eq("isActive", true)
-          .order("createdAt", { ascending: false }),
-        supabase
-          .from("PackageCategory")
-          .select("*")
-          .eq("isactive", true)
-          .order("sortorder", { ascending: true }),
-        supabase
-          .from("ValueProposition")
-          .select("id, icon, title, description")
-          .eq("isactive", true)
-          .order("sortorder", { ascending: true }),
-        supabase
-          .from("User")
-          .select("companyId", { count: "exact", head: true })
-          .not("companyId", "is", null),
-      ]);
+    const [
+      packages,
+      testimonials,
+      categories,
+      valueProps,
+      companyUsers,
+    ] = await Promise.all([
+      prisma.package.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true, title: true, duration: true, price: true,
+          originalPrice: true, rating: true, provider: true,
+          inclusions: true, images: true, category: true,
+        },
+      }),
+      prisma.testimonial.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, role: true, text: true, rating: true },
+      }),
+      prisma.packageCategory.findMany({
+        where: { isactive: true },
+        orderBy: { sortorder: "asc" },
+      }),
+      prisma.valueProposition.findMany({
+        where: { isactive: true },
+        orderBy: { sortorder: "asc" },
+        select: { id: true, icon: true, title: true, description: true },
+      }),
+      prisma.user.findMany({
+        where: { NOT: { companyId: null } },
+        select: { companyId: true },
+      }),
+    ]);
 
-    const carouselPackages = groupByCategory(packagesResult.data || []);
-    const testimonials = (testimonialsResult.data || []).map((t: Record<string, unknown>) => ({
-      id: t.id as string,
-      name: t.name as string,
-      role: t.role as string,
-      text: t.text as string,
-      rating: t.rating as number,
+    const carouselPackages = groupByCategory(packages as unknown as Record<string, unknown>[]);
+    const testimonialsList = testimonials.map((t) => ({
+      id: t.id,
+      name: t.name,
+      role: t.role,
+      text: t.text,
+      rating: t.rating,
     }));
-    const { map: categoriesMap, order: categoryOrder } = mapCategories(categoriesResult.data || []);
-    const valueProps = (valuePropsResult.data || []).map((v: Record<string, unknown>) => ({
-      icon: v.icon as string,
-      title: v.title as string,
-      description: v.description as string,
+    const { map: categoriesMap, order: categoryOrder } = mapCategories(categories as unknown as Record<string, unknown>[]);
+    const valuePropsList = valueProps.map((v) => ({
+      icon: v.icon,
+      title: v.title,
+      description: v.description,
     }));
 
     const uniqueCompanies = new Set(
-      (dashboardResult.data || [])
-        .map((u: Record<string, unknown>) => u.companyId as string)
-        .filter(Boolean)
+      companyUsers.map((u) => u.companyId).filter(Boolean)
     );
     const stats = {
       companies: `${uniqueCompanies.size || 500}+`,
-      bookings: `${(packagesResult.data || []).length * 2000}+`,
+      bookings: `${packages.length * 2000}+`,
       rating: "4.9",
     };
 
     return (
       <HomePageClient
         carouselPackages={carouselPackages}
-        testimonials={testimonials}
+        testimonials={testimonialsList}
         categories={categoriesMap}
         categoryOrder={categoryOrder}
-        valueProps={valueProps}
+        valueProps={valuePropsList}
         stats={stats}
       />
     );

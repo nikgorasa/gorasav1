@@ -42,6 +42,7 @@ interface PackageForm {
   importantNotes: string;
   images: string;
   status: string;
+  category: string;
 }
 
 const EMPTY_FORM: PackageForm = {
@@ -58,6 +59,7 @@ const EMPTY_FORM: PackageForm = {
   importantNotes: "",
   images: "[]",
   status: "DRAFT",
+  category: "TOP_DEALS",
 };
 
 const tryParseJSON = (str: string): Record<string, unknown> => {
@@ -120,6 +122,7 @@ export default function PackagesPage() {
       importantNotes: getHTML(pkg.importantNotes),
       images: pkg.images,
       status: pkg.status,
+      category: (pkg as any).category || "TOP_DEALS",
     });
     setShowModal(true);
   };

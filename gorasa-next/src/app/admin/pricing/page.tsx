@@ -35,6 +35,9 @@ export default function PricingRulesPage() {
   const [rules, setRules] = useState<PricingRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [editingRule, setEditingRule] = useState<any>(null);
+  const [viewingRule, setViewingRule] = useState<any>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("ALL");
   const [newRule, setNewRule] = useState({
     name: "",
@@ -88,6 +91,36 @@ export default function PricingRulesPage() {
       if (res.ok) fetchRules();
     } catch (err) {
       console.error("Failed to delete rule:", err);
+    }
+  };
+
+  const updateRule = async () => {
+    if (!editingRule) return;
+    try {
+      const res = await fetch(`/api/pricing-rules/${editingRule.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editingRule.name,
+          type: editingRule.type,
+          category: editingRule.category,
+          destination: editingRule.destination,
+          hotelName: editingRule.hotelName,
+          airlineCode: editingRule.airlineCode,
+          markupType: editingRule.markupType,
+          markupValue: editingRule.markupValue,
+          markupPercent: editingRule.markupPercent,
+          minPrice: editingRule.minPrice,
+          maxPrice: editingRule.maxPrice,
+          priority: editingRule.priority,
+        }),
+      });
+      if (res.ok) {
+        setEditingRule(null);
+        fetchRules();
+      }
+    } catch (err) {
+      console.error("Failed to update rule:", err);
     }
   };
 
@@ -377,8 +410,10 @@ export default function PricingRulesPage() {
                     <ToggleLeft size={32} className="text-slate-300" />
                   )}
                 </button>
+                <button onClick={() => setViewingRule(rule)} className="px-3 py-1.5 text-xs font-medium bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 cursor-pointer">View</button>
+                <button onClick={() => setEditingRule({ ...rule })} className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 cursor-pointer">Edit</button>
                 <button
-                  onClick={() => deleteRule(rule.id)}
+                  onClick={() => setDeleteConfirm(rule.id)}
                   className="p-2 text-red-400 hover:text-red-600 cursor-pointer"
                 >
                   <Trash2 size={16} />
@@ -408,6 +443,64 @@ export default function PricingRulesPage() {
           <p className="text-xs text-slate-500">Flight Rules</p>
         </div>
       </div>
+      {/* Edit Modal */}
+      {editingRule && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setEditingRule(null)} />
+          <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 max-h-[80vh] overflow-y-auto">
+            <h3 className="font-bold text-slate-900 mb-4">Edit Pricing Rule</h3>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="col-span-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Name</label><input value={editingRule.name} onChange={(e) => setEditingRule({ ...editingRule, name: e.target.value })} className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" /></div>
+              <div><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Type</label><select value={editingRule.type} onChange={(e) => setEditingRule({ ...editingRule, type: e.target.value })} className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"><option value="GLOBAL">Global</option><option value="CATEGORY">Category</option><option value="DESTINATION">Destination</option><option value="HOTEL">Hotel</option><option value="AIRLINE">Airline</option></select></div>
+              <div><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Category</label><select value={editingRule.category} onChange={(e) => setEditingRule({ ...editingRule, category: e.target.value })} className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"><option value="ALL">All</option><option value="HOTEL">Hotel</option><option value="FLIGHT">Flight</option><option value="PACKAGE">Package</option></select></div>
+              <div><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Markup Type</label><select value={editingRule.markupType} onChange={(e) => setEditingRule({ ...editingRule, markupType: e.target.value })} className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"><option value="PERCENT">Percentage</option><option value="FLAT">Flat</option></select></div>
+              <div><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Markup Value</label><input type="number" value={editingRule.markupValue} onChange={(e) => setEditingRule({ ...editingRule, markupValue: Number(e.target.value) })} className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" /></div>
+              <div><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Destination</label><input value={editingRule.destination || ""} onChange={(e) => setEditingRule({ ...editingRule, destination: e.target.value })} className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" /></div>
+              <div><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Priority</label><input type="number" value={editingRule.priority} onChange={(e) => setEditingRule({ ...editingRule, priority: Number(e.target.value) })} className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" /></div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={updateRule} className="px-6 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 cursor-pointer">Save Changes</button>
+              <button onClick={() => setEditingRule(null)} className="px-6 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 cursor-pointer">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {viewingRule && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setViewingRule(null)} />
+          <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6">
+            <h3 className="font-bold text-slate-900 mb-4">Pricing Rule Details</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between"><span className="text-sm text-slate-500">Name</span><span className="font-bold">{viewingRule.name}</span></div>
+              <div className="flex justify-between"><span className="text-sm text-slate-500">Type</span><span className="font-bold">{viewingRule.type}</span></div>
+              <div className="flex justify-between"><span className="text-sm text-slate-500">Category</span><span className="font-bold">{viewingRule.category}</span></div>
+              <div className="flex justify-between"><span className="text-sm text-slate-500">Markup</span><span className="font-bold">{viewingRule.markupType === "PERCENT" ? `${viewingRule.markupValue}%` : `₹${viewingRule.markupValue}`}</span></div>
+              {viewingRule.destination && <div className="flex justify-between"><span className="text-sm text-slate-500">Destination</span><span className="font-bold">{viewingRule.destination}</span></div>}
+              <div className="flex justify-between"><span className="text-sm text-slate-500">Priority</span><span className="font-bold">{viewingRule.priority}</span></div>
+              <div className="flex justify-between"><span className="text-sm text-slate-500">Status</span><span className={`font-bold ${viewingRule.isActive ? "text-green-600" : "text-slate-400"}`}>{viewingRule.isActive ? "Active" : "Inactive"}</span></div>
+            </div>
+            <button onClick={() => setViewingRule(null)} className="mt-6 w-full py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 cursor-pointer">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setDeleteConfirm(null)} />
+          <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center">
+            <h3 className="font-bold text-slate-900 mb-2">Delete Pricing Rule?</h3>
+            <p className="text-sm text-slate-500 mb-6">This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button onClick={() => { deleteRule(deleteConfirm); setDeleteConfirm(null); }} className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 cursor-pointer">Delete</button>
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 cursor-pointer">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

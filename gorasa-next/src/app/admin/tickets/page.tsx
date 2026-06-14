@@ -38,10 +38,13 @@ export default function AdminTicketsPage() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [sendingNote, setSendingNote] = useState(false);
+  const [assignableUsers, setAssignableUsers] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchTickets();
     fetchStats();
+    fetch("/api/leads/assignable-users").then(r => r.json()).then(setAssignableUsers).catch(() => {});
   }, []);
 
   const fetchTickets = async () => {
@@ -146,6 +149,24 @@ export default function AdminTicketsPage() {
     }
   };
 
+  const handleAssign = async (ticketId: string, userId: string, userName: string) => {
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assigned_to: userId, assigned_to_name: userName }),
+      });
+      if (res.ok) {
+        fetchTickets();
+        if (selectedTicket?.id === ticketId) {
+          setSelectedTicket({ ...selectedTicket, assigned_to: userId, assigned_to_name: userName } as any);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to assign ticket:", err);
+    }
+  };
+
   const handleArchive = async (ticketId: string) => {
     if (!confirm("Archive this ticket?")) return;
     try {
@@ -167,6 +188,10 @@ export default function AdminTicketsPage() {
   const filteredTickets = tickets.filter((ticket) => {
     if (filterStatus !== "all" && ticket.status !== filterStatus) return false;
     if (filterPriority !== "all" && ticket.priority !== filterPriority) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!ticket.subject?.toLowerCase().includes(q) && !ticket.userName?.toLowerCase().includes(q) && !ticket.userEmail?.toLowerCase().includes(q)) return false;
+    }
     return true;
   });
 
@@ -239,6 +264,12 @@ export default function AdminTicketsPage() {
       )}
 
       <div className="flex items-center gap-4 mb-6">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search tickets..."
+          className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-orange-500 outline-none"
+        />
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-slate-400" />
           <select
@@ -371,6 +402,28 @@ export default function AdminTicketsPage() {
                       <option key={p.value} value={p.value}>{p.label}</option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 block">Assigned To</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={(selectedTicket as any).assigned_to || ""}
+                    onChange={(e) => {
+                      const u = assignableUsers.find((u: any) => u.id === e.target.value);
+                      if (u) handleAssign(selectedTicket.id, u.id, u.name);
+                    }}
+                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  >
+                    <option value="">Unassigned</option>
+                    {assignableUsers.map((u: any) => (
+                      <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                    ))}
+                  </select>
+                  {(selectedTicket as any).assigned_to_name && (
+                    <span className="text-xs text-slate-500">Currently: {(selectedTicket as any).assigned_to_name}</span>
+                  )}
                 </div>
               </div>
 
