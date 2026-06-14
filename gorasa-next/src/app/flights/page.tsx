@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/lib";
 import { Plane, Search, Calendar, Users, ArrowRight, Star, Clock, Luggage, X, Loader2, ChevronDown, Minus, Plus, User } from "lucide-react";
@@ -46,6 +47,7 @@ function todayStr() {
 
 export default function FlightsPage() {
   const { user } = useAuth();
+  const { demoMode } = useDemoMode();
   const [showLogin, setShowLogin] = useState(false);
   const [originCity, setOriginCity] = useState<City>({ code: "13484", name: "Mumbai", state: "Maharashtra", source: "fallback", iata_code: "BOM" });
   const [destinationCity, setDestinationCity] = useState<City>({ code: "13482", name: "Delhi", state: "Delhi", source: "fallback", iata_code: "DEL" });
@@ -98,6 +100,7 @@ export default function FlightsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "search",
+          demo: demoMode,
           params: {
             origin: originCode,
             destination: destCode,

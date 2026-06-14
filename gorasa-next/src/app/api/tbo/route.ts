@@ -7,6 +7,7 @@ import {
   ticketFlight,
   getBookingDetail,
 } from "@/lib/tbo-flight-client";
+import * as mock from "@/lib/tbo-flight-mock";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +19,52 @@ export async function POST(req: NextRequest) {
         const p = body.params || {};
         const tripType = p.tripType || p.TripType || "OneWay";
         const journeyType = tripType === "Return" ? 2 : tripType === "Circle" ? 3 : 1;
+
+        // Demo mode: use mock data directly
+        if (body.demo) {
+          const mockReq = {
+            Origin: p.origin || "",
+            Destination: p.destination || "",
+            AdultCount: p.adults || 1,
+            ChildCount: p.children || 0,
+            InfantCount: p.infants || 0,
+            JourneyType: journeyType,
+            PreferredDepartureTime: p.departureDate || "",
+          };
+          const mockRes = mock.mockSearchFlights(mockReq);
+          const flights = mockRes.Response.Results.map((r) => ({
+            resultIndex: r.ResultIndex,
+            isLCC: r.IsLCC,
+            isRefundable: r.IsRefundable,
+            airline: r.Segments[0]?.Airline ?? "",
+            airlineCode: r.Segments[0]?.AirlineCode ?? "",
+            flightNumber: r.Segments[0]?.FlightNumber ?? "",
+            operatingCarrier: r.Segments[0]?.OperatingCarrier ?? "",
+            origin: r.Segments[0]?.Origin ?? "",
+            destination: r.Segments[0]?.Destination ?? "",
+            departureTime: r.Segments[0]?.DepTime ?? "",
+            arrivalTime: r.Segments[0]?.ArrTime ?? "",
+            duration: r.Segments[0]?.Duration ?? "",
+            cabinClass: r.Segments[0]?.CabinClass ?? "",
+            baggage: r.Segments[0]?.Baggage ?? "",
+            cabinBaggage: r.Segments[0]?.CabinBaggage ?? "",
+            currency: r.Fare.Currency,
+            publishedFare: r.Fare.PublishedFare,
+            offeredFare: r.Fare.OfferedFare,
+            baseFare: r.Fare.BaseFare,
+            tax: r.Fare.Tax,
+            yqTax: r.Fare.YQTax,
+            discount: r.Fare.Discount,
+            commissionEarned: r.Fare.CommissionEarned,
+            penalty: r.Penalty,
+            lastTicketDate: r.LastTicketDate,
+            fareRules: r.FareRules,
+            segments: r.Segments,
+            fareBreakdown: r.FareBreakdown,
+          }));
+          return NextResponse.json({ flights, traceId: mockRes.Response.TraceId });
+        }
+
         const result = await searchFlights({
           Origin: p.origin || p.Origin || "",
           Destination: p.destination || p.Destination || "",

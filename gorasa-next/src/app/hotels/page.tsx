@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/lib";
 import { Building2, Search, MapPin, X, Star, Wifi, Coffee, Car, Loader2, ChevronDown, Bed, Users, Minus, Plus, User } from "lucide-react";
@@ -42,6 +43,7 @@ function makeRoom(adults = 2, children = 0): RoomConfig {
 
 export default function HotelsPage() {
   const { user } = useAuth();
+  const { demoMode } = useDemoMode();
   const [showLogin, setShowLogin] = useState(false);
   const [selectedCity, setSelectedCity] = useState<City>({ code: "15648", name: "Goa", state: "Goa", source: "fallback" });
   const [checkIn, setCheckIn] = useState("");
@@ -103,6 +105,7 @@ export default function HotelsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "search",
+          demo: demoMode,
           params: {
             CheckInDate: checkIn || "2026-06-10",
             CheckOutDate: checkOut || "2026-06-11",
