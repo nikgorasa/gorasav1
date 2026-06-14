@@ -9,6 +9,7 @@ export async function createCheckout(params: {
   amount: number;
   gateway: "razorpay" | "phonepe";
   userEmail: string;
+  appUrl?: string;
 }): Promise<CheckoutResponse> {
   const booking = await prisma.booking.findUnique({
     where: { id: params.bookingId },
@@ -44,9 +45,11 @@ export async function createCheckout(params: {
   let checkoutUrl: string;
   let orderId: string;
 
+  const appUrl = params.appUrl || PAYMENT_CONFIG.appUrl;
+
   if (params.gateway === "phonepe") {
-    const redirectUrl = `${PAYMENT_CONFIG.appUrl}/payment/success?bookingId=${params.bookingId}`;
-    const callbackUrl = `${PAYMENT_CONFIG.appUrl}/api/webhooks/phonepe`;
+    const redirectUrl = `${appUrl}/payment/success?bookingId=${params.bookingId}`;
+    const callbackUrl = `${appUrl}/api/webhooks/phonepe`;
     const result = await phonepe.createPayment({
       amount: params.amount,
       transactionId: payment.id,
@@ -59,6 +62,7 @@ export async function createCheckout(params: {
     const result = await razorpay.createOrder({
       amount: params.amount,
       receipt: params.bookingId,
+      appUrl,
     });
     checkoutUrl = result.checkoutUrl;
     orderId = result.id;

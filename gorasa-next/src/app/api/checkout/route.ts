@@ -41,11 +41,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+      || `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+
     const result = await createCheckout({
       bookingId,
       amount: booking.price,
       gateway: selectedGateway,
       userEmail: (user as any).email,
+      appUrl,
     });
 
     return NextResponse.json(result);

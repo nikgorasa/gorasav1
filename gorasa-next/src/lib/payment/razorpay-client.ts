@@ -5,10 +5,11 @@ import type { RazorpayOrder } from "./types";
 export async function createOrder(params: {
   amount: number;
   receipt: string;
+  appUrl?: string;
 }): Promise<{ id: string; amount: number; checkoutUrl: string }> {
   if (PAYMENT_CONFIG.mock) {
     const orderId = generateMockOrderId();
-    const checkoutUrl = getMockCheckoutUrl(orderId, PAYMENT_CONFIG.appUrl);
+    const checkoutUrl = getMockCheckoutUrl(orderId, params.appUrl || PAYMENT_CONFIG.appUrl);
     return { id: orderId, amount: params.amount, checkoutUrl };
   }
 
