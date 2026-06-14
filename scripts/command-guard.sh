@@ -76,4 +76,13 @@ done
 
 # Command is safe
 echo -e "${GREEN}[ALLOWED]${NC} Command is safe: $CMD"
+
+# Additional check: scan for secrets in command
+SECRET_PATTERNS='(napi_[a-zA-Z0-9_-]{20,}|npg_[a-zA-Z0-9_-]{20,}|eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36})'
+
+if echo "$CMD" | grep -qE "$SECRET_PATTERNS"; then
+    echo -e "${YELLOW}[WARNING]${NC} Command contains what looks like a secret"
+    echo -e "${YELLOW}[WARNING]${NC} Make sure you're not exposing credentials"
+fi
+
 exit 0
