@@ -46,6 +46,7 @@ export default function UsersPage() {
   const [editForm, setEditForm] = useState<{ name: string; email: string; role: string } | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", role: "CUSTOMER" });
+  const [createdPassword, setCreatedPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const limit = 20;
 
@@ -57,9 +58,10 @@ export default function UsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
       });
+      const data = await res.json();
       if (res.ok) {
+        setCreatedPassword(data.tempPassword || "");
         setNewUser({ name: "", email: "", role: "CUSTOMER" });
-        setShowCreate(false);
         fetchUsers();
       }
     } catch (err) {
@@ -425,8 +427,27 @@ export default function UsersPage() {
             </div>
             <div className="flex gap-2">
               <button onClick={createUser} className="px-6 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 cursor-pointer">Create User</button>
-              <button onClick={() => setShowCreate(false)} className="px-6 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 cursor-pointer">Cancel</button>
+              <button onClick={() => { setShowCreate(false); setCreatedPassword(""); }} className="px-6 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 cursor-pointer">Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Created Password Display */}
+      {createdPassword && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setCreatedPassword("")} />
+          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-100 flex items-center justify-center">
+              <span className="text-green-600 text-xl">✓</span>
+            </div>
+            <h3 className="font-bold text-slate-900 mb-2">User Created</h3>
+            <p className="text-sm text-slate-500 mb-4">Share this temporary password with the user:</p>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-4">
+              <code className="font-mono text-lg font-bold text-slate-900">{createdPassword}</code>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">They should change this password on first login.</p>
+            <button onClick={() => setCreatedPassword("")} className="w-full py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 cursor-pointer">Done</button>
           </div>
         </div>
       )}
