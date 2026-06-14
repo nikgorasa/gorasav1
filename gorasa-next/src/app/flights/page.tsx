@@ -634,14 +634,16 @@ export default function FlightsPage() {
       </AnimatePresence>
 
       {/* Flight Booking Modal */}
-      <FlightBookingModal
-        isOpen={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
-        flight={selectedFlight!}
-        user={user}
-        date={departDate}
-        passengerCount={totalPassengers}
-      />
+      {selectedFlight && (
+        <FlightBookingModal
+          isOpen={showBookingModal}
+          onClose={() => setShowBookingModal(false)}
+          flight={selectedFlight}
+          user={user}
+          date={departDate}
+          passengerCount={totalPassengers}
+        />
+      )}
 
       <Footer />
     </>

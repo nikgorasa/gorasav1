@@ -1,7 +1,8 @@
 name: Deploy to Production (gorasa-next)
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
 
 concurrency:
   group: prod-deploy

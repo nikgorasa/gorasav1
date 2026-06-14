@@ -719,18 +719,20 @@ export default function HotelsPage() {
       </AnimatePresence>
 
       {/* Booking Modal */}
-      <HotelBookingModal
-        isOpen={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
-        hotel={selectedHotel!}
-        room={selectedRoom!}
-        sessionId={sessionId}
-        user={user}
-        location={selectedCity.name}
-        checkIn={checkIn}
-        checkOut={checkOut}
-        guestCount={totalGuests}
-      />
+      {selectedHotel && selectedRoom && (
+        <HotelBookingModal
+          isOpen={showBookingModal}
+          onClose={() => setShowBookingModal(false)}
+          hotel={selectedHotel}
+          room={selectedRoom}
+          sessionId={sessionId}
+          user={user}
+          location={selectedCity.name}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          guestCount={totalGuests}
+        />
+      )}
 
       <Footer />
     </>
