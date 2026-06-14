@@ -6,7 +6,47 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ---
 
-<!-- BEGIN:gorasa-governance -->
+# ⚠️ BEFORE ANY DEPLOYMENT — READ THIS FIRST
+
+**Read `../DEPLOY.md` before pushing to any branch.** It's 1 page. It tells you exactly how to deploy.
+
+```bash
+cat ../DEPLOY.md
+```
+
+---
+
+## ⛔ BLOCKED ACTIONS — NEVER DO THESE
+
+**Check before running any command:**
+```bash
+bash scripts/command-guard.sh "your command here"
+```
+
+**NEVER DELETE:**
+- `.env.local` — contains ALL credentials
+- `.vercel/` — links to Vercel
+- `vercel.json` — build config
+- `prisma/schema.prisma` — database schema
+- `.github/workflows/*.yml` — deploy automation
+- `node_modules/` — dependencies
+
+**NEVER RUN:**
+- `vercel deploy --prod` — use PR instead
+- `vercel env add` — ask user first
+- `vercel link` — breaks config
+- `rm .env.local` — deletes credentials
+- `git push --force` — breaks history
+- `gh secret delete` — removes deploy secrets
+
+**NEVER CHANGE WITHOUT USER APPROVAL:**
+- Git remotes
+- GitHub Actions workflows
+- Vercel environment variables
+- Supabase credentials
+- Prisma schema
+
+---<!-- BEGIN:gorasa-governance -->
 
 # GoRASA Project Governance
 

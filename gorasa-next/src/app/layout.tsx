@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
+import { DemoModeProvider } from "@/hooks/useDemoMode";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -55,7 +56,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${playfair.variable} ${outfit.variable} font-sans bg-[#F5EFE0] text-slate-900 antialiased`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <DemoModeProvider>{children}</DemoModeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

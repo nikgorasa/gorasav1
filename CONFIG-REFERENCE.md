@@ -2,7 +2,7 @@
 
 > **Generated:** 2026-06-11  
 > **Repository:** `/home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main`  
-> **Remote:** `Gorasa-In-2026/gorasav1` (push target: `neworigin`)  
+> **Remote:** `Gorasa-In-2026/gorasav1` (push target: `origin`)  
 > **Purpose:** Single source of truth — every config, token, project ID, and agent instruction in one place.
 
 ---
@@ -23,11 +23,11 @@
 | **Vercel Team ID** | `team_0pR3Xnbjx12q8H8pZF9xgE5S` | `.vercel/project.json` |
 | **Vercel Root Directory** | **`gorasa-next/`** | Set via API (not vercel.json) |
 | **Vercel Env: TBO_FORCE_MOCK** | Removed (was `true`) | Vercel dashboard — removed Jun 11, 2026 |
-| **Deploy target (Production)** | Manual `workflow_dispatch` → GitHub Actions → Vercel (branch protection + nikjp2021 approval) | `.github/workflows/deploy-prod.yml` |
-| **Deploy target (Dev)** | `git push neworigin dev` → GitHub Actions → Vercel | `.github/workflows/deploy-dev.yml` |
-| **Deploy target (QA)** | `git push neworigin qa` → GitHub Actions → Vercel | `.github/workflows/deploy-qa.yml` |
-| **Git remote (deploy)** | `neworigin → https://github.com/Gorasa-In-2026/gorasav1.git` | `git remote -v` |
-| **Git remote (origin)** | `origin → https://github.com/nikjp2021/gorasa-app.git` | `git remote -v` |
+| **Deploy target (Production)** | Push to `main` → GitHub Actions auto-deploys to Vercel | `.github/workflows/deploy-prod.yml` |
+| **Deploy target (Dev)** | `git push origin dev` → GitHub Actions → Vercel | `.github/workflows/deploy-dev.yml` |
+| **Deploy target (QA)** | `git push origin qa` → GitHub Actions → Vercel | `.github/workflows/deploy-qa.yml` |
+| **Git remote (origin)** | `origin → https://github.com/Gorasa-In-2026/gorasav1.git` | `git remote -v` |
+| **Git remote (cockroach)** | `cockroach → https://github.com/Gorasa-In-2026/Gorasa-Cockroach.git` | `git remote -v` |
 | **App working directory** | `gorasa-next/` (NOT repo root) | All `npm`/`next` commands |
 | **Node version** | 24.x (Vercel), 24.15.0 (local) | No `.nvmrc` |
 | **Render MCP token** | In `.mcp.json` (gitignored) | Repo root `.mcp.json` |
@@ -152,10 +152,10 @@ Use the supabase_get_advisors tool.
 ### Architecture
 
 - **Repo:** `Gorasa-In-2026/gorasav1`
-- **Prod deployment:** Manual `workflow_dispatch` (GitHub Actions) + **nikjp2021 approval gate**
+- **Prod deployment:** Push to `main` → GitHub Actions auto-deploys
 - **Dev deployment:** Push to `dev` → GitHub Actions auto-deploys
 - **QA deployment:** Merge PR to `qa` → GitHub Actions auto-deploys
-- **Vercel Git integration:** Disconnected on production (no auto-deploy on push to `main`)
+- **All 3 environments:** Same trigger pattern — push to branch → auto-deploy
 - **Project:** `gorasa-next` (ID: `prj_WLoI80KaCmVZSudP17ohcPbzTpSe`)
 - **Team:** `nikhil-gorasa-s-projects` (ID: `team_0pR3Xnbjx12q8H8pZF9xgE5S`)
 
@@ -189,22 +189,21 @@ Or set in Vercel Dashboard → gorasa-next → Settings → General → Root Dir
 
 ### How to Deploy
 
-**Production (manual — requires nikjp2021 approval):**
+**Production (auto on push to main):**
 ```bash
-# 1. Merge PR to main (branch protection requires 1 approval)
-# 2. Go to GitHub Actions → Deploy Prod → Run workflow
-# 3. nikjp2021 approves in GitHub Actions UI
+# Push to main triggers auto-deploy
+git push origin main
 ```
 
 **Dev (auto on push):**
 ```bash
-git push neworigin dev
+git push origin dev
 ```
 
 **QA (auto on push — branch protection requires PR):**
 ```bash
 # Push to qa is blocked; use a PR instead
-git push neworigin <feature-branch>
+git push origin <feature-branch>
 # Open PR → merge to qa → deploys
 ```
 
@@ -502,9 +501,9 @@ cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/gorasa-next
 - **Database:** Supabase → `isubgeemvhvhnhikxbjb`
 
 ### Step 4: Know the remotes
-- `git push neworigin main` **does NOT deploy** (Vercel auto-deploy disconnected)
-- Production deploys via manual `workflow_dispatch` in GitHub Actions + nikjp2021 approval
-- `origin` is a secondary remote (nikjp2021's fork)
+- `git push origin main` **auto-deploys** to production
+- `git push origin dev` **auto-deploys** to development
+- `cockroach` is a secondary remote for CockroachDB standalone repo
 
 ### Step 5: Verify keys work before debugging remotely
 ```bash
@@ -536,7 +535,7 @@ const { createClient } = require('@supabase/supabase-js');
 cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/gorasa-next
 npx next build
 # Fix any errors, then:
-git push neworigin main
+git push origin main
 ```
 
 ---
@@ -603,8 +602,8 @@ rasa-zero-app-main/
 ### Remotes
 
 ```
-origin    → https://github.com/nikjp2021/gorasa-app.git         (personal fork)
-neworigin → https://github.com/Gorasa-In-2026/gorasav1.git      (production — deploy target)
+origin    → https://github.com/Gorasa-In-2026/gorasav1.git      (production — deploy target)
+cockroach → https://github.com/Gorasa-In-2026/Gorasa-Cockroach.git (CockroachDB standalone)
 ```
 
 ### Branch
@@ -1002,7 +1001,7 @@ QA  (direct):  postgresql://neondb_owner:****@ep-quiet-tooth-aiehj2mq.c-4.us-eas
 
 - **Environment:** `Production` in GitHub repo settings
 - **Required reviewers:** nikjp2021
-- **Deployment branch policy:** Custom — only allowed via `workflow_dispatch` on `main`
+- **Deployment branch policy:** All branches — push to `main` auto-deploys
 
 ### GitHub Environment Secrets
 
@@ -1028,15 +1027,14 @@ Both `Production – dev-gorasa` and `Production – qa-gorasa` have 13 secrets:
 
 ```bash
 # Deploy to Development (auto on push)
-git push neworigin dev  →  GitHub Action → dev-gorasa.vercel.app
+git push origin dev  →  GitHub Action → dev-gorasa.vercel.app
 
 # Deploy to QA (auto on push to qa — PR required)
-git push neworigin dev  # or feature branch → PR into qa → GitHub Action → qa-gorasa.vercel.app
+git push origin <feature-branch>
+# Open PR → merge to qa → GitHub Action → qa-gorasa.vercel.app
 
-# Deploy to Production (manual trigger + approval)
-# 1. Merge PR to main (branch protection: 1 review required)
-# 2. GitHub Actions → Deploy Prod → Run workflow
-# 3. nikjp2021 approves → deploys to gorasa-next.vercel.app
+# Deploy to Production (auto on push to main)
+git push origin main  →  GitHub Action → gorasa-next.vercel.app
 ```
 
 ### Database Sync

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import { formatCurrency } from "@/lib";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import {
   X, Loader2, CheckCircle, AlertCircle, Plane,
   MapPin, Calendar, Phone, Mail, User, CreditCard, Clock, Luggage,
@@ -66,6 +67,7 @@ export default function FlightBookingModal({
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState("");
   const [discountApplied, setDiscountApplied] = useState(0);
+  const { demoMode } = useDemoMode();
   const [couponCodeUsed, setCouponCodeUsed] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -74,7 +76,9 @@ export default function FlightBookingModal({
   } | null>(null);
 
   const finalPrice = flight.price - discountApplied;
-  const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && dateOfBirth && gender;
+  const isValid = demoMode
+    ? firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim()
+    : firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && dateOfBirth && gender;
 
   const resetForm = () => {
     setStep("form");
@@ -131,23 +135,31 @@ export default function FlightBookingModal({
     try {
       const pnrCode = `GR${Date.now().toString(36).toUpperCase()}`;
 
+      const demoDiscount = demoMode ? 500 : 0;
+      const demoFinalPrice = flight.price - discountApplied - demoDiscount;
+      const bookingStatus = demoMode ? "CONFIRMED" : "PENDING";
+
       const saveRes = await fetch("/api/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-user-email": user.email },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": user.email,
+          ...(demoMode ? { "x-demo-mode": "true" } : {}),
+        },
         body: JSON.stringify({
           type: "FLIGHT",
           itemName: `${flight.airline} • ${flight.origin} → ${flight.destination}`,
           providerOrAirline: flight.airline,
-          price: finalPrice,
+          price: demoMode ? demoFinalPrice : finalPrice,
           originalPrice: flight.price,
-          discountApplied,
-          couponCodeUsed: couponCodeUsed || undefined,
+          discountApplied: discountApplied + demoDiscount,
+          couponCodeUsed: demoMode ? "DEMO500" : (couponCodeUsed || undefined),
           pnr: pnrCode,
           seatOrRoom: flight.tier,
           paxCount: passengerCount,
           travelDates: { departure: date || "TBD" },
           leadGuestPan: pan || undefined,
-          status: "PENDING",
+          status: bookingStatus,
           gstNumber: showGstFields ? gstNumber || undefined : undefined,
           gstCompanyName: showGstFields ? gstCompanyName || undefined : undefined,
         }),
@@ -159,8 +171,14 @@ export default function FlightBookingModal({
 
       const saveData = await saveRes.json();
       setBookingId(saveData.id);
-      setConfirmation({ pnr: pnrCode, status: "Pending Payment" });
-      setStep("checkout");
+
+      if (demoMode) {
+        setConfirmation({ pnr: pnrCode, status: "Confirmed" });
+        setStep("done");
+      } else {
+        setConfirmation({ pnr: pnrCode, status: "Pending Payment" });
+        setStep("checkout");
+      }
     } catch {
       setErrorMessage("Something went wrong. Please try again.");
       setStep("error");
@@ -191,6 +209,17 @@ export default function FlightBookingModal({
 
         {step === "form" && (
           <div className="p-6 space-y-5">
+            {/* Demo Mode Banner */}
+            {demoMode && (
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex items-center gap-2">
+                <span className="text-lg">🧪</span>
+                <div>
+                  <p className="text-sm font-semibold text-purple-800">Demo Mode Active</p>
+                  <p className="text-xs text-purple-600">₹500 auto-discount applied • Skip payment • Booking confirmed instantly</p>
+                </div>
+              </div>
+            )}
+
             {/* Booking Summary */}
             <div className="bg-blue-50 rounded-xl p-4 space-y-2">
               <div className="flex items-start gap-3">

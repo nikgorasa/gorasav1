@@ -44,6 +44,7 @@ VERCEL_PROJECT_QA="prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN"
 print_status "CHECK 1/14: Required documentation files..."
 
 REQUIRED_DOCS=(
+    "../DEPLOY.md"
     "../MEMORY.md"
     "../CHANGE-LOG.md"
     "../CONFIG-REFERENCE.md"
@@ -60,6 +61,21 @@ for doc in "${REQUIRED_DOCS[@]}"; do
         ERRORS=$((ERRORS + 1))
     fi
 done
+
+# ═══════════════════════════════════════════════════════
+# Check 1.5: Deployment Pipeline (from DEPLOY.md)
+# ═══════════════════════════════════════════════════════
+if [[ -f "../DEPLOY.md" ]]; then
+    echo ""
+    print_status "  Deployment Pipeline (from DEPLOY.md):"
+    echo ""
+    echo -e "    ${CYAN}Branch    │ Trigger          │ Auto-Deploys To${NC}"
+    echo -e "    ${CYAN}──────────┼──────────────────┼────────────────────────────────${NC}"
+    echo -e "    ${GREEN}dev${NC}       │ git push origin dev │ project-uul0v.vercel.app"
+    echo -e "    ${GREEN}qa${NC}        │ PR merge → qa     │ project-sm6gc.vercel.app"
+    echo -e "    ${GREEN}main${NC}      │ PR merge → main   │ gorasa-next.vercel.app"
+    echo ""
+fi
 
 # ═══════════════════════════════════════════════════════
 # Check 2: Read MEMORY.md (Last Session Context)

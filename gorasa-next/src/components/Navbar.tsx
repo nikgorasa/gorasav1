@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import { motion, AnimatePresence } from "motion/react";
 import GoRasaLogo from "./GoRasaLogo";
 import {
@@ -18,6 +19,7 @@ import {
   Plane,
   Building2,
   Palmtree,
+  FlaskConical,
 } from "lucide-react";
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
@@ -36,6 +38,7 @@ export default function Navbar({
   onLoginClick: () => void;
 }) {
   const { user, signOut } = useAuth();
+  const { demoMode, toggleDemoMode } = useDemoMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [navItems, setNavItems] = useState<{ href: string; label: string; icon: string }[]>([]);
   const [adminItems, setAdminItems] = useState<{ href: string; label: string; icon: string }[]>([]);
@@ -127,7 +130,21 @@ export default function Navbar({
           </div>
 
           {/* Auth / User Menu */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            {/* Demo Mode Toggle */}
+            <button
+              onClick={toggleDemoMode}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                demoMode
+                  ? "bg-purple-100 text-purple-700 border border-purple-300"
+                  : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
+              }`}
+              title={demoMode ? "Demo Mode ON — Click to disable" : "Demo Mode OFF — Click to enable (skip real APIs)"}
+            >
+              <FlaskConical size={14} />
+              {demoMode ? "Demo ON" : "Demo"}
+            </button>
+
             {user ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}

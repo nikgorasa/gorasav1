@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import { formatCurrency } from "@/lib";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import {
   X, Loader2, CheckCircle, AlertCircle, Building2,
   Bed, MapPin, Calendar, Phone, Mail, User, CreditCard,
@@ -54,10 +55,13 @@ export default function HotelBookingModal({
   const [confirmation, setConfirmation] = useState<{
     bookingId: string; pnr: string; confirmationNo: string; status: string;
   } | null>(null);
+  const { demoMode } = useDemoMode();
 
   const isInternational = hotel.hotelCode >= 10000000;
   const finalPrice = room.totalFare - discountApplied;
-  const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan.trim().toUpperCase());
+  const isValid = demoMode
+    ? firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim()
+    : firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan.trim().toUpperCase());
 
   const resetForm = () => {
     setStep("form");
@@ -112,101 +116,115 @@ export default function HotelBookingModal({
     setStep("blocking");
 
     try {
-      const blockRes = await fetch("/api/tbo-hotels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "block",
-          sessionId,
-          resultIndex: hotel.resultIndex,
-          hotelCode: hotel.hotelCode,
-          hotelName: hotel.name,
-          room,
-        }),
-      });
+      const demoDiscount = demoMode ? 500 : 0;
+      const demoFinalPrice = room.totalFare - discountApplied - demoDiscount;
+      const bookingStatus = demoMode ? "CONFIRMED" : "PENDING";
 
-      const blockData = await blockRes.json();
+      let pnrCode: string;
+      let confirmationNo = "";
 
-      if (!blockData.success) {
-        setErrorMessage("Price could not be verified. Please try again.");
-        setStep("error");
-        return;
-      }
+      if (demoMode) {
+        pnrCode = `GR-${Date.now()}`;
+      } else {
+        const blockRes = await fetch("/api/tbo-hotels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "block",
+            sessionId,
+            resultIndex: hotel.resultIndex,
+            hotelCode: hotel.hotelCode,
+            hotelName: hotel.name,
+            room,
+          }),
+        });
 
-      if (blockData.isPriceChanged) {
-        const proceed = window.confirm(
-          "The room price has changed. The new total is shown in the booking summary. Do you want to proceed?"
-        );
-        if (!proceed) {
-          setStep("form");
+        const blockData = await blockRes.json();
+
+        if (!blockData.success) {
+          setErrorMessage("Price could not be verified. Please try again.");
+          setStep("error");
           return;
         }
-      }
 
-      setStep("book-confirming");
+        if (blockData.isPriceChanged) {
+          const proceed = window.confirm(
+            "The room price has changed. The new total is shown in the booking summary. Do you want to proceed?"
+          );
+          if (!proceed) {
+            setStep("form");
+            return;
+          }
+        }
 
-      const clientRef = `GR-${Date.now()}`;
+        setStep("book-confirming");
 
-      const bookReqPayload = {
-        action: "book",
-        bookingCode: blockData.bookingCode,
-        guestNationality: "IN",
-        netAmount: room.totalFare,
-        hotelRoomsDetails: [{
-          passengers: [{
-            title: "Mr",
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            paxType: 1,
-            leadPassenger: true,
-            age: 30,
-            email: email.trim(),
-            phone: phone.trim(),
-            pan: pan.trim().toUpperCase(),
-            passportNo: isInternational ? passportNo || undefined : undefined,
-            passportExpiry: isInternational ? passportExpiry || undefined : undefined,
-            addressLine1: addressLine1 || undefined,
-            city: addressCity || location,
-            countryCode: "IN",
-            nationality: "IN",
+        const bookReqPayload = {
+          action: "book",
+          bookingCode: blockData.bookingCode,
+          guestNationality: "IN",
+          netAmount: room.totalFare,
+          hotelRoomsDetails: [{
+            passengers: [{
+              title: "Mr",
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              paxType: 1,
+              leadPassenger: true,
+              age: 30,
+              email: email.trim(),
+              phone: phone.trim(),
+              pan: pan.trim().toUpperCase(),
+              passportNo: isInternational ? passportNo || undefined : undefined,
+              passportExpiry: isInternational ? passportExpiry || undefined : undefined,
+              addressLine1: addressLine1 || undefined,
+              city: addressCity || location,
+              countryCode: "IN",
+              nationality: "IN",
+            }]
           }]
-        }]
-      };
+        };
 
-      const bookRes = await fetch("/api/tbo-hotels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookReqPayload),
-      });
+        const bookRes = await fetch("/api/tbo-hotels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bookReqPayload),
+        });
 
-      const bookData = await bookRes.json();
+        const bookData = await bookRes.json();
 
-      if (!bookData.success) {
-        setErrorMessage("Booking confirmation failed. Please try again.");
-        setStep("error");
-        return;
+        if (!bookData.success) {
+          setErrorMessage("Booking confirmation failed. Please try again.");
+          setStep("error");
+          return;
+        }
+
+        pnrCode = bookData.confirmationNo || `GR-${Date.now()}`;
+        confirmationNo = bookData.confirmationNo || "";
       }
 
       setStep("saving");
 
-      const pnrCode = bookData.confirmationNo || clientRef;
-
       const saveRes = await fetch("/api/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-user-email": user.email },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": user.email,
+          ...(demoMode ? { "x-demo-mode": "true" } : {}),
+        },
         body: JSON.stringify({
           type: "HOTEL",
           itemName: hotel.name,
           providerOrAirline: "GoRASA",
-          price: finalPrice,
+          price: demoMode ? demoFinalPrice : finalPrice,
           originalPrice: room.totalFare,
-          discountApplied,
-          couponCodeUsed: couponCodeUsed || undefined,
+          discountApplied: discountApplied + demoDiscount,
+          couponCodeUsed: demoMode ? "DEMO500" : (couponCodeUsed || undefined),
           pnr: pnrCode,
           seatOrRoom: room.name,
           paxCount: guestCount,
           travelDates: { checkIn, checkOut },
-          status: "PENDING",
+          status: bookingStatus,
           leadGuestPan: pan.trim().toUpperCase(),
           gstNumber: showGstFields ? gstNumber || undefined : undefined,
           gstCompanyName: showGstFields ? gstCompanyName || undefined : undefined,
@@ -221,10 +239,10 @@ export default function HotelBookingModal({
 
       setBookingId(saveData.id);
       setConfirmation({
-        bookingId: bookData.bookingId || clientRef,
+        bookingId: saveData.id || `GR-${Date.now()}`,
         pnr: pnrCode,
-        confirmationNo: bookData.confirmationNo || "",
-        status: "Pending Payment",
+        confirmationNo: confirmationNo || pnrCode,
+        status: demoMode ? "Confirmed" : "Pending Payment",
       });
 
       if (saveToProfile && user) {
@@ -249,7 +267,11 @@ export default function HotelBookingModal({
         }
       }
 
-      setStep("checkout");
+      if (demoMode) {
+        setStep("done");
+      } else {
+        setStep("checkout");
+      }
     } catch (err) {
       setErrorMessage("Something went wrong. Please try again.");
       setStep("error");
@@ -275,6 +297,17 @@ export default function HotelBookingModal({
 
         {step === "form" && (
           <div className="p-6 space-y-5">
+            {/* Demo Mode Banner */}
+            {demoMode && (
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex items-center gap-2">
+                <span className="text-lg">🧪</span>
+                <div>
+                  <p className="text-sm font-semibold text-purple-800">Demo Mode Active</p>
+                  <p className="text-xs text-purple-600">₹500 auto-discount applied • Skip TBO + payment • Booking confirmed instantly</p>
+                </div>
+              </div>
+            )}
+
             {/* Booking Summary */}
             <div className="bg-slate-50 rounded-xl p-4 space-y-2">
               <div className="flex items-start gap-3">

@@ -45,7 +45,7 @@
 | Hotel code architecture | `tbo-hotel-types.ts` (types) → `tbo-hotel-api.ts` (HTTP client) → `tbo-hotel-client.ts` (orchestration) → route | 2026-06-11 |
 | Flight API credentials | Corrected `RasaT` (not `RasaTAPI` as previously used) | 2026-06-11 |
 | Staging environments | 3 Vercel projects (prod, dev, qa) with NEON databases for dev/qa | 2026-06-12 |
-| Staging deployment | GitHub Actions workflows for dev/qa, Vercel Git integration for prod | 2026-06-12 |
+| Staging deployment | GitHub Actions workflows for dev/qa/prod — all auto-deploy on push | 2026-06-15 |
 | Staging database | NEON (gorasa-dev, gorasa-qa) with 28+ tables, 210 rows each | 2026-06-12 |
 | Ticket system RLS | Permissive "Full access" policy (matches Lead table pattern), anon key | 2026-06-12 |
 | Ticket user_id type | TEXT (not UUID) — app uses string IDs from own User table, not Supabase Auth | 2026-06-12 |
@@ -72,7 +72,7 @@
 | User.id is `text` with NO default | Random UUIDs assigned at creation time |
 | Vercel root dir must be `gorasa-next/` | Deploy from repo root or git push only (CLI from subdir fails) |
 | JWT secret may rotate | Service role key must be kept in sync with Supabase dashboard |
-| Git remotes: `neworigin` = prod, `origin` = fork, `old-pipeline` = original pipeline | Push to `neworigin main` to deploy main pipeline; `origin main` for CockroachDB standalone |
+| Git remotes: `origin` = gorasav1 (deploy target), `cockroach` = Gorasa-Cockroach | Push to `origin main` to deploy main pipeline |
 | CI/CD via GitHub Actions | `deploy-dev.yml` and `deploy-qa.yml` for staging environments |
 | Hotel API uses Basic Auth (not TokenId) | `Authorization: Basic base64(TBO_HOTEL_USERNAME:TBO_HOTEL_PASSWORD)` |
 | Hotel test creds have no balance | PreBook returns "Insufficient Balance" — expected with `TBOStaticAPITest` |
@@ -330,7 +330,7 @@ Work completed:
 **Deployment pipeline now fully gated:**
 - Dev → auto-deploy on push to `dev`
 - QA → PR into `qa` → auto-deploy on merge
-- Prod → PR into `main` → merge → manual `workflow_dispatch` → nikjp2021 approval
+- Prod → PR into `main` → auto-deploy on merge
 
 **Commit:** 1a4de24
 

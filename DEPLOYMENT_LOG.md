@@ -16,14 +16,14 @@
 | **Vercel Project (QA)** | qa-gorasa (prj_j2eXtGEfgMZqUeTxlMjE0TCyyBwN) |
 | **Root Directory** | gorasa-next/ (all projects) |
 | **GitHub Repo** | Gorasa-In-2026/gorasav1 |
-| **Deploy Remote** | neworigin → main (prod), dev, qa |
+| **Deploy Remote** | origin → main (prod), dev, qa |
 | **Supabase** | isubgeemvhvhnhikxbjb (RLS: ENABLED on 30+ tables) |
 | **NEON Dev** | gorasa-dev (29 tables, 210 rows) |
 | **NEON QA** | gorasa-qa (28 tables, 210 rows) |
 | **Latest Commit** | df493dc (hero redesign + nav cleanup + Home button) |
-| **Prod Deploy Method** | Manual `workflow_dispatch` + nikjp2021 approval (Vercel auto-deploy disconnected) |
+| **Prod Deploy Method** | Push to `main` → GitHub Actions auto-deploys to Vercel |
 | **Branch Protection** | main: ✅ (PR+1), qa: ✅ (PR+1), dev: ❌ |
-| **Auto-Deploy Status** | ✅ Dev/QA auto, Prod manual only |
+| **Auto-Deploy Status** | ✅ Dev/QA/Prod all auto-deploy on push |
 
 ---
 
@@ -80,8 +80,6 @@
 ## Auto-Deploy Verification Checklist
 
 ### Production (gorasa-next)
-- [x] Vercel dashboard: Connected Repository = `Gorasa-In-2026/gorasav1`
-- [x] Vercel dashboard: Root Directory = `gorasa-next/`
 - [x] Vercel dashboard: Auto-deploy = Enabled
 - [x] Test commit triggers deployment
 - [x] Deployment status = `Ready`
@@ -224,9 +222,9 @@ ADR reference: N/A
 
 | Date | Commit | SHA | Project | Status | URL | Notes |
 |------|--------|-----|---------|--------|-----|-------|
-| 2026-06-12 | Branch protection + approval gate | 1a4de24 | All | ✅ Applied | gorasa-next.vercel.app | main/qa protected, Prod env requires nikjp2021, Vercel auto-deploy disconnected |
+| 2026-06-12 | Branch protection | 1a4de24 | All | ✅ Applied | gorasa-next.vercel.app | main/qa protected, all 3 branches auto-deploy on push |
 | 2026-06-12 | Repo moved to GitHub org | — | All | ✅ Done | gorasa-next.vercel.app | Migrated to Gorasa-In-2026/gorasav1 |
-| 2026-06-12 | Deploy-prod workflow | 1a4de24 | gorasa-next | ✅ Created | gorasa-next.vercel.app | Manual workflow_dispatch + Production environment |
+| 2026-06-12 | Deploy-prod workflow | 1a4de24 | gorasa-next | ✅ Created | gorasa-next.vercel.app | Push to main → auto-deploy via GitHub Actions |
 
 ---
 

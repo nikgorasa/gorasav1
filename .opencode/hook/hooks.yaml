@@ -1,5 +1,22 @@
 hooks:
   # ═══════════════════════════════════════════════════════
+  # COMMAND GUARD — blocks dangerous commands before they run
+  # ═══════════════════════════════════════════════════════
+  # This hook runs before ANY bash command to check if it's safe.
+  # Blocks: vercel deploy, rm .env, git push --force, etc.
+  # See DEPLOY.md for full list of blocked commands.
+  # ═══════════════════════════════════════════════════════
+
+  - event: pre_tool_use
+    scope: main
+    conditions:
+      - tool: bash
+    actions:
+      - bash:
+          command: "bash /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/scripts/command-guard.sh \"${TOOL_INPUT_command}\""
+          timeout: 5000
+
+  # ═══════════════════════════════════════════════════════
   # BRANCH PROTECTION GUARD — NEVER BYPASS
   # ═══════════════════════════════════════════════════════
   # This hook runs on EVERY session start and idle to verify
@@ -67,7 +84,7 @@ hooks:
             echo '=== GoRASA Documentation Check (Strict) ==='
             cd /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main
             MISSING=0
-            for f in CHANGE-LOG.md MEMORY.md LEARNING-FROM-MISTAKES.md DEPLOYMENT_LOG.md CONFIG-REFERENCE.md Sprint-1.md; do
+            for f in DEPLOY.md CHANGE-LOG.md MEMORY.md LEARNING-FROM-MISTAKES.md DEPLOYMENT_LOG.md CONFIG-REFERENCE.md Sprint-1.md; do
               if [ ! -f "$f" ]; then
                 echo "❌ MISSING: $f"
                 MISSING=1
