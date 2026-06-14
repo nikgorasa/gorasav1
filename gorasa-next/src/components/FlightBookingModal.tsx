@@ -7,7 +7,7 @@ import { useDemoMode } from "@/hooks/useDemoMode";
 import {
   X, Loader2, CheckCircle, AlertCircle, Plane,
   MapPin, Calendar, Phone, Mail, User, CreditCard, Clock, Luggage,
-  Tag, Building2, ChevronDown, ChevronUp, Globe
+  Tag, Building2, ChevronDown, ChevronUp, Globe, Zap
 } from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
 
@@ -49,6 +49,7 @@ type BookingStep = "form" | "saving" | "checkout" | "done" | "error";
 export default function FlightBookingModal({
   isOpen, onClose, flight, user, date, passengerCount,
 }: FlightBookingModalProps) {
+  const { demoMode } = useDemoMode();
   const [step, setStep] = useState<BookingStep>("form");
   const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
@@ -67,7 +68,6 @@ export default function FlightBookingModal({
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState("");
   const [discountApplied, setDiscountApplied] = useState(0);
-  const { demoMode } = useDemoMode();
   const [couponCodeUsed, setCouponCodeUsed] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -76,9 +76,9 @@ export default function FlightBookingModal({
   } | null>(null);
 
   const finalPrice = flight.price - discountApplied;
-  const isValid = demoMode
-    ? firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim()
-    : firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && dateOfBirth && gender;
+  const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim();
+
+  const prefilled = firstName && lastName && phone && email;
 
   const resetForm = () => {
     setStep("form");
@@ -94,6 +94,21 @@ export default function FlightBookingModal({
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  const handlePrefill = () => {
+    setFirstName("Rahul");
+    setLastName("Sharma");
+    setPhone("9876543210");
+    setEmail("rahul.sharma@gorasa.in");
+    setDateOfBirth("1992-05-15");
+    setGender("M");
+    setPan("ABCRS1234F");
+    setPassportNo("A1234567");
+    setPassportExpiry("2030-12-31");
+    setNationality("Indian");
+    setGstNumber("27AABCR1234M1Z5");
+    setGstCompanyName("GoRASA Travel Services");
   };
 
   const handleApplyPromo = async () => {
@@ -135,31 +150,26 @@ export default function FlightBookingModal({
     try {
       const pnrCode = `GR${Date.now().toString(36).toUpperCase()}`;
 
-      const demoDiscount = demoMode ? 500 : 0;
-      const demoFinalPrice = flight.price - discountApplied - demoDiscount;
-      const bookingStatus = demoMode ? "CONFIRMED" : "PENDING";
-
       const saveRes = await fetch("/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-user-email": user.email,
-          ...(demoMode ? { "x-demo-mode": "true" } : {}),
         },
         body: JSON.stringify({
           type: "FLIGHT",
           itemName: `${flight.airline} • ${flight.origin} → ${flight.destination}`,
           providerOrAirline: flight.airline,
-          price: demoMode ? demoFinalPrice : finalPrice,
+          price: finalPrice,
           originalPrice: flight.price,
-          discountApplied: discountApplied + demoDiscount,
-          couponCodeUsed: demoMode ? "DEMO500" : (couponCodeUsed || undefined),
+          discountApplied,
+          couponCodeUsed: couponCodeUsed || undefined,
           pnr: pnrCode,
           seatOrRoom: flight.tier,
           paxCount: passengerCount,
           travelDates: { departure: date || "TBD" },
           leadGuestPan: pan || undefined,
-          status: bookingStatus,
+          status: "PENDING",
           gstNumber: showGstFields ? gstNumber || undefined : undefined,
           gstCompanyName: showGstFields ? gstCompanyName || undefined : undefined,
         }),
@@ -171,14 +181,8 @@ export default function FlightBookingModal({
 
       const saveData = await saveRes.json();
       setBookingId(saveData.id);
-
-      if (demoMode) {
-        setConfirmation({ pnr: pnrCode, status: "Confirmed" });
-        setStep("done");
-      } else {
-        setConfirmation({ pnr: pnrCode, status: "Pending Payment" });
-        setStep("checkout");
-      }
+      setConfirmation({ pnr: pnrCode, status: "Pending Payment" });
+      setStep("checkout");
     } catch {
       setErrorMessage("Something went wrong. Please try again.");
       setStep("error");
@@ -211,13 +215,33 @@ export default function FlightBookingModal({
           <div className="p-6 space-y-5">
             {/* Demo Mode Banner */}
             {demoMode && (
-              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex items-center gap-2">
-                <span className="text-lg">🧪</span>
-                <div>
-                  <p className="text-sm font-semibold text-purple-800">Demo Mode Active</p>
-                  <p className="text-xs text-purple-600">₹500 auto-discount applied • Skip payment • Booking confirmed instantly</p>
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🧪</span>
+                  <div>
+                    <p className="text-sm font-semibold text-purple-800">Demo Mode</p>
+                    <p className="text-xs text-purple-600">Use code DEMO500 for ₹500 off • Corporate rates auto-applied</p>
+                  </div>
                 </div>
+                <button
+                  onClick={handlePrefill}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 cursor-pointer"
+                >
+                  <Zap size={12} />
+                  Fill Demo Data
+                </button>
               </div>
+            )}
+
+            {/* Prefill button (always visible) */}
+            {!demoMode && !prefilled && (
+              <button
+                onClick={handlePrefill}
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 cursor-pointer"
+              >
+                <Zap size={14} />
+                Quick Fill Demo Data
+              </button>
             )}
 
             {/* Booking Summary */}
@@ -243,13 +267,35 @@ export default function FlightBookingModal({
                   <Calendar size={12} />{date}
                 </div>
               )}
-              <div className="pt-2 border-t border-blue-200 flex justify-between items-center">
-                <span className="text-sm text-slate-600">Total</span>
-                <div className="text-right">
-                  {discountApplied > 0 && (
-                    <span className="text-xs text-slate-400 line-through mr-2">{formatCurrency(flight.price)}</span>
-                  )}
-                  <span className="font-black font-mono text-lg text-blue-700">{formatCurrency(finalPrice)}</span>
+              <div className="pt-2 border-t border-blue-200 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Base Fare ({passengerCount} pax)</span>
+                  <span className="text-slate-900">{formatCurrency(flight.baseFare || flight.price)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Taxes & Surcharges</span>
+                  <span className="text-slate-900">{formatCurrency(flight.tax || 0)}</span>
+                </div>
+                {discountApplied > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600">Discount ({couponCodeUsed})</span>
+                    <span className="text-green-600">-{formatCurrency(discountApplied)}</span>
+                  </div>
+                )}
+                {demoMode && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-600">Demo Discount</span>
+                    <span className="text-purple-600">-{formatCurrency(500)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-1 border-t border-blue-200">
+                  <span className="font-bold text-slate-900">Total</span>
+                  <div className="text-right">
+                    {discountApplied > 0 && (
+                      <span className="text-xs text-slate-400 line-through mr-2">{formatCurrency(flight.price)}</span>
+                    )}
+                    <span className="font-black font-mono text-lg text-blue-700">{formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -263,7 +309,7 @@ export default function FlightBookingModal({
                   <input
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                    placeholder="Enter promo code"
+                    placeholder={demoMode ? "DEMO500" : "Enter promo code"}
                     disabled={!!couponCodeUsed}
                     className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm disabled:opacity-50"
                   />
@@ -425,7 +471,7 @@ export default function FlightBookingModal({
               className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
               <CreditCard size={18} />
-              Confirm Booking – {formatCurrency(finalPrice)}
+              Confirm Booking – {formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}
             </button>
           </div>
         )}
@@ -465,15 +511,21 @@ export default function FlightBookingModal({
                   <span className="text-sm font-bold text-green-600">-{formatCurrency(discountApplied)}</span>
                 </div>
               )}
+              {demoMode && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-purple-600">Demo Discount</span>
+                  <span className="text-sm font-bold text-purple-600">-{formatCurrency(500)}</span>
+                </div>
+              )}
               <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
                 <span className="text-xs text-slate-500">Amount to Pay</span>
-                <span className="text-sm font-black font-mono text-blue-700">{formatCurrency(finalPrice)}</span>
+                <span className="text-sm font-black font-mono text-blue-700">{formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}</span>
               </div>
             </div>
 
             <CheckoutButton
               bookingId={bookingId}
-              amount={finalPrice}
+              amount={demoMode ? finalPrice - 500 : finalPrice}
               userEmail={email}
             />
 

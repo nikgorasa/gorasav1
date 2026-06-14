@@ -131,7 +131,7 @@ gh workflow run deploy-qa.yml --ref qa
 
 **Organization:** `org-square-dawn-72979786` (Gorasa)
 
-**Neon API Key:** `[REDACTED - get from Neon dashboard]`
+**Neon API Key:** See `.secrets.local` (gitignored)
 
 ### Password Rotation
 

@@ -8,3 +8,4 @@ dist
 .env*
 # Example files — should never contain real credentials
 scripts/*.example
+.secrets.local

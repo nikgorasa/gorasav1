@@ -7,7 +7,7 @@ import { useDemoMode } from "@/hooks/useDemoMode";
 import {
   X, Loader2, CheckCircle, AlertCircle, Building2,
   Bed, MapPin, Calendar, Phone, Mail, User, CreditCard,
-  Tag, ChevronDown, ChevronUp, Globe, Home
+  Tag, ChevronDown, ChevronUp, Globe, Home, Zap
 } from "lucide-react";
 import type { TBODisplayHotel, TBODisplayRoom } from "@/lib/tbo-hotel-types";
 import CheckoutButton from "./CheckoutButton";
@@ -31,6 +31,7 @@ export default function HotelBookingModal({
   isOpen, onClose, hotel, room, sessionId, user, location,
   checkIn, checkOut, guestCount,
 }: HotelBookingModalProps) {
+  const { demoMode } = useDemoMode();
   const [step, setStep] = useState<BookingStep>("form");
   const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
@@ -55,13 +56,12 @@ export default function HotelBookingModal({
   const [confirmation, setConfirmation] = useState<{
     bookingId: string; pnr: string; confirmationNo: string; status: string;
   } | null>(null);
-  const { demoMode } = useDemoMode();
 
   const isInternational = hotel.hotelCode >= 10000000;
   const finalPrice = room.totalFare - discountApplied;
-  const isValid = demoMode
-    ? firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim()
-    : firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan.trim().toUpperCase());
+  const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim();
+
+  const prefilled = firstName && lastName && phone && email && pan;
 
   const resetForm = () => {
     setStep("form");
@@ -77,6 +77,20 @@ export default function HotelBookingModal({
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  const handlePrefill = () => {
+    setFirstName("Priya");
+    setLastName("Patel");
+    setPhone("9876543210");
+    setEmail("priya.patel@gorasa.in");
+    setPan("BDAPP1234K");
+    setAddressLine1("456 Corporate Tower, BKC");
+    setAddressCity("Mumbai");
+    setPassportNo("B9876543");
+    setPassportExpiry("2032-06-30");
+    setGstNumber("27AADCB2230M1ZT");
+    setGstCompanyName("GoRASA Corporate Travels");
   };
 
   const handleApplyPromo = async () => {
@@ -116,115 +130,104 @@ export default function HotelBookingModal({
     setStep("blocking");
 
     try {
-      const demoDiscount = demoMode ? 500 : 0;
-      const demoFinalPrice = room.totalFare - discountApplied - demoDiscount;
-      const bookingStatus = demoMode ? "CONFIRMED" : "PENDING";
+      const blockRes = await fetch("/api/tbo-hotels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "block",
+          sessionId,
+          resultIndex: hotel.resultIndex,
+          hotelCode: hotel.hotelCode,
+          hotelName: hotel.name,
+          room,
+        }),
+      });
 
-      let pnrCode: string;
-      let confirmationNo = "";
+      const blockData = await blockRes.json();
 
-      if (demoMode) {
-        pnrCode = `GR-${Date.now()}`;
-      } else {
-        const blockRes = await fetch("/api/tbo-hotels", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "block",
-            sessionId,
-            resultIndex: hotel.resultIndex,
-            hotelCode: hotel.hotelCode,
-            hotelName: hotel.name,
-            room,
-          }),
-        });
+      if (!blockData.success) {
+        setErrorMessage("Price could not be verified. Please try again.");
+        setStep("error");
+        return;
+      }
 
-        const blockData = await blockRes.json();
-
-        if (!blockData.success) {
-          setErrorMessage("Price could not be verified. Please try again.");
-          setStep("error");
+      if (blockData.isPriceChanged) {
+        const proceed = window.confirm(
+          "The room price has changed. The new total is shown in the booking summary. Do you want to proceed?"
+        );
+        if (!proceed) {
+          setStep("form");
           return;
         }
+      }
 
-        if (blockData.isPriceChanged) {
-          const proceed = window.confirm(
-            "The room price has changed. The new total is shown in the booking summary. Do you want to proceed?"
-          );
-          if (!proceed) {
-            setStep("form");
-            return;
-          }
-        }
+      setStep("book-confirming");
 
-        setStep("book-confirming");
+      const clientRef = `GR-${Date.now()}`;
 
-        const bookReqPayload = {
-          action: "book",
-          bookingCode: blockData.bookingCode,
-          guestNationality: "IN",
-          netAmount: room.totalFare,
-          hotelRoomsDetails: [{
-            passengers: [{
-              title: "Mr",
-              firstName: firstName.trim(),
-              lastName: lastName.trim(),
-              paxType: 1,
-              leadPassenger: true,
-              age: 30,
-              email: email.trim(),
-              phone: phone.trim(),
-              pan: pan.trim().toUpperCase(),
-              passportNo: isInternational ? passportNo || undefined : undefined,
-              passportExpiry: isInternational ? passportExpiry || undefined : undefined,
-              addressLine1: addressLine1 || undefined,
-              city: addressCity || location,
-              countryCode: "IN",
-              nationality: "IN",
-            }]
+      const bookReqPayload = {
+        action: "book",
+        bookingCode: blockData.bookingCode,
+        guestNationality: "IN",
+        netAmount: room.totalFare,
+        hotelRoomsDetails: [{
+          passengers: [{
+            title: "Mr",
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            paxType: 1,
+            leadPassenger: true,
+            age: 30,
+            email: email.trim(),
+            phone: phone.trim(),
+            pan: pan.trim().toUpperCase(),
+            passportNo: isInternational ? passportNo || undefined : undefined,
+            passportExpiry: isInternational ? passportExpiry || undefined : undefined,
+            addressLine1: addressLine1 || undefined,
+            city: addressCity || location,
+            countryCode: "IN",
+            nationality: "IN",
           }]
-        };
+        }]
+      };
 
-        const bookRes = await fetch("/api/tbo-hotels", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(bookReqPayload),
-        });
+      const bookRes = await fetch("/api/tbo-hotels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookReqPayload),
+      });
 
-        const bookData = await bookRes.json();
+      const bookData = await bookRes.json();
 
-        if (!bookData.success) {
-          setErrorMessage("Booking confirmation failed. Please try again.");
-          setStep("error");
-          return;
-        }
-
-        pnrCode = bookData.confirmationNo || `GR-${Date.now()}`;
-        confirmationNo = bookData.confirmationNo || "";
+      if (!bookData.success) {
+        setErrorMessage("Booking confirmation failed. Please try again.");
+        setStep("error");
+        return;
       }
 
       setStep("saving");
+
+      const pnrCode = bookData.confirmationNo || clientRef;
 
       const saveRes = await fetch("/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-user-email": user.email,
-          ...(demoMode ? { "x-demo-mode": "true" } : {}),
         },
         body: JSON.stringify({
           type: "HOTEL",
           itemName: hotel.name,
           providerOrAirline: "GoRASA",
-          price: demoMode ? demoFinalPrice : finalPrice,
+          price: finalPrice,
           originalPrice: room.totalFare,
-          discountApplied: discountApplied + demoDiscount,
-          couponCodeUsed: demoMode ? "DEMO500" : (couponCodeUsed || undefined),
+          discountApplied,
+          couponCodeUsed: couponCodeUsed || undefined,
           pnr: pnrCode,
           seatOrRoom: room.name,
           paxCount: guestCount,
           travelDates: { checkIn, checkOut },
-          status: bookingStatus,
+          status: "PENDING",
           leadGuestPan: pan.trim().toUpperCase(),
           gstNumber: showGstFields ? gstNumber || undefined : undefined,
           gstCompanyName: showGstFields ? gstCompanyName || undefined : undefined,
@@ -239,10 +242,10 @@ export default function HotelBookingModal({
 
       setBookingId(saveData.id);
       setConfirmation({
-        bookingId: saveData.id || `GR-${Date.now()}`,
+        bookingId: bookData.bookingId || clientRef,
         pnr: pnrCode,
-        confirmationNo: confirmationNo || pnrCode,
-        status: demoMode ? "Confirmed" : "Pending Payment",
+        confirmationNo: bookData.confirmationNo || "",
+        status: "Pending Payment",
       });
 
       if (saveToProfile && user) {
@@ -267,11 +270,7 @@ export default function HotelBookingModal({
         }
       }
 
-      if (demoMode) {
-        setStep("done");
-      } else {
-        setStep("checkout");
-      }
+      setStep("checkout");
     } catch (err) {
       setErrorMessage("Something went wrong. Please try again.");
       setStep("error");
@@ -299,13 +298,33 @@ export default function HotelBookingModal({
           <div className="p-6 space-y-5">
             {/* Demo Mode Banner */}
             {demoMode && (
-              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex items-center gap-2">
-                <span className="text-lg">🧪</span>
-                <div>
-                  <p className="text-sm font-semibold text-purple-800">Demo Mode Active</p>
-                  <p className="text-xs text-purple-600">₹500 auto-discount applied • Skip TBO + payment • Booking confirmed instantly</p>
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🧪</span>
+                  <div>
+                    <p className="text-sm font-semibold text-purple-800">Demo Mode</p>
+                    <p className="text-xs text-purple-600">Use code DEMO500 for ₹500 off • Corporate rates auto-applied</p>
+                  </div>
                 </div>
+                <button
+                  onClick={handlePrefill}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 cursor-pointer"
+                >
+                  <Zap size={12} />
+                  Fill Demo Data
+                </button>
               </div>
+            )}
+
+            {/* Prefill button (always visible) */}
+            {!demoMode && !prefilled && (
+              <button
+                onClick={handlePrefill}
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 cursor-pointer"
+              >
+                <Zap size={14} />
+                Quick Fill Demo Data
+              </button>
             )}
 
             {/* Booking Summary */}
@@ -329,13 +348,32 @@ export default function HotelBookingModal({
                   ✓ {room.mealType.replace("_", " ")} included
                 </p>
               )}
-              <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-                <span className="text-sm text-slate-600">Total</span>
-                <div className="text-right">
-                  {discountApplied > 0 && (
-                    <span className="text-xs text-slate-400 line-through mr-2">{formatCurrency(room.totalFare)}</span>
-                  )}
-                  <span className="font-black font-mono text-lg text-emerald-700">{formatCurrency(finalPrice)}</span>
+              <div className="pt-2 border-t border-slate-200 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Room Fare</span>
+                  <span className="text-slate-900">{formatCurrency(room.roomFare || room.totalFare)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Taxes & Fees</span>
+                  <span className="text-slate-900">{formatCurrency(room.roomTax)}</span>
+                </div>
+                {discountApplied > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600">Discount ({couponCodeUsed})</span>
+                    <span className="text-green-600">-{formatCurrency(discountApplied)}</span>
+                  </div>
+                )}
+                {demoMode && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-600">Demo Discount</span>
+                    <span className="text-purple-600">-{formatCurrency(500)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-1 border-t border-slate-200">
+                  <span className="font-bold text-slate-900">Total per night</span>
+                  <div className="text-right">
+                    <span className="font-black font-mono text-lg text-emerald-700">{formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -349,7 +387,7 @@ export default function HotelBookingModal({
                   <input
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                    placeholder="Enter promo code"
+                    placeholder={demoMode ? "DEMO500" : "Enter promo code"}
                     disabled={!!couponCodeUsed}
                     className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm disabled:opacity-50"
                   />
@@ -402,9 +440,6 @@ export default function HotelBookingModal({
                 />
               </div>
               <p className="text-[10px] text-slate-400 mt-1">Required for Indian hotel bookings (e.g. ABCDE1234F)</p>
-              {pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan.trim().toUpperCase()) && (
-                <p className="text-[10px] text-red-500 mt-1">Invalid PAN format. Expected: 5 letters + 4 digits + 1 letter</p>
-              )}
             </div>
 
             {/* Passport (International Hotels) */}
@@ -525,7 +560,7 @@ export default function HotelBookingModal({
               className="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
               <CreditCard size={18} />
-              Confirm Booking – {formatCurrency(finalPrice)}
+              Confirm Booking – {formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}
             </button>
           </div>
         )}
@@ -577,15 +612,21 @@ export default function HotelBookingModal({
                   <span className="text-sm font-bold text-green-600">-{formatCurrency(discountApplied)}</span>
                 </div>
               )}
+              {demoMode && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-purple-600">Demo Discount</span>
+                  <span className="text-sm font-bold text-purple-600">-{formatCurrency(500)}</span>
+                </div>
+              )}
               <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
                 <span className="text-xs text-slate-500">Amount to Pay</span>
-                <span className="text-sm font-black font-mono text-emerald-700">{formatCurrency(finalPrice)}</span>
+                <span className="text-sm font-black font-mono text-emerald-700">{formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}</span>
               </div>
             </div>
 
             <CheckoutButton
               bookingId={bookingId}
-              amount={finalPrice}
+              amount={demoMode ? finalPrice - 500 : finalPrice}
               userEmail={email}
             />
 
