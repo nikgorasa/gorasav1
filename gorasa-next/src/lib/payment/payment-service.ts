@@ -1,12 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import { PAYMENT_CONFIG } from "./config";
 import * as razorpay from "./razorpay-client";
 import * as phonepe from "./phonepe-client";
 import type { CheckoutResponse, WebhookResult, PaymentStatus, RefundResult } from "./types";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function createCheckout(params: {
   bookingId: string;
@@ -14,45 +10,36 @@ export async function createCheckout(params: {
   gateway: "razorpay" | "phonepe";
   userEmail: string;
 }): Promise<CheckoutResponse> {
-  const { data: booking, error: bookingError } = await supabase
-    .from("Booking")
-    .select("*")
-    .eq("id", params.bookingId)
-    .single();
+  const booking = await prisma.booking.findUnique({
+    where: { id: params.bookingId },
+  });
 
-  if (bookingError || !booking) {
+  if (!booking) {
     throw new Error("Booking not found");
   }
 
-  const { data: existingPayment } = await supabase
-    .from("Payment")
-    .select("*")
-    .eq("bookingId", params.bookingId)
-    .single();
+  const existingPayment = await prisma.payment.findFirst({
+    where: { bookingId: params.bookingId },
+    orderBy: { createdAt: "desc" },
+  });
 
   if (existingPayment && existingPayment.status === "COMPLETED") {
     throw new Error("Payment already completed");
   }
 
   if (existingPayment) {
-    await supabase.from("Payment").delete().eq("id", existingPayment.id);
+    await prisma.payment.delete({ where: { id: existingPayment.id } });
   }
 
-  const { data: payment, error: paymentError } = await supabase
-    .from("Payment")
-    .insert({
+  const payment = await prisma.payment.create({
+    data: {
       bookingId: params.bookingId,
       amount: params.amount,
       method: params.gateway,
       status: "PENDING",
       gateway: params.gateway,
-    })
-    .select()
-    .single();
-
-  if (paymentError) {
-    throw new Error("Failed to create payment record");
-  }
+    },
+  });
 
   let checkoutUrl: string;
   let orderId: string;
@@ -77,10 +64,10 @@ export async function createCheckout(params: {
     orderId = result.id;
   }
 
-  await supabase
-    .from("Payment")
-    .update({ orderId })
-    .eq("id", payment.id);
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: { orderId },
+  });
 
   return { checkoutUrl, orderId };
 }
@@ -98,33 +85,31 @@ export async function handleRazorpayWebhook(params: {
     }
   }
 
-  const { data: payment } = await supabase
-    .from("Payment")
-    .select("*")
-    .eq("orderId", params.orderId)
-    .single();
+  const payment = await prisma.payment.findFirst({
+    where: { orderId: params.orderId },
+  });
 
   if (!payment) {
     throw new Error("Payment not found for order: " + params.orderId);
   }
 
-  await supabase
-    .from("Payment")
-    .update({
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: {
       status: "COMPLETED",
       paymentId: params.paymentId,
       signature: params.signature,
-    })
-    .eq("id", payment.id);
+    },
+  });
 
-  await supabase
-    .from("Booking")
-    .update({
+  await prisma.booking.update({
+    where: { id: payment.bookingId },
+    data: {
       paymentStatus: "COMPLETED",
       status: "CONFIRMED",
-      confirmedAt: new Date().toISOString(),
-    })
-    .eq("id", payment.bookingId);
+      confirmedAt: new Date(),
+    },
+  });
 
   return { success: true, bookingId: payment.bookingId, paymentId: params.paymentId };
 }
@@ -134,73 +119,68 @@ export async function handlePhonePeWebhook(params: {
   state: string;
   payload: any;
 }): Promise<WebhookResult> {
-  const { data: payment } = await supabase
-    .from("Payment")
-    .select("*")
-    .eq("id", params.transactionId)
-    .single();
+  const payment = await prisma.payment.findUnique({
+    where: { id: params.transactionId },
+  });
 
   if (!payment) {
     throw new Error("Payment not found: " + params.transactionId);
   }
 
   if (params.state === "COMPLETED") {
-    await supabase
-      .from("Payment")
-      .update({
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: {
         status: "COMPLETED",
         paymentId: params.transactionId,
         metadata: params.payload,
-      })
-      .eq("id", payment.id);
+      },
+    });
 
-    await supabase
-      .from("Booking")
-      .update({
+    await prisma.booking.update({
+      where: { id: payment.bookingId },
+      data: {
         paymentStatus: "COMPLETED",
         status: "CONFIRMED",
-        confirmedAt: new Date().toISOString(),
-      })
-      .eq("id", payment.bookingId);
+        confirmedAt: new Date(),
+      },
+    });
 
     return { success: true, bookingId: payment.bookingId };
   }
 
-  await supabase
-    .from("Payment")
-    .update({
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: {
       status: "FAILED",
       failureReason: `PhonePe state: ${params.state}`,
-    })
-    .eq("id", payment.id);
+    },
+  });
 
-  await supabase
-    .from("Booking")
-    .update({ paymentStatus: "FAILED" })
-    .eq("id", payment.bookingId);
+  await prisma.booking.update({
+    where: { id: payment.bookingId },
+    data: { paymentStatus: "FAILED" },
+  });
 
   return { success: false, bookingId: payment.bookingId };
 }
 
 export async function getPaymentStatus(bookingId: string): Promise<PaymentStatus> {
-  const { data: payment } = await supabase
-    .from("Payment")
-    .select("*")
-    .eq("bookingId", bookingId)
-    .order("createdAt", { ascending: false })
-    .limit(1)
-    .single();
+  const payment = await prisma.payment.findFirst({
+    where: { bookingId },
+    orderBy: { createdAt: "desc" },
+  });
 
   if (!payment) {
     return { status: "PENDING", amount: 0, gateway: "razorpay", createdAt: "" };
   }
 
   return {
-    status: payment.status,
+    status: payment.status as "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "REFUNDED",
     amount: payment.amount,
     gateway: payment.gateway,
-    paymentId: payment.paymentId,
-    createdAt: payment.createdAt,
+    paymentId: payment.paymentId ?? undefined,
+    createdAt: payment.createdAt?.toISOString() || "",
   };
 }
 
@@ -208,11 +188,9 @@ export async function processRefund(
   paymentId: string,
   amount?: number
 ): Promise<RefundResult> {
-  const { data: payment } = await supabase
-    .from("Payment")
-    .select("*")
-    .eq("id", paymentId)
-    .single();
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+  });
 
   if (!payment) {
     throw new Error("Payment not found");
@@ -222,21 +200,25 @@ export async function processRefund(
     throw new Error("Can only refund completed payments");
   }
 
+  if (!payment.paymentId) {
+    throw new Error("No gateway payment ID for refund");
+  }
+
   const refund = await razorpay.createRefund(payment.paymentId, amount);
 
-  await supabase
-    .from("Payment")
-    .update({
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: {
       status: "REFUNDED",
-      refundedAt: new Date().toISOString(),
+      refundedAt: new Date(),
       refundAmount: amount || payment.amount,
-    })
-    .eq("id", paymentId);
+    },
+  });
 
-  await supabase
-    .from("Booking")
-    .update({ paymentStatus: "REFUNDED" })
-    .eq("id", payment.bookingId);
+  await prisma.booking.update({
+    where: { id: payment.bookingId },
+    data: { paymentStatus: "REFUNDED" },
+  });
 
   return { success: true, refundId: refund.id, amount: amount || payment.amount };
 }

@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const { data: rules, error } = await supabase
-    .from("PricingRule")
-    .select("*")
-    .order("priority", { ascending: false });
-
-  if (error) {
+  try {
+    const rules = await prisma.pricingRule.findMany({
+      orderBy: { priority: "desc" },
+    });
+    return NextResponse.json(rules);
+  } catch {
     return NextResponse.json({ error: "Failed to fetch pricing rules" }, { status: 500 });
   }
-
-  return NextResponse.json(rules);
 }
 
 export async function POST(request: NextRequest) {
@@ -35,9 +28,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: rule, error } = await supabase
-      .from("PricingRule")
-      .insert({
+    const rule = await prisma.pricingRule.create({
+      data: {
+        markupPercent: 0,
         name,
         type,
         category: category || "ALL",
@@ -53,16 +46,11 @@ export async function POST(request: NextRequest) {
         isActive: isActive !== false,
         validFrom: validFrom || null,
         validTo: validTo || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to create pricing rule" }, { status: 500 });
-    }
+      },
+    });
 
     return NextResponse.json(rule, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }

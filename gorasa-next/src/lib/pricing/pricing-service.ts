@@ -1,10 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import type { PricingContext, PricingResult, PromoValidation, CorporateDiscount } from "./types";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 let rulesCache: any[] | null = null;
 let rulesCacheTime = 0;
@@ -16,20 +11,18 @@ async function getActiveRules(): Promise<any[]> {
     return rulesCache;
   }
 
-  const { data, error } = await supabase
-    .from("PricingRule")
-    .select("*")
-    .eq("isActive", true)
-    .order("priority", { ascending: false });
-
-  if (error) {
+  try {
+    const rules = await prisma.pricingRule.findMany({
+      where: { isActive: true },
+      orderBy: { priority: "desc" },
+    });
+    rulesCache = rules;
+    rulesCacheTime = now;
+    return rulesCache;
+  } catch (error) {
     console.error("Failed to fetch pricing rules:", error);
     return rulesCache || [];
   }
-
-  rulesCache = data || [];
-  rulesCacheTime = now;
-  return rulesCache;
 }
 
 function matchesRule(rule: any, ctx: PricingContext): boolean {
@@ -126,14 +119,11 @@ export async function validatePromoCode(
   category: string,
   userId: string
 ): Promise<PromoValidation> {
-  const { data: promo, error } = await supabase
-    .from("PromoCode")
-    .select("*")
-    .eq("code", code.toUpperCase())
-    .eq("isActive", true)
-    .single();
+  const promo = await prisma.promoCode.findFirst({
+    where: { code: code.toUpperCase(), isActive: true },
+  });
 
-  if (error || !promo) {
+  if (!promo) {
     return { valid: false, discountAmount: 0, finalPrice: bookingAmount, error: "Invalid promo code" };
   }
 
@@ -168,11 +158,10 @@ export async function validatePromoCode(
   }
 
   if (promo.isFirstBooking) {
-    const { count } = await supabase
-      .from("Booking")
-      .select("*", { count: "exact", head: true })
-      .eq("userId", userId);
-    if (count && count > 0) {
+    const count = await prisma.booking.count({
+      where: { userId },
+    });
+    if (count > 0) {
       return {
         valid: false,
         discountAmount: 0,
@@ -183,7 +172,7 @@ export async function validatePromoCode(
   }
 
   let discount = 0;
-  if (promo.type === "flat" || promo.discountType === "FLAT") {
+  if (promo.type === "flat" || promo.type === "FLAT") {
     discount = promo.discountValue;
   } else {
     discount = Math.round(bookingAmount * (promo.discountValue / 100));
@@ -194,10 +183,10 @@ export async function validatePromoCode(
 
   discount = Math.min(discount, bookingAmount);
 
-  await supabase
-    .from("PromoCode")
-    .update({ usedCount: (promo.usedCount || 0) + 1 })
-    .eq("id", promo.id);
+  await prisma.promoCode.update({
+    where: { id: promo.id },
+    data: { usedCount: (promo.usedCount || 0) + 1 },
+  });
 
   return {
     valid: true,
@@ -216,14 +205,12 @@ export async function getCorporateDiscount(
     return { discountAmount: 0, finalPrice: bookingAmount, ruleName: null };
   }
 
-  const { data: rates, error } = await supabase
-    .from("CorporateRate")
-    .select("*")
-    .eq("companyId", companyId)
-    .eq("isActive", true)
-    .order("discountValue", { ascending: false });
+  const rates = await prisma.corporateRate.findMany({
+    where: { companyId, isActive: true },
+    orderBy: { discountValue: "desc" },
+  });
 
-  if (error || !rates || rates.length === 0) {
+  if (!rates || rates.length === 0) {
     return { discountAmount: 0, finalPrice: bookingAmount, ruleName: null };
   }
 

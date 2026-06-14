@@ -1,27 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import { createCheckout } from "../../payment-service";
 import { PAYMENT_CONFIG } from "../../config";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-async function getUserFromRequest(request: Request) {
-  const userEmail = request.headers.get("x-user-email");
-  if (!userEmail) return null;
-  const { data: dbUser } = await supabase
-    .from("User")
-    .select("*")
-    .eq("email", userEmail)
-    .single();
-  return dbUser;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
+    const userEmail = request.headers.get("x-user-email");
+    if (!userEmail) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: userEmail } });
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -35,11 +24,10 @@ export async function POST(request: NextRequest) {
 
     const selectedGateway = gateway || PAYMENT_CONFIG.gateway;
 
-    const { data: booking } = await supabase
-      .from("Booking")
-      .select("price")
-      .eq("id", bookingId)
-      .single();
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { price: true },
+    });
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
