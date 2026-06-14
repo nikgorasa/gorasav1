@@ -1,5 +1,28 @@
 hooks:
   # ═══════════════════════════════════════════════════════
+  # BRANCH PROTECTION GUARD — NEVER BYPASS
+  # ═══════════════════════════════════════════════════════
+  # This hook runs on EVERY session start and idle to verify
+  # that main and qa branch protection is active.
+  # NEVER remove branch protection. Use PRs for all merges.
+  # If protection is missing, run: bash scripts/restore-protection.sh
+  # ═══════════════════════════════════════════════════════
+
+  - event: session.start
+    scope: main
+    actions:
+      - bash:
+          command: "echo '═══ BRANCH PROTECTION GUARD ═══' && bash /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/scripts/branch-protection-guard.sh --check-all"
+          timeout: 30000
+
+  - event: session.idle
+    scope: main
+    actions:
+      - bash:
+          command: "bash /home/nikhil/Downloads/Gorasa/App-1/rasa-zero-app-main/scripts/branch-protection-guard.sh --check-all"
+          timeout: 30000
+
+  # ═══════════════════════════════════════════════════════
   # SESSION START — Pre-Flight Check (COMPULSORY)
   # ═══════════════════════════════════════════════════════
   - event: session.start
