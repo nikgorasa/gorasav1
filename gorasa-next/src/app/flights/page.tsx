@@ -16,7 +16,9 @@ import Link from "next/link";
 interface Flight {
   id: string;
   airline: string;
+  airlineCode: string;
   flightNumber: string;
+  operatingCarrier: string;
   origin: string;
   destination: string;
   departureTime: string;
@@ -25,6 +27,15 @@ interface Flight {
   stops: number;
   price: number;
   tier: string;
+  baggage?: string;
+  cabinBaggage?: string;
+  isRefundable?: boolean;
+  isLCC?: boolean;
+  penalty?: string;
+  baseFare?: number;
+  tax?: number;
+  yqTax?: number;
+  lastTicketDate?: string;
 }
 
 const CABIN_OPTIONS = ["Economy", "Premium Economy", "Business", "First"] as const;
@@ -103,7 +114,9 @@ export default function FlightsPage() {
       const flights = (data.flights || []).map((f: any) => ({
         id: f.resultIndex || `${f.airline}-${f.flightNumber}`,
         airline: f.airline,
+        airlineCode: f.airlineCode || "",
         flightNumber: f.flightNumber,
+        operatingCarrier: f.operatingCarrier || "",
         origin: f.origin,
         destination: f.destination,
         departureTime: f.departureTime,
@@ -112,6 +125,15 @@ export default function FlightsPage() {
         stops: f.stops || 0,
         price: f.publishedFare || f.baseFare || 0,
         tier: f.cabinClass || "Economy",
+        baggage: f.baggage || "",
+        cabinBaggage: f.cabinBaggage || "7 KG",
+        isRefundable: f.isRefundable ?? false,
+        isLCC: f.isLCC ?? false,
+        penalty: f.penalty || "",
+        baseFare: f.baseFare || 0,
+        tax: f.tax || 0,
+        yqTax: f.yqTax || 0,
+        lastTicketDate: f.lastTicketDate || "",
       }));
       setResults(flights);
       setSearched(true);

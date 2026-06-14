@@ -40,6 +40,12 @@ export default function TripsPage() {
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [cancelResult, setCancelResult] = useState<{
+    refundAmount?: number;
+    cancellationFee?: number;
+    refundPercentage?: number;
+  } | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -62,6 +68,7 @@ export default function TripsPage() {
     switch (status) {
       case "CONFIRMED": return "bg-green-100 text-green-700";
       case "CANCELLED": return "bg-red-100 text-red-700";
+      case "CANCELLATION_REQUESTED": return "bg-orange-100 text-orange-700";
       case "PENDING": return "bg-yellow-100 text-yellow-700";
       default: return "bg-slate-100 text-slate-700";
     }
@@ -327,15 +334,28 @@ export default function TripsPage() {
                       {formatCurrency(selectedBooking.price)}
                     </p>
                   </div>
-                  {selectedBooking.status === "CONFIRMED" && !cancelSuccess && (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={cancelReason}
-                        onChange={(e) => setCancelReason(e.target.value)}
-                        placeholder="Reason for cancellation..."
-                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                      />
+                  {selectedBooking.status === "CONFIRMED" && !cancelSuccess && !showCancelConfirm && (
+                    <button
+                      onClick={() => setShowCancelConfirm(true)}
+                      className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-medium hover:bg-red-100 cursor-pointer"
+                    >
+                      Cancel Booking
+                    </button>
+                  )}
+                </div>
+
+                {showCancelConfirm && !cancelSuccess && (
+                  <div className="mt-4 p-4 bg-red-50 rounded-xl space-y-3">
+                    <p className="text-sm font-medium text-red-800">Are you sure you want to cancel this booking?</p>
+                    <p className="text-xs text-red-600">Refund will be processed based on cancellation policy.</p>
+                    <input
+                      type="text"
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      placeholder="Reason for cancellation..."
+                      className="w-full px-4 py-2 bg-white border border-red-200 rounded-xl text-sm"
+                    />
+                    <div className="flex gap-2">
                       <button
                         onClick={async () => {
                           if (!cancelReason || !user) return;
@@ -347,9 +367,11 @@ export default function TripsPage() {
                               body: JSON.stringify({ bookingId: selectedBooking.id, userId: user.id, reason: cancelReason }),
                             });
                             if (res.ok) {
+                              const data = await res.json();
+                              setCancelResult(data);
                               setCancelSuccess(true);
-                              setBookings(bookings.map((b) => b.id === selectedBooking.id ? { ...b, status: "CANCELLATION_REQUESTED" } : b));
-                              setSelectedBooking({ ...selectedBooking, status: "CANCELLATION_REQUESTED" });
+                              setBookings(bookings.map((b) => b.id === selectedBooking.id ? { ...b, status: "CANCELLED" } : b));
+                              setSelectedBooking({ ...selectedBooking, status: "CANCELLED" });
                             }
                           } catch (err) {
                             console.error("Cancellation failed:", err);
@@ -358,16 +380,57 @@ export default function TripsPage() {
                           }
                         }}
                         disabled={cancelling || !cancelReason}
-                        className="px-6 py-2.5 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50"
+                        className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 disabled:opacity-50 cursor-pointer"
                       >
-                        {cancelling ? "Requesting..." : "Request Cancellation"}
+                        {cancelling ? "Processing..." : "Confirm Cancellation"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCancelConfirm(false);
+                          setCancelReason("");
+                        }}
+                        className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 cursor-pointer"
+                      >
+                        Go Back
                       </button>
                     </div>
-                  )}
-                  {cancelSuccess && (
-                    <p className="text-sm text-green-600 font-medium">Cancellation request submitted!</p>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {cancelSuccess && cancelResult && (
+                  <div className="mt-4 p-4 bg-green-50 rounded-xl space-y-2">
+                    <p className="text-sm font-medium text-green-800">✓ Booking cancelled successfully</p>
+                    {cancelResult.refundAmount !== undefined && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-green-700">Refund Amount</span>
+                          <span className="font-bold text-green-700">{formatCurrency(cancelResult.refundAmount)}</span>
+                        </div>
+                        {cancelResult.cancellationFee !== undefined && cancelResult.cancellationFee > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-red-600">Cancellation Fee</span>
+                            <span className="font-bold text-red-600">{formatCurrency(cancelResult.cancellationFee)}</span>
+                          </div>
+                        )}
+                        {cancelResult.refundPercentage !== undefined && (
+                          <p className="text-xs text-green-600">{cancelResult.refundPercentage}% refund as per policy</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedBooking.status === "CANCELLED" && !cancelSuccess && (
+                  <div className="mt-4 p-3 bg-red-50 rounded-xl">
+                    <p className="text-sm text-red-700 font-medium">This booking has been cancelled.</p>
+                  </div>
+                )}
+
+                {selectedBooking.status === "CANCELLATION_REQUESTED" && (
+                  <div className="mt-4 p-3 bg-orange-50 rounded-xl">
+                    <p className="text-sm text-orange-700 font-medium">Cancellation request is being processed.</p>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

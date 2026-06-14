@@ -5,9 +5,11 @@ import { motion } from "motion/react";
 import { formatCurrency } from "@/lib";
 import {
   X, Loader2, CheckCircle, AlertCircle, Building2,
-  Bed, MapPin, Calendar, Phone, Mail, User, CreditCard
+  Bed, MapPin, Calendar, Phone, Mail, User, CreditCard,
+  Tag, ChevronDown, ChevronUp, Globe, Home
 } from "lucide-react";
 import type { TBODisplayHotel, TBODisplayRoom } from "@/lib/tbo-hotel-types";
+import CheckoutButton from "./CheckoutButton";
 
 interface HotelBookingModalProps {
   isOpen: boolean;
@@ -22,7 +24,7 @@ interface HotelBookingModalProps {
   guestCount: number;
 }
 
-type BookingStep = "form" | "blocking" | "book-confirming" | "saving" | "done" | "error";
+type BookingStep = "form" | "blocking" | "book-confirming" | "saving" | "checkout" | "done" | "error";
 
 export default function HotelBookingModal({
   isOpen, onClose, hotel, room, sessionId, user, location,
@@ -35,17 +37,37 @@ export default function HotelBookingModal({
   const [email, setEmail] = useState(user?.email || "");
   const [pan, setPan] = useState("");
   const [saveToProfile, setSaveToProfile] = useState(false);
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressCity, setAddressCity] = useState(location);
+  const [passportNo, setPassportNo] = useState("");
+  const [passportExpiry, setPassportExpiry] = useState("");
+  const [showGstFields, setShowGstFields] = useState(false);
+  const [gstNumber, setGstNumber] = useState("");
+  const [gstCompanyName, setGstCompanyName] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [discountApplied, setDiscountApplied] = useState(0);
+  const [couponCodeUsed, setCouponCodeUsed] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [bookingId, setBookingId] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<{
     bookingId: string; pnr: string; confirmationNo: string; status: string;
   } | null>(null);
 
+  const isInternational = hotel.hotelCode >= 10000000;
+  const finalPrice = room.totalFare - discountApplied;
   const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan.trim().toUpperCase());
 
   const resetForm = () => {
     setStep("form");
     setErrorMessage("");
     setConfirmation(null);
+    setBookingId(null);
+    setDiscountApplied(0);
+    setCouponCodeUsed("");
+    setPromoCode("");
+    setPromoError("");
   };
 
   const handleClose = () => {
@@ -53,9 +75,40 @@ export default function HotelBookingModal({
     onClose();
   };
 
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim() || !user) return;
+    setPromoLoading(true);
+    setPromoError("");
+    try {
+      const res = await fetch("/api/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: promoCode.trim(),
+          bookingAmount: room.totalFare,
+          category: "HOTEL",
+          userId: user.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setDiscountApplied(data.discount || 0);
+        setCouponCodeUsed(promoCode.trim());
+        setPromoError("");
+      } else {
+        setPromoError(data.error || "Invalid promo code");
+        setDiscountApplied(0);
+        setCouponCodeUsed("");
+      }
+    } catch {
+      setPromoError("Failed to validate promo code");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
   const handleBook = async () => {
     if (!isValid || !user) return;
-
     setStep("blocking");
 
     try {
@@ -110,8 +163,10 @@ export default function HotelBookingModal({
             email: email.trim(),
             phone: phone.trim(),
             pan: pan.trim().toUpperCase(),
-            addressLine1: "N/A",
-            city: location,
+            passportNo: isInternational ? passportNo || undefined : undefined,
+            passportExpiry: isInternational ? passportExpiry || undefined : undefined,
+            addressLine1: addressLine1 || undefined,
+            city: addressCity || location,
             countryCode: "IN",
             nationality: "IN",
           }]
@@ -143,24 +198,35 @@ export default function HotelBookingModal({
           type: "HOTEL",
           itemName: hotel.name,
           providerOrAirline: "GoRASA",
-          price: room.totalFare,
+          price: finalPrice,
+          originalPrice: room.totalFare,
+          discountApplied,
+          couponCodeUsed: couponCodeUsed || undefined,
           pnr: pnrCode,
           seatOrRoom: room.name,
           paxCount: guestCount,
           travelDates: { checkIn, checkOut },
-          status: "CONFIRMED",
+          status: "PENDING",
           leadGuestPan: pan.trim().toUpperCase(),
+          gstNumber: showGstFields ? gstNumber || undefined : undefined,
+          gstCompanyName: showGstFields ? gstCompanyName || undefined : undefined,
         }),
       });
 
+      if (!saveRes.ok) {
+        throw new Error("Failed to save booking");
+      }
+
+      const saveData = await saveRes.json();
+
+      setBookingId(saveData.id);
       setConfirmation({
         bookingId: bookData.bookingId || clientRef,
         pnr: pnrCode,
         confirmationNo: bookData.confirmationNo || "",
-        status: bookData.status || "Confirmed",
+        status: "Pending Payment",
       });
 
-      // Save PAN to profile if requested
       if (saveToProfile && user) {
         try {
           const profileRes = await fetch("/api/profile", {
@@ -172,7 +238,7 @@ export default function HotelBookingModal({
                 name: `${firstName.trim()} ${lastName.trim()}`.trim(),
                 relation: "Self",
                 gender: "Male",
-                passport: "",
+                passport: passportNo || "",
                 pan: pan.trim().toUpperCase(),
               }]
             }),
@@ -182,7 +248,8 @@ export default function HotelBookingModal({
           console.warn("Profile save failed:", e);
         }
       }
-      setStep("done");
+
+      setStep("checkout");
     } catch (err) {
       setErrorMessage("Something went wrong. Please try again.");
       setStep("error");
@@ -224,32 +291,66 @@ export default function HotelBookingModal({
                 <span className="flex items-center gap-1"><Bed size={12} />{room.name}</span>
                 <span className="flex items-center gap-1"><Calendar size={12} />{checkIn || "TBD"} – {checkOut || "TBD"}</span>
               </div>
+              {room.mealType && room.mealType !== "Room_Only" && (
+                <p className="text-xs text-emerald-600 font-medium">
+                  ✓ {room.mealType.replace("_", " ")} included
+                </p>
+              )}
               <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
                 <span className="text-sm text-slate-600">Total</span>
-                <span className="font-black font-mono text-lg text-emerald-700">{formatCurrency(room.totalFare)}</span>
+                <div className="text-right">
+                  {discountApplied > 0 && (
+                    <span className="text-xs text-slate-400 line-through mr-2">{formatCurrency(room.totalFare)}</span>
+                  )}
+                  <span className="font-black font-mono text-lg text-emerald-700">{formatCurrency(finalPrice)}</span>
+                </div>
               </div>
+            </div>
+
+            {/* Promo Code */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">Promo Code</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="Enter promo code"
+                    disabled={!!couponCodeUsed}
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm disabled:opacity-50"
+                  />
+                </div>
+                <button
+                  onClick={handleApplyPromo}
+                  disabled={!!couponCodeUsed || promoLoading || !promoCode.trim()}
+                  className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+                >
+                  {promoLoading ? "..." : couponCodeUsed ? "Applied" : "Apply"}
+                </button>
+              </div>
+              {promoError && <p className="text-xs text-red-500 mt-1">{promoError}</p>}
+              {couponCodeUsed && discountApplied > 0 && (
+                <p className="text-xs text-green-600 mt-1">✓ {couponCodeUsed} applied — {formatCurrency(discountApplied)} off</p>
+              )}
             </div>
 
             {/* Guest Details */}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">Guest Details</label>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <input
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="First Name *"
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                  />
-                </div>
-                <div>
-                  <input
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Last Name *"
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                  />
-                </div>
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First Name *"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                />
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last Name *"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                />
               </div>
               <p className="text-[10px] text-slate-400 mt-1">Lead guest name for booking</p>
             </div>
@@ -273,17 +374,50 @@ export default function HotelBookingModal({
               )}
             </div>
 
-            {user && (
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={saveToProfile}
-                  onChange={(e) => setSaveToProfile(e.target.checked)}
-                  className="w-4 h-4 text-emerald-600 rounded border-slate-300"
-                />
-                <span className="text-sm text-slate-600">Save PAN to my profile for future bookings</span>
-              </label>
+            {/* Passport (International Hotels) */}
+            {isInternational && (
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block flex items-center gap-1">
+                  <Globe size={12} /> Passport Details (International Booking)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    value={passportNo}
+                    onChange={(e) => setPassportNo(e.target.value.toUpperCase())}
+                    placeholder="Passport No"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm uppercase"
+                  />
+                  <input
+                    type="date"
+                    value={passportExpiry}
+                    onChange={(e) => setPassportExpiry(e.target.value)}
+                    placeholder="Passport Expiry"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
+              </div>
             )}
+
+            {/* Address */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block flex items-center gap-1">
+                <Home size={12} /> Address
+              </label>
+              <div className="space-y-3">
+                <input
+                  value={addressLine1}
+                  onChange={(e) => setAddressLine1(e.target.value)}
+                  placeholder="Address Line 1"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                />
+                <input
+                  value={addressCity}
+                  onChange={(e) => setAddressCity(e.target.value)}
+                  placeholder="City"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                />
+              </div>
+            </div>
 
             {/* Contact Info */}
             <div>
@@ -310,6 +444,47 @@ export default function HotelBookingModal({
               </div>
             </div>
 
+            {user && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={saveToProfile}
+                  onChange={(e) => setSaveToProfile(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 rounded border-slate-300"
+                />
+                <span className="text-sm text-slate-600">Save PAN to my profile for future bookings</span>
+              </label>
+            )}
+
+            {/* B2B GST Toggle */}
+            <div>
+              <button
+                onClick={() => setShowGstFields(!showGstFields)}
+                className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 cursor-pointer"
+              >
+                <Building2 size={14} />
+                <span>B2B GST Invoice (Optional)</span>
+                {showGstFields ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              {showGstFields && (
+                <div className="mt-3 space-y-3 pl-6">
+                  <input
+                    value={gstNumber}
+                    onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                    placeholder="GSTIN (15 characters)"
+                    maxLength={15}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm uppercase"
+                  />
+                  <input
+                    value={gstCompanyName}
+                    onChange={(e) => setGstCompanyName(e.target.value)}
+                    placeholder="Company Name"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
             {/* Action */}
             <button
               onClick={handleBook}
@@ -317,12 +492,11 @@ export default function HotelBookingModal({
               className="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
               <CreditCard size={18} />
-              Confirm Booking – {formatCurrency(room.totalFare)}
+              Confirm Booking – {formatCurrency(finalPrice)}
             </button>
           </div>
         )}
 
-        {/* Processing States */}
         {(step === "blocking" || step === "book-confirming" || step === "saving") && (
           <div className="p-12 text-center">
             <Loader2 size={40} className="mx-auto text-emerald-600 mb-4 animate-spin" />
@@ -339,7 +513,58 @@ export default function HotelBookingModal({
           </div>
         )}
 
-        {/* Confirmation */}
+        {step === "checkout" && bookingId && (
+          <div className="p-6 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CreditCard size={32} className="text-emerald-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-1">Booking Created!</h3>
+            <p className="text-sm text-slate-500 mb-6">Complete payment to confirm your hotel reservation.</p>
+
+            <div className="bg-slate-50 rounded-xl p-4 space-y-3 text-left mb-6">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Confirmation No.</span>
+                <span className="text-sm font-bold font-mono text-slate-900">{confirmation?.confirmationNo || confirmation?.pnr}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Hotel</span>
+                <span className="text-sm font-bold text-slate-900">{hotel.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Room</span>
+                <span className="text-sm font-bold text-slate-900">{room.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Dates</span>
+                <span className="text-sm font-bold text-slate-900">{checkIn} – {checkOut}</span>
+              </div>
+              {discountApplied > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-green-600">Discount ({couponCodeUsed})</span>
+                  <span className="text-sm font-bold text-green-600">-{formatCurrency(discountApplied)}</span>
+                </div>
+              )}
+              <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-xs text-slate-500">Amount to Pay</span>
+                <span className="text-sm font-black font-mono text-emerald-700">{formatCurrency(finalPrice)}</span>
+              </div>
+            </div>
+
+            <CheckoutButton
+              bookingId={bookingId}
+              amount={finalPrice}
+              userEmail={email}
+            />
+
+            <button
+              onClick={handleClose}
+              className="w-full mt-3 py-2.5 text-sm text-slate-500 hover:text-slate-700 cursor-pointer"
+            >
+              Pay Later
+            </button>
+          </div>
+        )}
+
         {step === "done" && confirmation && (
           <div className="p-6 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -356,10 +581,6 @@ export default function HotelBookingModal({
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-500">Confirmation No.</span>
                 <span className="text-sm font-bold font-mono text-slate-900">{confirmation.confirmationNo || confirmation.pnr}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500">PNR</span>
-                <span className="text-sm font-bold font-mono text-slate-900">{confirmation.pnr}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-500">Status</span>
@@ -381,7 +602,6 @@ export default function HotelBookingModal({
           </div>
         )}
 
-        {/* Error */}
         {step === "error" && (
           <div className="p-6 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
