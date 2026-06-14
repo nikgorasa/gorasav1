@@ -97,10 +97,10 @@ export default function FlightBookingModal({
   };
 
   const handlePrefill = () => {
-    setFirstName("Rahul");
-    setLastName("Sharma");
+    setFirstName("Amit");
+    setLastName("Patel");
     setPhone("9876543210");
-    setEmail("rahul.sharma@gorasa.in");
+    setEmail("amit@example.com");
     setDateOfBirth("1992-05-15");
     setGender("M");
     setPan("ABCRS1234F");

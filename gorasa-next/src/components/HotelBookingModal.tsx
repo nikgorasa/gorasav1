@@ -81,9 +81,9 @@ export default function HotelBookingModal({
 
   const handlePrefill = () => {
     setFirstName("Priya");
-    setLastName("Patel");
+    setLastName("Singh");
     setPhone("9876543210");
-    setEmail("priya.patel@gorasa.in");
+    setEmail("priya@example.com");
     setPan("BDAPP1234K");
     setAddressLine1("456 Corporate Tower, BKC");
     setAddressCity("Mumbai");
