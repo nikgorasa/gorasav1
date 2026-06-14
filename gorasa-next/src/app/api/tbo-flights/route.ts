@@ -9,7 +9,6 @@ import {
   getBookingDetail,
   setLastResults,
 } from "@/lib/tbo-flight-client";
-import * as mock from "@/lib/tbo-flight-mock";
 
 function getEndUserIp(req: NextRequest): string {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
@@ -27,51 +26,6 @@ export async function POST(req: NextRequest) {
       case "search": {
         const { origin, destination, date, adults, children, infants, journeyType } = body;
 
-        // Demo mode: use mock data directly
-        if (body.demo) {
-          const mockReq = {
-            Origin: origin,
-            Destination: destination,
-            AdultCount: adults || 1,
-            ChildCount: children || 0,
-            InfantCount: infants || 0,
-            JourneyType: journeyType || 1,
-            PreferredDepartureTime: date,
-          };
-          const mockRes = mock.mockSearchFlights(mockReq);
-          const flights = mockRes.Response.Results.map((r) => ({
-            resultIndex: r.ResultIndex,
-            isLCC: r.IsLCC,
-            isRefundable: r.IsRefundable,
-            airline: r.Segments[0]?.Airline ?? "",
-            airlineCode: r.Segments[0]?.AirlineCode ?? "",
-            flightNumber: r.Segments[0]?.FlightNumber ?? "",
-            operatingCarrier: r.Segments[0]?.OperatingCarrier ?? "",
-            origin: r.Segments[0]?.Origin ?? "",
-            destination: r.Segments[0]?.Destination ?? "",
-            departureTime: r.Segments[0]?.DepTime ?? "",
-            arrivalTime: r.Segments[0]?.ArrTime ?? "",
-            duration: r.Segments[0]?.Duration ?? "",
-            cabinClass: r.Segments[0]?.CabinClass ?? "",
-            baggage: r.Segments[0]?.Baggage ?? "",
-            cabinBaggage: r.Segments[0]?.CabinBaggage ?? "",
-            currency: r.Fare.Currency,
-            publishedFare: r.Fare.PublishedFare,
-            offeredFare: r.Fare.OfferedFare,
-            baseFare: r.Fare.BaseFare,
-            tax: r.Fare.Tax,
-            yqTax: r.Fare.YQTax,
-            discount: r.Fare.Discount,
-            commissionEarned: r.Fare.CommissionEarned,
-            penalty: r.Penalty,
-            lastTicketDate: r.LastTicketDate,
-            fareRules: r.FareRules,
-            segments: r.Segments,
-            fareBreakdown: r.FareBreakdown,
-          }));
-          return NextResponse.json({ flights, traceId: mockRes.Response.TraceId });
-        }
-
         const result = await searchFlights({
           Origin: origin,
           Destination: destination,
@@ -81,6 +35,7 @@ export async function POST(req: NextRequest) {
           JourneyType: journeyType || 1,
           PreferredDepartureTime: date,
           EndUserIp: endUserIp,
+          forceMock: !!body.demo,
         });
         setLastResults(result.flights.map(f => ({
           ResultIndex: f.resultIndex,

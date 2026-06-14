@@ -96,8 +96,9 @@ export async function searchFlights(params: {
   JourneyType: number;
   PreferredDepartureTime?: string;
   EndUserIp?: string;
+  forceMock?: boolean;
 }): Promise<TBOFlightSearchOutput> {
-  if (hasCredentials) {
+  if (!params.forceMock && hasCredentials) {
     try {
       const tokenId = await ensureToken();
       const searchReq: TBOFlightSearchRequest = {

@@ -220,8 +220,9 @@ export async function searchHotels(params: {
   rooms: { adults: number; children: number; childrenAges: number[] }[];
   guestNationality?: string;
   preferredCurrency?: string;
+  forceMock?: boolean;
 }): Promise<TBOHotelSearchOutput> {
-  if (hasCredentials) {
+  if (!params.forceMock && hasCredentials) {
     try {
       const resolvedCodes = await resolveHotelCodes(params.city, params.hotelCodes, params.cityCode);
       if (!resolvedCodes) {

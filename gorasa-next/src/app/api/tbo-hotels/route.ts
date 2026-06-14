@@ -9,7 +9,6 @@ import {
   getCities,
   getHotelCodes,
 } from "@/lib/tbo-hotel-client";
-import * as mock from "@/lib/tbo-hotel-mock";
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return "";
@@ -44,65 +43,6 @@ export async function POST(req: NextRequest) {
           childrenAges: r.ChildAge || r.childrenAges || [],
         }));
 
-        // Demo mode: use mock data directly
-        if (body.demo) {
-          const mockReq = {
-            CheckIn: checkIn,
-            CheckOut: checkOut,
-            HotelCodes: hotelCodes || "",
-            GuestNationality: p.GuestNationality || "IN",
-            PaxRooms: roomsArray.map((r: any) => ({ Adults: r.adults, Children: r.children, ChildrenAges: r.childrenAges })),
-            PreferredCurrency: p.PreferredCurrency || "INR",
-            SearchedCities: cityName ? [cityName] : undefined,
-          };
-          const mockRes = mock.mockSearchHotels(mockReq);
-          // Convert mock results to display format
-          const hotels = mockRes.HotelResult.map((h) => {
-            const info = mock.getHotelInfoByCode(h.HotelCode);
-            const rooms = h.Rooms.map((r: any, ri: number) => ({
-              roomId: r.RoomID?.[0] || `${h.HotelCode}-${ri}`,
-              roomName: r.Name?.[0] || "Room",
-              name: r.Name?.[0] || "Room",
-              bookingCode: r.BookingCode || "",
-              mealType: r.MealType || "Room_Only",
-              isRefundable: r.IsRefundable ?? false,
-              totalFare: r.TotalFare || 0,
-              totalTax: r.TotalTax || 0,
-              inclusion: r.Inclusion || "",
-              dayRates: (r.DayRates?.[0] || []).map((dr: any) => ({ basePrice: dr.BasePrice || 0 })),
-              cancelPolicy: r.CancelPolicies?.[0] ? `${r.CancelPolicies[0].ChargeType}: ${r.CancelPolicies[0].CancellationCharge}%` : "Non Refundable",
-              cancellationPolicy: r.CancelPolicies?.[0] ? `${r.CancelPolicies[0].ChargeType}: ${r.CancelPolicies[0].CancellationCharge}%` : "Non Refundable",
-              roomIndex: ri + 1,
-              typeCode: "",
-              ratePlanCode: "",
-              roomFare: r.DayRates?.[0]?.[0]?.BasePrice || 0,
-              roomTax: (r.TotalTax || 0) / Math.max(1, (r.DayRates?.[0]?.length || 1)),
-              currency: h.Currency,
-              amenities: r.Amenities?.Amenity || [],
-            }));
-            return {
-              hotelCode: Number(h.HotelCode) || 0,
-              name: info?.HotelName || `Hotel ${h.HotelCode}`,
-              hotelRating: info?.HotelRating || 3,
-              location: info?.CityName || cityName || "",
-              currency: h.Currency,
-              minTotalFare: Math.min(...rooms.map((r: any) => r.totalFare)),
-              rooms,
-              resultIndex: 1,
-              picture: info?.imageUrl || "",
-              rating: "ThreeStar",
-              address: (info as any)?.Address || "",
-              tripAdvisorRating: 0,
-              description: "",
-              price: Math.min(...rooms.map((r: any) => r.totalFare)),
-              starRating: info?.HotelRating || 3,
-              originalPrice: Math.min(...rooms.map((r: any) => r.totalFare)),
-              source: "mock" as const,
-            };
-          });
-          return NextResponse.json({ hotels, traceId: "" });
-        }
-
         const result = await searchHotels({
           checkIn,
           checkOut,
@@ -112,6 +52,7 @@ export async function POST(req: NextRequest) {
           rooms: roomsArray,
           guestNationality: p.GuestNationality || p.guestNationality || "IN",
           preferredCurrency: p.PreferredCurrency || p.preferredCurrency || "INR",
+          forceMock: !!body.demo,
         });
         return NextResponse.json(result);
       }
