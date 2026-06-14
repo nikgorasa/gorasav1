@@ -76,6 +76,8 @@ export default function FlightBookingModal({
   } | null>(null);
 
   const finalPrice = flight.price - discountApplied;
+  const demoDiscount = demoMode ? 500 : 0;
+  const totalPayable = finalPrice - demoDiscount;
   const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim();
 
   const prefilled = firstName && lastName && phone && email;
@@ -160,7 +162,7 @@ export default function FlightBookingModal({
           type: "FLIGHT",
           itemName: `${flight.airline} • ${flight.origin} → ${flight.destination}`,
           providerOrAirline: flight.airline,
-          price: finalPrice,
+          price: totalPayable,
           originalPrice: flight.price,
           discountApplied,
           couponCodeUsed: couponCodeUsed || undefined,
@@ -294,7 +296,7 @@ export default function FlightBookingModal({
                     {discountApplied > 0 && (
                       <span className="text-xs text-slate-400 line-through mr-2">{formatCurrency(flight.price)}</span>
                     )}
-                    <span className="font-black font-mono text-lg text-blue-700">{formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}</span>
+                    <span className="font-black font-mono text-lg text-blue-700">{formatCurrency(totalPayable)}</span>
                   </div>
                 </div>
               </div>
@@ -471,7 +473,7 @@ export default function FlightBookingModal({
               className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
               <CreditCard size={18} />
-              Confirm Booking – {formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}
+              Confirm Booking – {formatCurrency(totalPayable)}
             </button>
           </div>
         )}
@@ -519,13 +521,13 @@ export default function FlightBookingModal({
               )}
               <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
                 <span className="text-xs text-slate-500">Amount to Pay</span>
-                <span className="text-sm font-black font-mono text-blue-700">{formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}</span>
+                <span className="text-sm font-black font-mono text-blue-700">{formatCurrency(totalPayable)}</span>
               </div>
             </div>
 
             <CheckoutButton
               bookingId={bookingId}
-              amount={demoMode ? finalPrice - 500 : finalPrice}
+              amount={totalPayable}
               userEmail={email}
             />
 

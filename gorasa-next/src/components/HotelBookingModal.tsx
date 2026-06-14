@@ -58,7 +58,10 @@ export default function HotelBookingModal({
   } | null>(null);
 
   const isInternational = hotel.hotelCode >= 10000000;
-  const finalPrice = room.totalFare - discountApplied;
+  const baseAndTax = room.totalFare + room.roomTax;
+  const finalPrice = baseAndTax - discountApplied;
+  const demoDiscount = demoMode ? 500 : 0;
+  const totalPayable = finalPrice - demoDiscount;
   const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim();
 
   const prefilled = firstName && lastName && phone && email && pan;
@@ -222,7 +225,7 @@ export default function HotelBookingModal({
           type: "HOTEL",
           itemName: hotel.name,
           providerOrAirline: "GoRASA",
-          price: finalPrice,
+          price: totalPayable,
           originalPrice: room.totalFare,
           discountApplied,
           couponCodeUsed: couponCodeUsed || undefined,
@@ -375,7 +378,7 @@ export default function HotelBookingModal({
                 <div className="flex justify-between items-center pt-1 border-t border-slate-200">
                   <span className="font-bold text-slate-900">Total per night</span>
                   <div className="text-right">
-                    <span className="font-black font-mono text-lg text-emerald-700">{formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}</span>
+                    <span className="font-black font-mono text-lg text-emerald-700">{formatCurrency(totalPayable)}</span>
                   </div>
                 </div>
               </div>
@@ -563,7 +566,7 @@ export default function HotelBookingModal({
               className="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
               <CreditCard size={18} />
-              Confirm Booking – {formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}
+              Confirm Booking – {formatCurrency(totalPayable)}
             </button>
           </div>
         )}
@@ -623,13 +626,13 @@ export default function HotelBookingModal({
               )}
               <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
                 <span className="text-xs text-slate-500">Amount to Pay</span>
-                <span className="text-sm font-black font-mono text-emerald-700">{formatCurrency(demoMode ? finalPrice - 500 : finalPrice)}</span>
+                <span className="text-sm font-black font-mono text-emerald-700">{formatCurrency(totalPayable)}</span>
               </div>
             </div>
 
             <CheckoutButton
               bookingId={bookingId}
-              amount={demoMode ? finalPrice - 500 : finalPrice}
+              amount={totalPayable}
               userEmail={email}
             />
 
