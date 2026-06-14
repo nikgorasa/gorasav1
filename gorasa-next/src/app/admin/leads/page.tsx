@@ -23,6 +23,9 @@ export default function LeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [activeStage, setActiveStage] = useState<string>("all");
   const [stages, setStages] = useState<{ id: string; label: string; color: string }[]>([]);
+  const [lostReason, setLostReason] = useState("");
+  const [showLostModal, setShowLostModal] = useState(false);
+  const [pendingLostLeadId, setPendingLostLeadId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/leads")
@@ -41,12 +44,14 @@ export default function LeadsPage() {
       .catch(() => {});
   }, []);
 
-  const updateLeadStage = async (leadId: string, newStage: string) => {
+  const updateLeadStage = async (leadId: string, newStage: string, reason?: string) => {
     try {
+      const body: any = { stage: newStage };
+      if (reason) body.notes = `LOST: ${reason}`;
       const res = await fetch(`/api/leads/${leadId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage: newStage }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         setLeads(leads.map((l) => (l.id === leadId ? { ...l, stage: newStage } : l)));
@@ -232,7 +237,14 @@ export default function LeadsPage() {
                 {stages.map((stage) => (
                   <button
                     key={stage.id}
-                    onClick={() => updateLeadStage(selectedLead.id, stage.id)}
+                    onClick={() => {
+                      if (stage.id === "LOST") {
+                        setPendingLostLeadId(selectedLead.id);
+                        setShowLostModal(true);
+                      } else {
+                        updateLeadStage(selectedLead.id, stage.id);
+                      }
+                    }}
                     className={`px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors ${
                       selectedLead.stage === stage.id
                         ? "bg-slate-900 text-white"
@@ -247,6 +259,62 @@ export default function LeadsPage() {
           </motion.div>
         </div>
       )}
+      {/* Lost Reason Modal */}
+      {showLostModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => { setShowLostModal(false); setPendingLostLeadId(null); setLostReason(""); }} />
+          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <h3 className="font-bold text-slate-900 mb-2">Mark Lead as Lost</h3>
+            <p className="text-sm text-slate-500 mb-4">Please provide a reason for losing this lead.</p>
+            <select
+              value={lostReason}
+              onChange={(e) => setLostReason(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm mb-3"
+            >
+              <option value="">Select reason...</option>
+              <option value="Budget too high">Budget too high</option>
+              <option value="Chose competitor">Chose competitor</option>
+              <option value="No response">No response</option>
+              <option value="Changed plans">Changed plans</option>
+              <option value="Duplicate lead">Duplicate lead</option>
+              <option value="Invalid contact">Invalid contact</option>
+              <option value="Other">Other</option>
+            </select>
+            {lostReason === "Other" && (
+              <textarea
+                value={lostReason}
+                onChange={(e) => setLostReason(e.target.value)}
+                placeholder="Specify reason..."
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm mb-3"
+                rows={3}
+              />
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (pendingLostLeadId && lostReason) {
+                    updateLeadStage(pendingLostLeadId, "LOST", lostReason);
+                    setShowLostModal(false);
+                    setPendingLostLeadId(null);
+                    setLostReason("");
+                  }
+                }}
+                disabled={!lostReason}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 cursor-pointer disabled:opacity-50"
+              >
+                Mark as Lost
+              </button>
+              <button
+                onClick={() => { setShowLostModal(false); setPendingLostLeadId(null); setLostReason(""); }}
+                className="flex-1 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
