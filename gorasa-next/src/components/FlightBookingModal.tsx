@@ -507,21 +507,45 @@ export default function FlightBookingModal({
                 <span className="text-xs text-slate-500">Route</span>
                 <span className="text-sm font-bold text-slate-900">{flight.origin} → {flight.destination}</span>
               </div>
-              {discountApplied > 0 && (
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-green-600">Discount ({couponCodeUsed})</span>
-                  <span className="text-sm font-bold text-green-600">-{formatCurrency(discountApplied)}</span>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Class</span>
+                <span className="text-sm font-bold text-slate-900">{flight.tier}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Passengers</span>
+                <span className="text-sm font-bold text-slate-900">{passengerCount}</span>
+              </div>
+
+              <div className="border-t border-slate-200 pt-3 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Price Breakup</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Base Fare ({passengerCount} pax)</span>
+                  <span className="text-slate-900">{formatCurrency(flight.baseFare || 0)}</span>
                 </div>
-              )}
-              {demoMode && (
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-purple-600">Demo Discount</span>
-                  <span className="text-sm font-bold text-purple-600">-{formatCurrency(500)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Taxes & Surcharges</span>
+                  <span className="text-slate-900">{formatCurrency(flight.tax || 0)}</span>
                 </div>
-              )}
-              <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-                <span className="text-xs text-slate-500">Amount to Pay</span>
-                <span className="text-sm font-black font-mono text-blue-700">{formatCurrency(totalPayable)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Subtotal</span>
+                  <span className="text-slate-900">{formatCurrency(flight.price)}</span>
+                </div>
+                {discountApplied > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600">Promo ({couponCodeUsed})</span>
+                    <span className="text-green-600">-{formatCurrency(discountApplied)}</span>
+                  </div>
+                )}
+                {demoMode && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-600">Demo Discount</span>
+                    <span className="text-purple-600">-{formatCurrency(500)}</span>
+                  </div>
+                )}
+                <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
+                  <span className="font-bold text-slate-900">Total Amount</span>
+                  <span className="font-black font-mono text-lg text-blue-700">{formatCurrency(totalPayable)}</span>
+                </div>
               </div>
             </div>
 

@@ -612,21 +612,47 @@ export default function HotelBookingModal({
                 <span className="text-xs text-slate-500">Dates</span>
                 <span className="text-sm font-bold text-slate-900">{checkIn} – {checkOut}</span>
               </div>
-              {discountApplied > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Guests</span>
+                <span className="text-sm font-bold text-slate-900">{guestCount}</span>
+              </div>
+              {room.mealType && room.mealType !== "Room_Only" && (
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-green-600">Discount ({couponCodeUsed})</span>
-                  <span className="text-sm font-bold text-green-600">-{formatCurrency(discountApplied)}</span>
+                  <span className="text-xs text-slate-500">Meal Plan</span>
+                  <span className="text-sm font-bold text-emerald-600">{room.mealType.replace("_", " ")}</span>
                 </div>
               )}
-              {demoMode && (
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-purple-600">Demo Discount</span>
-                  <span className="text-sm font-bold text-purple-600">-{formatCurrency(500)}</span>
+
+              <div className="border-t border-slate-200 pt-3 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Price Breakup</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Room Fare</span>
+                  <span className="text-slate-900">{formatCurrency(room.roomFare || room.totalFare)}</span>
                 </div>
-              )}
-              <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-                <span className="text-xs text-slate-500">Amount to Pay</span>
-                <span className="text-sm font-black font-mono text-emerald-700">{formatCurrency(totalPayable)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Taxes & Fees</span>
+                  <span className="text-slate-900">{formatCurrency(room.roomTax)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Subtotal</span>
+                  <span className="text-slate-900">{formatCurrency(room.totalFare + room.roomTax)}</span>
+                </div>
+                {discountApplied > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600">Promo ({couponCodeUsed})</span>
+                    <span className="text-green-600">-{formatCurrency(discountApplied)}</span>
+                  </div>
+                )}
+                {demoMode && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-600">Demo Discount</span>
+                    <span className="text-purple-600">-{formatCurrency(500)}</span>
+                  </div>
+                )}
+                <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
+                  <span className="font-bold text-slate-900">Total Amount</span>
+                  <span className="font-black font-mono text-lg text-emerald-700">{formatCurrency(totalPayable)}</span>
+                </div>
               </div>
             </div>
 
