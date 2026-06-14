@@ -414,6 +414,7 @@ export interface TBOFlightDisplay {
   leg: "outbound" | "inbound" | "oneway";
   isLCC: boolean;
   isRefundable: boolean;
+  isDomestic?: boolean;
   source: number;
   airline: string;
   airlineCode: string;
@@ -432,7 +433,12 @@ export interface TBOFlightDisplay {
   offeredFare: number;
   baseFare: number;
   tax: number;
+  yqTax?: number;
+  discount?: number;
   commissionEarned: number;
+  penalty?: string;
+  lastTicketDate?: string;
+  fareRules?: string;
   segments: TBOFlightSegment[];
   fareBreakdown: TBOFlightFareBreakdown[];
 }

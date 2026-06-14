@@ -5,13 +5,17 @@ import { motion } from "motion/react";
 import { formatCurrency } from "@/lib";
 import {
   X, Loader2, CheckCircle, AlertCircle, Plane,
-  MapPin, Calendar, Phone, Mail, User, CreditCard, Clock, Luggage
+  MapPin, Calendar, Phone, Mail, User, CreditCard, Clock, Luggage,
+  Tag, Building2, ChevronDown, ChevronUp, Globe
 } from "lucide-react";
+import CheckoutButton from "./CheckoutButton";
 
 interface Flight {
   id: string;
   airline: string;
+  airlineCode?: string;
   flightNumber: string;
+  operatingCarrier?: string;
   origin: string;
   destination: string;
   departureTime: string;
@@ -20,6 +24,14 @@ interface Flight {
   stops: number;
   price: number;
   tier: string;
+  baggage?: string;
+  cabinBaggage?: string;
+  isRefundable?: boolean;
+  isLCC?: boolean;
+  penalty?: string;
+  baseFare?: number;
+  tax?: number;
+  yqTax?: number;
 }
 
 interface FlightBookingModalProps {
@@ -31,7 +43,7 @@ interface FlightBookingModalProps {
   passengerCount: number;
 }
 
-type BookingStep = "form" | "saving" | "done" | "error";
+type BookingStep = "form" | "saving" | "checkout" | "done" | "error";
 
 export default function FlightBookingModal({
   isOpen, onClose, flight, user, date, passengerCount,
@@ -41,17 +53,38 @@ export default function FlightBookingModal({
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(user?.email || "");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState("");
+  const [pan, setPan] = useState("");
+  const [passportNo, setPassportNo] = useState("");
+  const [passportExpiry, setPassportExpiry] = useState("");
+  const [nationality, setNationality] = useState("Indian");
+  const [showGstFields, setShowGstFields] = useState(false);
+  const [gstNumber, setGstNumber] = useState("");
+  const [gstCompanyName, setGstCompanyName] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [discountApplied, setDiscountApplied] = useState(0);
+  const [couponCodeUsed, setCouponCodeUsed] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [bookingId, setBookingId] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<{
     pnr: string; status: string;
   } | null>(null);
 
-  const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim();
+  const finalPrice = flight.price - discountApplied;
+  const isValid = firstName.trim() && lastName.trim() && phone.trim().length >= 10 && email.trim() && dateOfBirth && gender;
 
   const resetForm = () => {
     setStep("form");
     setErrorMessage("");
     setConfirmation(null);
+    setBookingId(null);
+    setDiscountApplied(0);
+    setCouponCodeUsed("");
+    setPromoCode("");
+    setPromoError("");
   };
 
   const handleClose = () => {
@@ -59,9 +92,40 @@ export default function FlightBookingModal({
     onClose();
   };
 
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim() || !user) return;
+    setPromoLoading(true);
+    setPromoError("");
+    try {
+      const res = await fetch("/api/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: promoCode.trim(),
+          bookingAmount: flight.price,
+          category: "FLIGHT",
+          userId: user.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setDiscountApplied(data.discount || 0);
+        setCouponCodeUsed(promoCode.trim());
+        setPromoError("");
+      } else {
+        setPromoError(data.error || "Invalid promo code");
+        setDiscountApplied(0);
+        setCouponCodeUsed("");
+      }
+    } catch {
+      setPromoError("Failed to validate promo code");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
   const handleBook = async () => {
     if (!isValid || !user) return;
-
     setStep("saving");
 
     try {
@@ -74,12 +138,18 @@ export default function FlightBookingModal({
           type: "FLIGHT",
           itemName: `${flight.airline} • ${flight.origin} → ${flight.destination}`,
           providerOrAirline: flight.airline,
-          price: flight.price,
+          price: finalPrice,
+          originalPrice: flight.price,
+          discountApplied,
+          couponCodeUsed: couponCodeUsed || undefined,
           pnr: pnrCode,
           seatOrRoom: flight.tier,
           paxCount: passengerCount,
           travelDates: { departure: date || "TBD" },
-          status: "CONFIRMED",
+          leadGuestPan: pan || undefined,
+          status: "PENDING",
+          gstNumber: showGstFields ? gstNumber || undefined : undefined,
+          gstCompanyName: showGstFields ? gstCompanyName || undefined : undefined,
         }),
       });
 
@@ -87,8 +157,10 @@ export default function FlightBookingModal({
         throw new Error("Failed to save booking");
       }
 
-      setConfirmation({ pnr: pnrCode, status: "Confirmed" });
-      setStep("done");
+      const saveData = await saveRes.json();
+      setBookingId(saveData.id);
+      setConfirmation({ pnr: pnrCode, status: "Pending Payment" });
+      setStep("checkout");
     } catch {
       setErrorMessage("Something went wrong. Please try again.");
       setStep("error");
@@ -144,32 +216,123 @@ export default function FlightBookingModal({
               )}
               <div className="pt-2 border-t border-blue-200 flex justify-between items-center">
                 <span className="text-sm text-slate-600">Total</span>
-                <span className="font-black font-mono text-lg text-blue-700">{formatCurrency(flight.price)}</span>
+                <div className="text-right">
+                  {discountApplied > 0 && (
+                    <span className="text-xs text-slate-400 line-through mr-2">{formatCurrency(flight.price)}</span>
+                  )}
+                  <span className="font-black font-mono text-lg text-blue-700">{formatCurrency(finalPrice)}</span>
+                </div>
               </div>
+            </div>
+
+            {/* Promo Code */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">Promo Code</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="Enter promo code"
+                    disabled={!!couponCodeUsed}
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm disabled:opacity-50"
+                  />
+                </div>
+                <button
+                  onClick={handleApplyPromo}
+                  disabled={!!couponCodeUsed || promoLoading || !promoCode.trim()}
+                  className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+                >
+                  {promoLoading ? "..." : couponCodeUsed ? "Applied" : "Apply"}
+                </button>
+              </div>
+              {promoError && <p className="text-xs text-red-500 mt-1">{promoError}</p>}
+              {couponCodeUsed && discountApplied > 0 && (
+                <p className="text-xs text-green-600 mt-1">✓ {couponCodeUsed} applied — {formatCurrency(discountApplied)} off</p>
+              )}
             </div>
 
             {/* Passenger Details */}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">Passenger Details</label>
               <div className="grid grid-cols-2 gap-3">
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First Name *"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                />
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last Name *"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
                 <div>
+                  <label className="text-[10px] text-slate-400 mb-1 block">Date of Birth *</label>
                   <input
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="First Name *"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                   />
                 </div>
                 <div>
+                  <label className="text-[10px] text-slate-400 mb-1 block">Gender *</label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  >
+                    <option value="">Select</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 mb-1 block">PAN</label>
                   <input
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Last Name *"
+                    value={pan}
+                    onChange={(e) => setPan(e.target.value.toUpperCase())}
+                    placeholder="ABCDE1234F"
+                    maxLength={10}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm uppercase"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 mb-1 block">Nationality</label>
+                  <input
+                    value={nationality}
+                    onChange={(e) => setNationality(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                   />
                 </div>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Lead passenger name for booking</p>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 mb-1 block">Passport No</label>
+                  <input
+                    value={passportNo}
+                    onChange={(e) => setPassportNo(e.target.value.toUpperCase())}
+                    placeholder="A1234567"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm uppercase"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 mb-1 block">Passport Expiry</label>
+                  <input
+                    type="date"
+                    value={passportExpiry}
+                    onChange={(e) => setPassportExpiry(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Contact Info */}
@@ -197,6 +360,35 @@ export default function FlightBookingModal({
               </div>
             </div>
 
+            {/* B2B GST Toggle */}
+            <div>
+              <button
+                onClick={() => setShowGstFields(!showGstFields)}
+                className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 cursor-pointer"
+              >
+                <Building2 size={14} />
+                <span>B2B GST Invoice (Optional)</span>
+                {showGstFields ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              {showGstFields && (
+                <div className="mt-3 space-y-3 pl-6">
+                  <input
+                    value={gstNumber}
+                    onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                    placeholder="GSTIN (15 characters)"
+                    maxLength={15}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm uppercase"
+                  />
+                  <input
+                    value={gstCompanyName}
+                    onChange={(e) => setGstCompanyName(e.target.value)}
+                    placeholder="Company Name"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
             {/* Action */}
             <button
               onClick={handleBook}
@@ -204,25 +396,71 @@ export default function FlightBookingModal({
               className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
               <CreditCard size={18} />
-              Confirm Booking – {formatCurrency(flight.price)}
+              Confirm Booking – {formatCurrency(finalPrice)}
             </button>
           </div>
         )}
 
-        {/* Saving */}
         {step === "saving" && (
           <div className="p-12 text-center">
             <Loader2 size={40} className="mx-auto text-blue-600 mb-4 animate-spin" />
-            <h3 className="font-bold text-slate-900 mb-1">Confirming Booking...</h3>
-            <p className="text-sm text-slate-500">Finalizing your flight reservation</p>
+            <h3 className="font-bold text-slate-900 mb-1">Creating Booking...</h3>
+            <p className="text-sm text-slate-500">Saving your flight reservation</p>
           </div>
         )}
 
-        {/* Confirmation */}
-        {step === "done" && confirmation && (
+        {step === "checkout" && bookingId && (
           <div className="p-6 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-              <CheckCircle size={32} className="text-blue-600" />
+              <CreditCard size={32} className="text-blue-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-1">Booking Created!</h3>
+            <p className="text-sm text-slate-500 mb-6">Complete payment to confirm your booking.</p>
+
+            <div className="bg-slate-50 rounded-xl p-4 space-y-3 text-left mb-6">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">PNR</span>
+                <span className="text-sm font-bold font-mono text-slate-900">{confirmation?.pnr}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Flight</span>
+                <span className="text-sm font-bold text-slate-900">{flight.airline} {flight.flightNumber}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Route</span>
+                <span className="text-sm font-bold text-slate-900">{flight.origin} → {flight.destination}</span>
+              </div>
+              {discountApplied > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-green-600">Discount ({couponCodeUsed})</span>
+                  <span className="text-sm font-bold text-green-600">-{formatCurrency(discountApplied)}</span>
+                </div>
+              )}
+              <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-xs text-slate-500">Amount to Pay</span>
+                <span className="text-sm font-black font-mono text-blue-700">{formatCurrency(finalPrice)}</span>
+              </div>
+            </div>
+
+            <CheckoutButton
+              bookingId={bookingId}
+              amount={finalPrice}
+              userEmail={email}
+            />
+
+            <button
+              onClick={handleClose}
+              className="w-full mt-3 py-2.5 text-sm text-slate-500 hover:text-slate-700 cursor-pointer"
+            >
+              Pay Later
+            </button>
+          </div>
+        )}
+
+        {step === "done" && confirmation && (
+          <div className="p-6 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle size={32} className="text-green-600" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 mb-1">Booking Confirmed!</h3>
             <p className="text-sm text-slate-500 mb-6">Your flight has been booked successfully.</p>
@@ -234,7 +472,7 @@ export default function FlightBookingModal({
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-500">Status</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{confirmation.status}</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">{confirmation.status}</span>
               </div>
               <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
                 <span className="text-xs text-slate-500">Flight</span>
@@ -259,7 +497,6 @@ export default function FlightBookingModal({
           </div>
         )}
 
-        {/* Error */}
         {step === "error" && (
           <div className="p-6 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
