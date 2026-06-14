@@ -73,6 +73,7 @@ model Lead {
   notes           String?
   stage           String     @default("NEW")
   assignedTo      String?
+  source          String     @default("manual")
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   activities      Activity[]

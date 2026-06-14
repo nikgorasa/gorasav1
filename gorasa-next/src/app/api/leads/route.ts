@@ -14,7 +14,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { destination, travelerName, travelerEmail, travelerPhone, numberOfDays, inclusions, specificDemands, notes } = body;
+    const { destination, travelerName, travelerEmail, travelerPhone, numberOfDays, inclusions, specificDemands, notes, source } = body;
 
     if (!destination || !travelerName || !travelerEmail) {
       return NextResponse.json(
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       inclusions,
       specificDemands,
       notes,
+      source: source || "manual",
     });
 
     return NextResponse.json(lead, { status: 201 });
