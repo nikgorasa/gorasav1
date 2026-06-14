@@ -42,6 +42,7 @@ export async function PUT(
     if (body.importantNotes !== undefined) updateData.importantNotes = body.importantNotes;
     if (body.images !== undefined) updateData.images = body.images;
     if (body.status !== undefined) updateData.status = body.status;
+    if (body.category !== undefined) updateData.category = body.category;
     if (body.isActive !== undefined) updateData.isActive = body.isActive;
 
     const pkg = await packages.update(id, updateData);
