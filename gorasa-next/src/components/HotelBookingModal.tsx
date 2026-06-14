@@ -130,84 +130,87 @@ export default function HotelBookingModal({
     setStep("blocking");
 
     try {
-      const blockRes = await fetch("/api/tbo-hotels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "block",
-          sessionId,
-          resultIndex: hotel.resultIndex,
-          hotelCode: hotel.hotelCode,
-          hotelName: hotel.name,
-          room,
-        }),
-      });
+      const clientRef = `GR-${Date.now()}`;
+      let pnrCode = clientRef;
+      let confirmationNo = "";
 
-      const blockData = await blockRes.json();
+      if (!demoMode) {
+        const blockRes = await fetch("/api/tbo-hotels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "block",
+            sessionId,
+            resultIndex: hotel.resultIndex,
+            hotelCode: hotel.hotelCode,
+            hotelName: hotel.name,
+            room,
+          }),
+        });
 
-      if (!blockData.success) {
-        setErrorMessage("Price could not be verified. Please try again.");
-        setStep("error");
-        return;
-      }
+        const blockData = await blockRes.json();
 
-      if (blockData.isPriceChanged) {
-        const proceed = window.confirm(
-          "The room price has changed. The new total is shown in the booking summary. Do you want to proceed?"
-        );
-        if (!proceed) {
-          setStep("form");
+        if (!blockData.success) {
+          setErrorMessage("Price could not be verified. Please try again.");
+          setStep("error");
           return;
         }
-      }
 
-      setStep("book-confirming");
+        if (blockData.isPriceChanged) {
+          const proceed = window.confirm(
+            "The room price has changed. The new total is shown in the booking summary. Do you want to proceed?"
+          );
+          if (!proceed) {
+            setStep("form");
+            return;
+          }
+        }
 
-      const clientRef = `GR-${Date.now()}`;
+        setStep("book-confirming");
 
-      const bookReqPayload = {
-        action: "book",
-        bookingCode: blockData.bookingCode,
-        guestNationality: "IN",
-        netAmount: room.totalFare,
-        hotelRoomsDetails: [{
-          passengers: [{
-            title: "Mr",
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            paxType: 1,
-            leadPassenger: true,
-            age: 30,
-            email: email.trim(),
-            phone: phone.trim(),
-            pan: pan.trim().toUpperCase(),
-            passportNo: isInternational ? passportNo || undefined : undefined,
-            passportExpiry: isInternational ? passportExpiry || undefined : undefined,
-            addressLine1: addressLine1 || undefined,
-            city: addressCity || location,
-            countryCode: "IN",
-            nationality: "IN",
+        const bookReqPayload = {
+          action: "book",
+          bookingCode: blockData.bookingCode,
+          guestNationality: "IN",
+          netAmount: room.totalFare,
+          hotelRoomsDetails: [{
+            passengers: [{
+              title: "Mr",
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              paxType: 1,
+              leadPassenger: true,
+              age: 30,
+              email: email.trim(),
+              phone: phone.trim(),
+              pan: pan.trim().toUpperCase(),
+              passportNo: isInternational ? passportNo || undefined : undefined,
+              passportExpiry: isInternational ? passportExpiry || undefined : undefined,
+              addressLine1: addressLine1 || undefined,
+              city: addressCity || location,
+              countryCode: "IN",
+              nationality: "IN",
+            }]
           }]
-        }]
-      };
+        };
 
-      const bookRes = await fetch("/api/tbo-hotels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookReqPayload),
-      });
+        const bookRes = await fetch("/api/tbo-hotels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bookReqPayload),
+        });
 
-      const bookData = await bookRes.json();
+        const bookData = await bookRes.json();
 
-      if (!bookData.success) {
-        setErrorMessage("Booking confirmation failed. Please try again.");
-        setStep("error");
-        return;
+        if (!bookData.success) {
+          setErrorMessage("Booking confirmation failed. Please try again.");
+          setStep("error");
+          return;
+        }
+
+        pnrCode = bookData.confirmationNo || clientRef;
+        confirmationNo = bookData.confirmationNo || "";
       }
-
-      setStep("saving");
-
-      const pnrCode = bookData.confirmationNo || clientRef;
 
       const saveRes = await fetch("/api/bookings", {
         method: "POST",
@@ -242,9 +245,9 @@ export default function HotelBookingModal({
 
       setBookingId(saveData.id);
       setConfirmation({
-        bookingId: bookData.bookingId || clientRef,
+        bookingId: saveData.id || clientRef,
         pnr: pnrCode,
-        confirmationNo: bookData.confirmationNo || "",
+        confirmationNo: confirmationNo || pnrCode,
         status: "Pending Payment",
       });
 
