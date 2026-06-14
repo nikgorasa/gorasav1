@@ -9,7 +9,7 @@ export async function createOrder(params: {
 }): Promise<{ id: string; amount: number; checkoutUrl: string }> {
   if (PAYMENT_CONFIG.mock) {
     const orderId = generateMockOrderId();
-    const checkoutUrl = getMockCheckoutUrl(orderId, params.appUrl || PAYMENT_CONFIG.appUrl);
+    const checkoutUrl = getMockCheckoutUrl(orderId, params.appUrl || PAYMENT_CONFIG.appUrl, params.receipt);
     return { id: orderId, amount: params.amount, checkoutUrl };
   }
 

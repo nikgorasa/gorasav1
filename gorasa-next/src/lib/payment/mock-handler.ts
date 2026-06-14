@@ -33,6 +33,8 @@ export function createMockWebhookPayload(orderId: string) {
   };
 }
 
-export function getMockCheckoutUrl(orderId: string, appUrl: string): string {
-  return `${appUrl}/payment/success?order_id=${orderId}&mock=true`;
+export function getMockCheckoutUrl(orderId: string, appUrl: string, bookingId?: string): string {
+  const params = new URLSearchParams({ order_id: orderId, mock: "true" });
+  if (bookingId) params.set("bookingId", bookingId);
+  return `${appUrl}/payment/success?${params.toString()}`;
 }
