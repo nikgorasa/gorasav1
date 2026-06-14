@@ -146,21 +146,9 @@ export default function HotelsPage() {
     setHotelRoomsLoading(true);
 
     try {
-      const res = await fetch("/api/tbo-hotels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "rooms",
-          sessionId,
-          resultIndex: hotel.resultIndex,
-          hotelCode: hotel.hotelCode,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.rooms) {
-        setHotelRooms(data.rooms);
-        if (data.rooms.length > 0) setSelectedRoom(data.rooms[0]);
+      if (hotel.rooms && hotel.rooms.length > 0) {
+        setHotelRooms(hotel.rooms);
+        if (hotel.rooms.length > 0) setSelectedRoom(hotel.rooms[0]);
       } else {
         setHotelRooms([]);
       }
