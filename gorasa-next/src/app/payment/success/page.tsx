@@ -3,7 +3,6 @@
 import React, { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import PaymentStatusPage from "@/components/PaymentStatusPage";
-import { PAYMENT_CONFIG } from "@/lib/payment";
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -13,15 +12,15 @@ function PaymentSuccessContent() {
 
   // In mock mode, auto-confirm by calling webhook
   useEffect(() => {
-    if (isMock && orderId) {
+    if (isMock && orderId && bookingId) {
       fetch("/api/webhooks/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Razorpay-Signature": "mock" },
         body: JSON.stringify({
           event: "payment.captured",
           payload: {
-            payment: { entity: { id: `mock_pay_${Date.now()}`, order_id: orderId, amount: 0, status: "captured", method: "upi" } },
-            order: { entity: { id: orderId, amount: 0, receipt: bookingId } },
+            payment: { entity: { id: `mock_pay_${Date.now()}`, order_id: orderId, amount: 100, status: "captured", method: "upi" } },
+            order: { entity: { id: orderId, amount: 100, receipt: bookingId } },
           },
         }),
       }).catch(console.error);
@@ -31,7 +30,13 @@ function PaymentSuccessContent() {
   if (!bookingId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-slate-500">Invalid payment session.</p>
+        <div className="text-center">
+          <p className="text-slate-500 mb-4">Payment processing...</p>
+          <p className="text-xs text-slate-400">If you were redirected here from a booking, please check My Trips.</p>
+          <a href="/trips" className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">
+            Go to My Trips
+          </a>
+        </div>
       </div>
     );
   }
