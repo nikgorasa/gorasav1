@@ -319,3 +319,94 @@ ADR reference: N/A
 - TypeScript compiles cleanly
 - Next.js build passes
 - Neon DB migration applied
+
+## 2026-06-15 — CockroachDB Standalone Migration + Deployment
+
+### Summary:
+- **New DB:** CockroachDB cluster `aqua-pony-27730` (31 tables, 249 rows)
+- **New Vercel project:** `project-10o7w` → https://project-10o7w.vercel.app
+- **New GitHub repo:** `Gorasa-In-2026/Gorasa-Cockroach`
+- **Parallel governance:** `cockroach-standalone/` (11 files)
+- **Migration method:** Node.js script — export from Supabase → import to CockroachDB
+
+### Changes Made:
+
+**Data Migration (5 files):**
+- `gorasa-next/scripts/migrate-to-cockroach.js` — exports 31 tables from Supabase REST API, creates + imports to CockroachDB
+- Dropped all 14 FK constraints before import
+- Re-added all 14 FK constraints after all data loaded
+- Row counts verified exact match (249 rows total)
+
+**Code Migration (9 files rewritten to use Prisma):**
+- `src/lib/ticket/serverManager.ts` — `createClient` → `prisma`
+- `src/lib/payment/payment-service.ts` — `createClient` → `prisma`
+- `src/lib/pricing/pricing-service.ts` — `createClient` → `prisma`
+- `src/lib/pricing/api/pricing-rules/route.ts` — `createClient` → `prisma`
+- `src/lib/pricing/api/pricing-rules/[id]/route.ts` — `createClient` → `prisma`
+- `src/lib/pricing/api/corporate-rates/route.ts` — `createClient` → `prisma`
+- `src/lib/pricing/api/corporate-rates/[id]/route.ts` — `createClient` → `prisma`
+- `src/lib/payment/api/checkout/route.ts` — `createClient` → `prisma`
+- `src/app/page.tsx` — `createClient` → `prisma`
+
+**Deployment:**
+- Created new Vercel project `project-10o7w` (ID: `prj_m749kRKHlyXSTKvbxmw28KRqdcH1`)
+- Set 10+ env vars on new Vercel project (CockroachDB DATABASE_URL, Supabase auth keys, TBO creds)
+- `.vercel/project.json` linked to `project-10o7w`
+- Deployed to https://project-10o7w.vercel.app — homepage 200, all API endpoints return CockroachDB data
+
+**Git:**
+- Created `Gorasa-In-2026/Gorasa-Cockroach` repo (user created)
+- Added remote `origin → Gorasa-Cockroach.git`
+- Renamed old remote to `old-pipeline`
+- Pushed current code to main branch on new repo
+
+**Governance (11 files in `cockroach-standalone/`):**
+- `GOVERNANCE.md` — adapted for single-branch/single-DB/single-deploy pipeline
+- `MEMORY.md`, `CONFIG-REFERENCE.md`, `CHANGE-LOG.md`, `LEARNING-FROM-MISTAKES.md`, `DEPLOYMENT_LOG.md`, `DB-CHANGES.md`, `Sprint-1.md`
+- `scripts/preflight-check.sh`, `scripts/post-task-check.sh`
+- `docs/adr/.gitkeep`
+
+### Auth NOT Migrated:
+- Supabase Auth remains unchanged (`isubgeemvhvhnhikxbjb`)
+- LoginModal, `/api/auth/login`, `/api/auth/me` still use Supabase
+- Only the data layer uses CockroachDB + Prisma
+
+### Security Items (PENDING):
+1. `packages/backend/.env` tracked in git — needs gitignore/redaction
+2. `scripts/setup-github-secrets.sh` references old repo `nikgorasa/gorasav1`
+3. Local `.env.local` still points to Neon (correct — local dev targets DEV pipeline, CockroachDB uses Vercel overrides)
+
+## 2026-06-15 — Admin Panel Enhancements + Sales Register + Reports
+
+### Commits:
+- 936ae7c: feat: enhance reports — Cost Price (TBO), Selling Price, Net Earnings, fixed type grouping, promo usage
+- 5c6ad9e: feat: Sales/Booking Register with breakup reports for admin
+- 88a4323: feat: implement missing admin features — ticket assignment, lead source/create, Supabase Auth user creation
+- cdb98e8: feat: add category dropdown to packages admin — links to homepage carousels
+- e45baa6: feat: add Lost stage to leads pipeline with reason tracking
+- 99269d9: feat: Phase 1 admin panel improvements — edit, create, assignment, source tracking
+
+### Changes Made:
+
+**Reports (NEW):**
+- New `/admin/reports` page with Sales & Booking Register
+- Cost Price (TBO) = sellingPrice / 1.15, Selling Price, Markup, Net Earnings calculations
+- Fixed type grouping: normalized Hotel/HOTEL, Flight/FLIGHT, PACKAGE/Holiday Package → 3 canonical types
+- 5 tabs: Overview, All Bookings, Cancellations, By Type, Promo Usage
+- Price Flow visualization: Cost → +Markup → Selling → -Discounts → Net Earnings
+- CSV export with all financial fields
+- Period filters: Weekly/Monthly/Quarterly/Half-Yearly/Annual + custom date range
+
+**Admin Panel:**
+- Tickets: assignment dropdown (SALES/ADMIN/SUPER_ADMIN), search by subject/customer/email
+- Leads: source tracking (AI Planner/Package/Manual), source filter, Create Lead form with source selection
+- Users: Create User now creates Supabase Auth user + DB record, auto-generates temp password
+- Packages: Category dropdown linking to homepage carousels (6 categories)
+- Promos: Edit form, View modal, Delete confirmation, applicableTo field
+- Pricing: Edit form, View modal, Delete confirmation
+- Leads: Lost stage with reason tracking (7 preset reasons + custom)
+
+**Database:**
+- Added `source` column to Lead table (Neon DB)
+- Added `LOST` stage to LeadStage table
+- Added `reports` NavigationItem to admin sidebar
