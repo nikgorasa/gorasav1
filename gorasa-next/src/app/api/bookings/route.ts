@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       pnr: pnrCode,
       seatOrRoom,
       paxCount: paxCount || 1,
-      travelDates,
+      travelDates: typeof travelDates === "object" ? JSON.stringify(travelDates) : travelDates,
       leadGuestPan: leadGuestPan || null,
     });
 
