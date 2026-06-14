@@ -417,3 +417,7 @@ Work completed:
 ### Commits:
 - 7db0627: feat: PAN card compliance for hotel bookings
 - c32592a: docs: update CHANGE-LOG for PAN compliance
+
+## Rules
+
+- **Plan file naming**: NEVER use random names like "gentle-star.md" or "hidden-mountain.md". Plan files MUST be named descriptively based on current context. Examples: `PAN-COMPLIANCE-HOTEL-BOOKINGS.md`, `ADMIN-PANEL-IMPROVEMENT-PLAN.md`, `DEAD-WEIGHT-CLEANUP.md`. The name should immediately tell what the plan is about.
