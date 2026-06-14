@@ -232,7 +232,7 @@ export default function HotelBookingModal({
           pnr: pnrCode,
           seatOrRoom: room.name,
           paxCount: guestCount,
-          travelDates: { checkIn, checkOut },
+          travelDates: `${checkIn} to ${checkOut}`,
           status: "PENDING",
           leadGuestPan: pan.trim().toUpperCase(),
           gstNumber: showGstFields ? gstNumber || undefined : undefined,

@@ -169,7 +169,7 @@ export default function FlightBookingModal({
           pnr: pnrCode,
           seatOrRoom: flight.tier,
           paxCount: passengerCount,
-          travelDates: { departure: date || "TBD" },
+          travelDates: date || "TBD",
           leadGuestPan: pan || undefined,
           status: "PENDING",
           gstNumber: showGstFields ? gstNumber || undefined : undefined,
