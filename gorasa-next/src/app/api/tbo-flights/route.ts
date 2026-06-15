@@ -89,6 +89,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(result);
       }
 
+      case "get-ssr": {
+        const { traceId: tId, resultIndex: rIdx } = body;
+        const result = await getSSR({ traceId: tId, resultIndex: rIdx, EndUserIp: endUserIp });
+        return NextResponse.json(result);
+      }
+
       case "book": {
         const { traceId, resultIndex, passengers } = body;
         const result = await bookFlight({ traceId, resultIndex, passengers, EndUserIp: endUserIp });

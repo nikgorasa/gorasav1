@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { type, itemName, providerOrAirline, price, originalPrice, discountApplied, couponCodeUsed, pnr, seatOrRoom, paxCount, travelDates, paymentMethod, leadGuestPan, status: bookingStatus } = body;
+    const { type, itemName, providerOrAirline, price, originalPrice, discountApplied, couponCodeUsed, pnr, seatOrRoom, paxCount, travelDates, paymentMethod, leadGuestPan, status: bookingStatus, addOns } = body;
 
     if (!type || !itemName || price === undefined) {
       return NextResponse.json(
@@ -60,6 +60,7 @@ export async function POST(request: Request) {
       travelDates: typeof travelDates === "object" ? JSON.stringify(travelDates) : travelDates,
       leadGuestPan: leadGuestPan || null,
       status: bookingStatus || "CONFIRMED",
+      metadata: addOns ? JSON.stringify({ addOns: JSON.parse(addOns) }) : null,
     });
 
     if (paymentMethod) {
